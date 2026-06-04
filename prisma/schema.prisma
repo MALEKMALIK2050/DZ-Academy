@@ -1,0 +1,694 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ========================================
+// ENUMS
+// ========================================
+
+enum Role {
+  ADMIN
+  DESIGNER
+  TEACHER
+  STUDENT
+}
+
+enum NiveauScolaire {
+  PRIMAIRE
+  CEM
+  LYCEE
+  BAC
+  LICENCE
+  MASTER
+  DOCTORAT
+}
+
+enum StatutProfil {
+  INCOMPLET
+  PARTIELLEMENT_COMPLET
+  COMPLET
+}
+
+enum CourseStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum SupportType {
+  PDF
+  VIDEO
+  IMAGE
+  PPT
+  SCORM
+  ARTICULATE
+  TEXTE
+  FORUM
+}
+
+enum QuizType {
+  FORMATIF
+  SOMMATIF
+}
+
+enum ForumType {
+  OPEN
+  QA
+  DEBATE
+  BRAINSTORM
+}
+
+enum ForumPosition {
+  START
+  AFTER_VIDEO
+  AFTER_IMAGE
+  AFTER_TEXT
+  AFTER_QCM
+  AFTER_DEVOIR
+  END
+}
+
+enum ForumStatus {
+  DRAFT
+  PUBLISHED
+  CLOSED
+}
+
+// ========================================
+// USER MODEL - AMÉLIORÉ
+// ========================================
+
+model User {
+  id              Int      @id @default(autoincrement())
+  nom             String
+  prenom          String
+  email           String   @unique
+  password        String
+  role            Role
+  
+  // Scolarité
+  niveau          String?
+  annee           String?
+  classe          String?
+  niveauScolaire  NiveauScolaire?
+  matieres        String[]
+  niveaux         String[]
+  ecole           String?
+  
+  // Tuteur
+  tuteurNom       String?
+  tuteurPrenom    String?
+  tuteurTelephone String?
+  
+  // Adresse
+  adresse         String?
+  codePostal      String?
+  ville           String?
+  pays            String? @default("Algérie")
+  
+  // Personnel
+  telephone       String?
+  dateNaissance   String?
+  lieuNaissance   String?
+  village         String?
+  photo           String?
+  
+  // Profil professionnel (Teacher / Designer)
+  specialite      String?
+  biographie      String?
+  diplome         String?
+  universite      String?
+  
+  // Profil
+  active          Boolean  @default(true)
+  profilComplet   Boolean  @default(false)
+  statutProfil    StatutProfil @default(INCOMPLET)
+  pourcentageCompletion Int @default(0)
+  
+  // Timestamps
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  lastLoginAt     DateTime?
+  deletedAt       DateTime?
+  
+  // Relations
+  chapterProgress ChapterProgress[]
+  createdCourses  Course[]          @relation("DesignerCourses")
+  teachingCourses Course[]          @relation("TeacherCourses")
+  rendus          DevoirRendu[]
+  enrollments     Enrollment[]
+
+  forumsCreated Forum[]         @relation("ForumCreatedBy")
+  forumPosts    ForumPost[]     @relation("ForumPosts")
+  postsGraded   ForumPost[]     @relation("PostGradedBy")
+  forumLikes    ForumPostLike[] @relation("UserLikes")
+
+  groupMessages    GroupMessage[] @relation("GroupMessageSender")
+  receivedMessages Message[]      @relation("ReceiverMessages")
+  sentMessages     Message[]      @relation("SenderMessages")
+
+  notifications  Notification[]
+  pretestResults PretestResult[] @relation("PretestResults")
+  quizResults    QuizResult[]
+  videoProgress  VideoProgress[]
+
+  remediationsEnvoyes  Remediation[] @relation("RemediationStudent")
+  remediationsRecues   Remediation[] @relation("RemediationTeacher")
+  
+  @@index([email])
+  @@index([role])
+  @@index([active])
+  @@index([niveauScolaire])
+  @@index([createdAt])
+  @@index([deletedAt])
+}
+
+// ========================================
+// COURSE MODEL
+// ========================================
+
+model Course {
+  id          Int          @id @default(autoincrement())
+  title       String
+  description String?
+  designerId  Int?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  coverImage  String?
+  objectifs   String?
+  status      CourseStatus @default(DRAFT)
+  annee       String?
+  matiere     String?
+  niveau      String?
+
+  chapters Chapter[]
+
+  teachers User[] @relation("TeacherCourses")
+  designer User?  @relation("DesignerCourses", fields: [designerId], references: [id])
+
+  introduction   CourseIntroduction?
+  enrollments    Enrollment[]
+  forums         Forum[]
+  pretest        Pretest?
+  pretestResults PretestResult[]
+  quizFinal      Quiz?
+  importBatches  ImportBatch[]
+  remediations Remediation[]
+}
+
+// ========================================
+// CHAPTER MODEL
+// ========================================
+
+model Chapter {
+  id        Int      @id @default(autoincrement())
+  title     String
+  content   String?
+  courseId  Int
+  createdAt DateTime @default(now())
+  objectifs String?
+  ordre     Int      @default(0)
+
+  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  progress    ChapterProgress[]
+  devoirs     Devoir[]
+  forums      Forum[]
+  paragraphes Paragraphe[]
+  quiz        Quiz?
+  supports    Support[]
+}
+
+// ========================================
+// DEVOIR MODEL
+// ========================================
+
+model Devoir {
+  id        Int           @id @default(autoincrement())
+  titre     String
+  consigne  String
+  dateLimit DateTime
+  createdAt DateTime      @default(now())
+  chapterId Int
+  chapter   Chapter       @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+  rendus    DevoirRendu[]
+}
+
+// ========================================
+// DEVOIR RENDU MODEL
+// ========================================
+
+model DevoirRendu {
+  id          Int      @id @default(autoincrement())
+  fichierUrl  String
+  fichierNom  String
+  fichierType String
+  commentaire String?
+  note        Float?
+  feedback    String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  devoirId    Int
+  studentId   Int
+  devoir      Devoir   @relation(fields: [devoirId], references: [id], onDelete: Cascade)
+  student     User     @relation(fields: [studentId], references: [id])
+
+  @@unique([devoirId, studentId])
+}
+
+// ========================================
+// SUPPORT MODEL
+// ========================================
+
+model Support {
+  id            Int             @id @default(autoincrement())
+  type          SupportType
+  url           String?
+  nom           String?
+  ordre         Int             @default(0)
+  chapterId     Int
+  createdAt     DateTime        @default(now())
+  contenu       String?
+  forumId       Int?
+  videoId       String?
+  chapter       Chapter         @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+  forum         Forum?          @relation(fields: [forumId], references: [id])
+  videoProgress VideoProgress[]
+}
+
+// ========================================
+// VIDEO PROGRESS MODEL
+// ========================================
+
+model VideoProgress {
+  id           Int      @id @default(autoincrement())
+  progression  Float    @default(0)
+  completed    Boolean  @default(false)
+  events       Json     @default("[]")
+  lastPosition Float    @default(0)
+  updatedAt    DateTime @updatedAt
+  createdAt    DateTime @default(now())
+  studentId    Int
+  supportId    Int
+  student      User     @relation(fields: [studentId], references: [id])
+  support      Support  @relation(fields: [supportId], references: [id], onDelete: Cascade)
+
+  @@unique([studentId, supportId])
+}
+
+// ========================================
+// QUIZ MODEL
+// ========================================
+
+model Quiz {
+  id          Int          @id @default(autoincrement())
+  type        QuizType
+  chapterId   Int?         @unique
+  courseId    Int?         @unique
+  createdAt   DateTime     @default(now())
+  questions   Question[]
+  chapter     Chapter?     @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+  course      Course?      @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  quizResults QuizResult[]
+  remediations Remediation[]
+}
+
+// ========================================
+// QUESTION MODEL
+// ========================================
+
+model Question {
+  id      Int      @id @default(autoincrement())
+  texte   String
+  choix   String[]
+  reponse String
+  quizId  Int
+  points  Int      @default(1)
+  type    String   @default("QCM")
+  quiz    Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
+}
+
+// ========================================
+// QUIZ RESULT MODEL
+// ========================================
+
+model QuizResult {
+  id         Int      @id @default(autoincrement())
+  score      Float
+  reponses   Json
+  createdAt  DateTime @default(now())
+  studentId  Int
+  quizId     Int
+  tentatives Int      @default(1)
+  quiz       Quiz     @relation(fields: [quizId], references: [id])
+  student    User     @relation(fields: [studentId], references: [id])
+
+  @@unique([studentId, quizId])
+}
+
+// ========================================
+// ENROLLMENT MODEL - AMÉLIORÉ
+// ========================================
+
+model Enrollment {
+  id           Int       @id @default(autoincrement())
+  progression  Int       @default(0)
+  completed    Boolean   @default(false)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  studentId    Int
+  courseId     Int
+  note         String?
+  prixPaye     Float?
+  statut       String    @default("EN_ATTENTE")
+  typePaiement String?
+  valideAt     DateTime?
+  validePar    Int?
+  progress     Int       @default(0)
+  course       Course    @relation(fields: [courseId], references: [id])
+  student      User      @relation(fields: [studentId], references: [id])
+
+  @@unique([studentId, courseId])
+}
+
+// ========================================
+// CHAPTER PROGRESS MODEL
+// ========================================
+
+model ChapterProgress {
+  id        Int       @id @default(autoincrement())
+  lu        Boolean   @default(false)
+  luAt      DateTime?
+  createdAt DateTime  @default(now())
+  studentId Int
+  chapterId Int
+  chapter   Chapter   @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+  student   User      @relation(fields: [studentId], references: [id])
+
+  @@unique([studentId, chapterId])
+}
+
+// ========================================
+// MESSAGE MODEL - AMÉLIORÉ
+// ========================================
+
+model Message {
+  id         Int      @id @default(autoincrement())
+  content    String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  senderId   Int
+  receiverId Int?
+  lu         Boolean  @default(false)
+  receiver   User?    @relation("ReceiverMessages", fields: [receiverId], references: [id])
+  sender     User     @relation("SenderMessages", fields: [senderId], references: [id])
+  
+  @@index([senderId])
+  @@index([receiverId])
+}
+
+// ========================================
+// GROUP MESSAGE MODEL
+// ========================================
+
+model GroupMessage {
+  id        Int      @id @default(autoincrement())
+  content   String
+  groupType String
+  createdAt DateTime @default(now())
+  senderId  Int
+  sender    User     @relation("GroupMessageSender", fields: [senderId], references: [id])
+}
+
+// ========================================
+// FORUM MODEL
+// ========================================
+
+model Forum {
+  id             Int           @id @default(autoincrement())
+  courseId       Int?
+  allowAnonymous Boolean       @default(false)
+  chapitreId     Int
+  closeAt        DateTime?
+  createdAt      DateTime      @default(now())
+  createdById    Int
+  description    String?
+  isModerated    Boolean       @default(false)
+  isPeerReview   Boolean       @default(false)
+  isRequired     Boolean       @default(false)
+  notifyTeacher  Boolean       @default(true)
+  openAt         DateTime?
+  position       ForumPosition @default(END)
+  status         ForumStatus   @default(DRAFT)
+  title          String
+  type           ForumType     @default(OPEN)
+  updatedAt      DateTime      @updatedAt
+
+  chapter   Chapter @relation(fields: [chapitreId], references: [id], onDelete: Cascade)
+  course    Course? @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  createdBy User    @relation("ForumCreatedBy", fields: [createdById], references: [id])
+
+  posts    ForumPost[]
+  supports Support[]
+
+  @@index([chapitreId], map: "idx_forum_chapitre")
+  @@index([createdById], map: "idx_forum_createdBy")
+  @@index([chapitreId])
+  @@index([createdById])
+  @@map("Forum")
+}
+
+// ========================================
+// FORUM POST MODEL
+// ========================================
+
+model ForumPost {
+  id          Int       @id @default(autoincrement())
+  createdAt   DateTime  @default(now())
+  forumId     Int
+  authorId    Int
+  content     String
+  depth       Int       @default(0)
+  isAnonymous Boolean   @default(false)
+  isApproved  Boolean   @default(true)
+  isFeedback  Boolean   @default(false)
+  parentId    Int?
+  updatedAt   DateTime  @updatedAt
+  feedback    String?
+  grade       Int?
+  gradedAt    DateTime?
+  gradedById  Int?
+
+  author   User  @relation("ForumPosts", fields: [authorId], references: [id])
+  forum    Forum @relation(fields: [forumId], references: [id], onDelete: Cascade)
+  gradedBy User? @relation("PostGradedBy", fields: [gradedById], references: [id])
+
+  parent   ForumPost?  @relation("PostChildren", fields: [parentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  children ForumPost[] @relation("PostChildren")
+
+  likes ForumPostLike[] @relation("PostLikes")
+
+  @@index([forumId])
+  @@index([parentId])
+  @@index([authorId])
+}
+
+// ========================================
+// FORUM POST LIKE MODEL
+// ========================================
+
+model ForumPostLike {
+  id        Int      @id @default(autoincrement())
+  postId    Int
+  userId    Int
+  createdAt DateTime @default(now())
+
+  post ForumPost @relation("PostLikes", fields: [postId], references: [id], onDelete: Cascade)
+  user User      @relation("UserLikes", fields: [userId], references: [id])
+
+  @@unique([postId, userId])
+  @@index([postId])
+  @@index([userId])
+}
+
+// ========================================
+// COURSE INTRODUCTION MODEL
+// ========================================
+
+model CourseIntroduction {
+  id        Int      @id @default(autoincrement())
+  contenu   String
+  courseId  Int      @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+}
+
+// ========================================
+// PRETEST MODEL
+// ========================================
+
+model Pretest {
+  id        Int               @id @default(autoincrement())
+  courseId  Int               @unique
+  createdAt DateTime          @default(now())
+  course    Course            @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  questions PretestQuestion[]
+}
+
+// ========================================
+// PRETEST QUESTION MODEL
+// ========================================
+
+model PretestQuestion {
+  id        Int      @id @default(autoincrement())
+  type      String   @default("QCM")
+  texte     String
+  choix     String[]
+  reponse   String
+  points    Int      @default(1)
+  pretestId Int
+  pretest   Pretest  @relation(fields: [pretestId], references: [id], onDelete: Cascade)
+}
+
+// ========================================
+// PRETEST RESULT MODEL
+// ========================================
+
+model PretestResult {
+  id          Int      @id @default(autoincrement())
+  score       Float
+  total       Float
+  pourcentage Float
+  reponses    Json
+  studentId   Int
+  courseId    Int
+  createdAt   DateTime @default(now())
+  course      Course   @relation(fields: [courseId], references: [id])
+  student     User     @relation("PretestResults", fields: [studentId], references: [id])
+
+  @@unique([studentId, courseId])
+}
+
+// ========================================
+// PARAGRAPHE MODEL
+// ========================================
+
+model Paragraphe {
+  id        Int      @id @default(autoincrement())
+  titre     String?
+  contenu   String
+  imageUrl  String?
+  ordre     Int      @default(0)
+  chapterId Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  chapter   Chapter  @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+
+  @@index([chapterId])
+}
+
+// ========================================
+// COURSE IMPORT MODEL
+// ========================================
+
+model CourseImport {
+  id          Int      @id @default(autoincrement())
+  fileName    String
+  fileUrl     String
+  status      String   @default("PROCESSING")
+  rawText     String?
+  resultJson  Json?
+  courseId    Int?
+  createdAt   DateTime @default(now())
+}
+
+// ========================================
+// IMPORT BATCH MODEL
+// ========================================
+
+model ImportBatch {
+  id        Int       @id @default(autoincrement())
+  courseId  Int
+  course    Course    @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  
+  status    String    @default("IN_PROGRESS")
+  
+  chaptersStatus    String    @default("PENDING")
+  pretestStatus     String    @default("PENDING")
+  formativeStatus   String    @default("PENDING")
+  summativeStatus   String    @default("PENDING")
+  
+  chaptersError     String?
+  pretestError      String?
+  formativeError    String?
+  summativeError    String?
+  
+  chaptersCreated   Int       @default(0)
+  pretestCreated    Int       @default(0)
+  formativeCreated  Int       @default(0)
+  summativeCreated  Int       @default(0)
+  
+  startedAt         DateTime  @default(now())
+  completedAt       DateTime?
+  
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+}
+
+// ========================================
+// REMEDIATION MODEL
+// ========================================
+
+model Remediation {
+  id                Int       @id @default(autoincrement())
+  studentId         Int
+  quizId            Int
+  courseId          Int
+  teacherId         Int
+  score             Int
+  messageEtudiant   String    @db.Text
+  reponseEnseignant String?   @db.Text
+  erreursDetail     Json
+  statut            String    @default("EN_ATTENTE")
+  debloqueLe        DateTime?
+  debloqueParId     Int?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  student    User   @relation("RemediationStudent", fields: [studentId],   references: [id])
+  teacher    User   @relation("RemediationTeacher", fields: [teacherId],   references: [id])
+  quiz       Quiz   @relation(fields: [quizId],    references: [id])
+  course     Course @relation(fields: [courseId],  references: [id])
+
+  @@index([studentId, quizId])
+  @@index([teacherId, statut])
+  @@index([courseId])
+}
+
+// ========================================
+// NOTIFICATION MODEL
+// ========================================
+
+model Notification {
+  id            Int      @id @default(autoincrement())
+  userId        Int
+  type          String
+  titre         String
+  message       String   @db.Text
+  lien          String?
+  remediationId Int?
+  lu            Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  contenu       String?
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([userId, lu])
+  @@index([createdAt])
+}

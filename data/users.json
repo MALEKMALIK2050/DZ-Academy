@@ -1,0 +1,14 @@
+[
+  {
+    "id": 1,
+    "firstName": "Ahmed",
+    "lastName": "Kouribi",
+    "email": "ahmed@example.com",
+    "password": "MotDePasse123",
+    "level": "4eme-college",
+    "progress": {
+      "maths": "not_started",
+      "francais": "completed"
+    }
+  }
+]

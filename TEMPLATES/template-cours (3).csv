@@ -1,0 +1,6 @@
+﻿SupportID;Type;ChapitreID;URL_Contenu;Nom
+1;VIDEO;2;https://youtube.com/watch?v=example1;
+2;PDF;2;https://example.com/translation.pdf;
+3;TEXTE;2;Voici les points clés à retenir;
+4;FORUM;3;Partagez vos solutions de rotation;
+5;IMAGE;3;https://example.com/rotation.png;

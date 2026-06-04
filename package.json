@@ -1,0 +1,63 @@
+{
+  "name": "academy",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "db:push": "prisma db push",
+    "db:seed": "prisma db seed",
+    "db:studio": "prisma studio"
+  },
+  "prisma": {
+    "seed": "node prisma/seed.js"
+  },
+  "dependencies": {
+    "@aws-sdk/client-bedrock-runtime": "^3.1045.0",
+    "@prisma/client": "^5.22.0",
+    "@tiptap/extension-image": "^3.22.5",
+    "@tiptap/extension-link": "^3.22.5",
+    "@tiptap/extension-text-align": "^3.22.5",
+    "@tiptap/extension-underline": "^3.22.5",
+    "@tiptap/pm": "^3.22.5",
+    "@tiptap/react": "^3.22.5",
+    "@tiptap/starter-kit": "^3.22.5",
+    "@types/react-dom": "^18.3.7",
+    "adm-zip": "^0.5.17",
+    "archiver": "^8.0.0",
+    "bcrypt": "^6.0.0",
+    "bcryptjs": "^3.0.3",
+    "cookie": "^1.1.1",
+    "csv-parser": "^3.2.1",
+    "dotenv": "^17.4.2",
+    "extract-zip": "^2.0.1",
+    "formidable": "^2.1.5",
+    "jose": "^6.2.2",
+    "jsonwebtoken": "^9.0.3",
+    "mammoth": "^1.12.0",
+    "multer": "^2.1.1",
+    "next": "^14.2.5",
+    "next-auth": "^4.24.14",
+    "nodemailer": "^7.0.13",
+    "openai": "^4.104.0",
+    "pdf-parse": "^1.1.4",
+    "prisma": "^5.22.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "resend": "^6.12.3",
+    "socket.io": "^4.8.3",
+    "socket.io-client": "^4.8.3",
+    "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "@types/formidable": "^3.5.1",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/node": "20.11.30",
+    "@types/react": "^18.3.28",
+    "autoprefixer": "^10.5.0",
+    "postcss": "^8.5.14",
+    "tailwindcss": "^4.2.4",
+    "typescript": "5.4.5"
+  }
+}

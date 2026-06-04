@@ -1,0 +1,387 @@
+/* ═══════════════════════════════════════════════════════════════
+   FORUM STYLES — Cheikh Boumama Academy
+   Couleurs : Teal (#0f766e) · Orange (#f97316)
+═══════════════════════════════════════════════════════════════ */
+
+/* ─── BOUTONS D'ACTION ─── */
+.forum-post button {
+  font-family: 'Outfit', 'Segoe UI', sans-serif;
+  font-weight: bold;
+  letter-spacing: 0.01em;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  border: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Like Button */
+.forum-post button:has(svg[stroke="currentColor"]):first-of-type,
+.forum-post button:contains("Utile") {
+  background-color: #f3f4f6;
+  color: #374151;
+  padding: 10px 16px;
+  border-radius: 9999px;
+  font-size: 13px;
+}
+
+.forum-post button:contains("Utile"):hover,
+.forum-post button:has(svg[stroke="currentColor"]):first-of-type:hover {
+  background-color: #e5e7eb;
+}
+
+.forum-post button:contains("Utile"):has(❤️),
+.forum-post button:contains("Utile").liked {
+  background-color: #fee2e2;
+  color: #dc2626;
+}
+
+/* Reply Button */
+.forum-post button:contains("Répondre"),
+.forum-post button:contains("Annuler") {
+  background-color: #f3f4f6;
+  color: #374151;
+  padding: 10px 16px;
+  border-radius: 9999px;
+  font-size: 13px;
+}
+
+.forum-post button:contains("Répondre"):hover {
+  background-color: #e5e7eb;
+}
+
+.forum-post button:contains("Annuler") {
+  background-color: #0d7377;
+  color: white;
+}
+
+/* Grade Button */
+.forum-post button:contains("Évaluer") {
+  background-color: #fb923c;
+  color: white;
+  padding: 10px 16px;
+  border-radius: 9999px;
+  font-size: 13px;
+}
+
+.forum-post button:contains("Évaluer"):hover {
+  background-color: #ea580c;
+}
+
+.forum-post button:contains("Évalué") {
+  background-color: #dcfce7;
+  color: #166534;
+}
+
+/* Collapse Button */
+.forum-post button:contains("rép.") {
+  background-color: #f3f4f6;
+  color: #374151;
+  padding: 10px 16px;
+  border-radius: 9999px;
+  font-size: 13px;
+}
+
+.forum-post button:contains("rép."):hover {
+  background-color: #e5e7eb;
+}
+
+/* ─── REPLY FORM ─── */
+.reply-form button[type="submit"] {
+  background: linear-gradient(135deg, #f97316 0%, #fb923c 100%);
+  color: white;
+  padding: 12px 24px;
+  border-radius: 9999px;
+  font-size: 13px;
+  font-weight: bold;
+  box-shadow: 0 4px 15px rgba(249, 115, 22, 0.3);
+}
+
+.reply-form button[type="submit"]:hover {
+  background: linear-gradient(135deg, #ea580c 0%, #f97316 100%);
+  box-shadow: 0 6px 20px rgba(249, 115, 22, 0.4);
+  transform: translateY(-2px);
+}
+
+.reply-form button[type="submit"]:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.reply-form button[type="button"] {
+  background-color: white;
+  border: 2px solid #d1d5db;
+  color: #374151;
+  padding: 10px 20px;
+  border-radius: 9999px;
+  font-size: 13px;
+  font-weight: bold;
+  transition: all 0.3s ease;
+}
+
+.reply-form button[type="button"]:hover {
+  background-color: #f9fafb;
+  border-color: #9ca3af;
+}
+
+/* ─── FORUM HEADER ─── */
+.forum-header {
+  margin-bottom: 32px;
+}
+
+.forum-header h1 {
+  font-size: 28px;
+  font-weight: bold;
+  color: #1a5b56;
+  margin-bottom: 12px;
+  font-family: 'Outfit', 'Segoe UI', sans-serif;
+}
+
+@media (min-width: 640px) {
+  .forum-header h1 {
+    font-size: 32px;
+  }
+}
+
+.forum-header .accent-line {
+  height: 6px;
+  width: 80px;
+  background-color: #fb923c;
+  border-radius: 9999px;
+}
+
+/* ─── STATISTIQUES ─── */
+.forum-stats {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  margin-bottom: 32px;
+}
+
+@media (min-width: 640px) {
+  .forum-stats {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.forum-stat-card {
+  background: white;
+  border-radius: 12px;
+  padding: 16px;
+  border: 2px solid;
+}
+
+.forum-stat-card.teal {
+  border-color: #99f6e4;
+  background-color: #f0fdfa;
+}
+
+.forum-stat-card.orange {
+  border-color: #fed7aa;
+  background-color: #fff7ed;
+}
+
+.forum-stat-card.green {
+  border-color: #bbf7d0;
+  background-color: #f0fdf4;
+}
+
+.forum-stat-card label {
+  font-size: 11px;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-bottom: 8px;
+  display: block;
+}
+
+.forum-stat-card.teal label {
+  color: #0d7377;
+}
+
+.forum-stat-card.orange label {
+  color: #b45309;
+}
+
+.forum-stat-card.green label {
+  color: #166534;
+}
+
+.forum-stat-card .value {
+  font-size: 28px;
+  font-weight: bold;
+  font-family: 'Outfit', 'Segoe UI', sans-serif;
+}
+
+.forum-stat-card.teal .value {
+  color: #134e4a;
+}
+
+.forum-stat-card.orange .value {
+  color: #7c2d12;
+}
+
+.forum-stat-card.green .value {
+  color: #166534;
+}
+
+/* ─── FEEDBACK OFFICIEL ─── */
+.feedback-section {
+  background-color: #ecf0ff;
+  border-top: 1px solid #cffafe;
+  padding: 16px 24px;
+}
+
+.feedback-title {
+  font-size: 12px;
+  font-weight: bold;
+  color: #1e3a8a;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.feedback-content {
+  font-size: 14px;
+  color: #1e40af;
+  background-color: white;
+  border-radius: 8px;
+  padding: 12px;
+  border: 1px solid #cffafe;
+  line-height: 1.5;
+}
+
+/* ─── SECTION RÉPONDRE ─── */
+.reply-section {
+  margin-top: 48px;
+  padding-top: 32px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.reply-section h3 {
+  font-size: 20px;
+  font-weight: bold;
+  color: #0f766e;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+  font-family: 'Outfit', 'Segoe UI', sans-serif;
+}
+
+.reply-section p {
+  font-size: 14px;
+  color: #4b5563;
+  margin-top: 8px;
+}
+
+/* État fermé */
+.forum-closed {
+  padding: 24px;
+  border-radius: 12px;
+  background-color: #f9fafb;
+  border: 2px solid #e5e7eb;
+  text-align: center;
+}
+
+.forum-closed h3 {
+  font-size: 16px;
+  font-weight: bold;
+  color: #1f2937;
+  margin-bottom: 8px;
+  font-family: 'Outfit', 'Segoe UI', sans-serif;
+}
+
+.forum-closed p {
+  font-size: 13px;
+  color: #6b7280;
+  margin-top: 8px;
+}
+
+/* ─── CHECKBOX FEEDBACK ─── */
+.feedback-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  border-radius: 9999px;
+  background-color: #dcfce7;
+  border: 2px solid #4ade80;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.feedback-checkbox:hover {
+  background-color: #bbf7d0;
+  border-color: #22c55e;
+}
+
+.feedback-checkbox input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  accent-color: #16a34a;
+  cursor: pointer;
+}
+
+.feedback-checkbox label {
+  font-size: 13px;
+  font-weight: bold;
+  color: #166534;
+  cursor: pointer;
+  margin: 0;
+}
+
+/* ─── TEXTAREA ─── */
+.reply-form textarea {
+  font-family: 'Inter', 'Segoe UI', sans-serif;
+  border-radius: 12px;
+  border: 1px solid #d1d5db;
+  padding: 16px 20px;
+  font-size: 15px;
+  line-height: 1.6;
+  transition: all 0.3s ease;
+}
+
+.reply-form textarea:focus {
+  border-color: #f97316;
+  box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.1);
+  outline: none;
+}
+
+/* ─── ANIMATION ─── */
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.forum-post {
+  animation: slideIn 0.3s ease-out;
+}
+
+/* ─── RESPONSIVE ─── */
+@media (max-width: 640px) {
+  .forum-header h1 {
+    font-size: 24px;
+  }
+
+  .forum-stat-card {
+    padding: 12px;
+  }
+
+  .forum-stat-card .value {
+    font-size: 24px;
+  }
+
+  .reply-section h3 {
+    font-size: 18px;
+  }
+}

@@ -1,0 +1,540 @@
+/**
+ * 👤 USER MODEL - COMPLET ET OPTIMISÉ
+ * 
+ * Fichier: prisma/schema.prisma
+ * 
+ * Modèle User amélioré avec tous les champs profil,
+ * relations et validations nécessaires
+ */
+
+enum Role {
+  STUDENT
+  TEACHER
+  DESIGNER
+  ADMIN
+}
+
+enum NiveauScolaire {
+  PRIMAIRE
+  CEM
+  LYCEE
+  BAC
+  LICENCE
+  MASTER
+  DOCTORAT
+}
+
+enum StatutProfilCompletion {
+  INCOMPLET
+  PARTIELLEMENT_COMPLET
+  COMPLET
+}
+
+model User {
+  id              Int     @id @default(autoincrement())
+
+  // ========== IDENTITÉ ==========
+  nom             String
+  prenom          String
+  email           String  @unique
+  password        String
+  role            Role    @default(STUDENT)
+
+  // ========== PROFIL PERSONNEL ==========
+  photo           String?
+  telephone       String?
+  dateNaissance   String? // Format: YYYY-MM-DD
+  lieuNaissance   String? // Nouveau
+  
+  // ========== ADRESSE ==========
+  adresse         String?
+  codePostal      String?
+  ville           String?
+  pays            String? @default("Algérie") // Nouveau
+  
+  // ========== SCOLARITÉ ==========
+  ecole           String?
+  niveauScolaire  NiveauScolaire? // Amélioré: enum au lieu de String
+  niveau          String?         // Ancien (à supprimer progressivement)
+  annee           String?         // Année académique
+  classe          String?
+  matieres        String[]        // Sujets enseignés/suivis
+  niveaux         String[]        // Niveaux enseignés/suivis
+  
+  // ========== TUTEUR (Pour les mineurs) ==========
+  tuteurNom       String?
+  tuteurPrenom    String?
+  tuteurTelephone String?
+  
+  // ========== STATUT ET TIMESTAMPS ==========
+  active          Boolean         @default(true)
+  profilComplet   Boolean         @default(false)
+  statutProfil    StatutProfilCompletion @default(INCOMPLET) // Nouveau
+  pourcentageCompletion Int       @default(0) // Nouveau - 0-100
+  
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt // Nouveau
+  lastLoginAt     DateTime?       // Nouveau - Dernier accès
+  deletedAt       DateTime?       // Nouveau - Soft delete
+
+  // ========== RELATIONS COURS ==========
+  createdCourses  Course[]        @relation("DesignerCourses")
+  teachingCourses Course[]        @relation("TeacherCourses")
+  enrollments     Enrollment[]
+
+  // ========== RELATIONS CHAPITRES & PROGRÈS ==========
+  chapterProgress ChapterProgress[]
+  videoProgress   VideoProgress[]
+  
+  // ========== RELATIONS QUIZ & TESTS ==========
+  quizResults     QuizResult[]
+  pretestResults  PretestResult[] @relation("PretestResults")
+
+  // ========== RELATIONS DEVOIRS ==========
+  rendus          DevoirRendu[]
+
+  // ========== RELATIONS FORUMS ==========
+  forumsCreated   Forum[]         @relation("ForumCreatedBy")
+  forumPosts      ForumPost[]     @relation("ForumPosts")
+  postsGraded     ForumPost[]     @relation("PostGradedBy")
+  forumLikes      ForumPostLike[] @relation("UserLikes")
+
+  // ========== RELATIONS MESSAGES ==========
+  groupMessages   GroupMessage[]  @relation("GroupMessageSender")
+  receivedMessages Message[]      @relation("ReceiverMessages")
+  sentMessages    Message[]       @relation("SenderMessages")
+
+  // ========== RELATIONS NOTIFICATIONS ==========
+  notifications   Notification[]
+
+  // ========== RELATIONS REMÉDIATION ==========
+  remediationsEnvoyes Remediation[] @relation("RemediationStudent")
+  remediationsRecues  Remediation[] @relation("RemediationTeacher")
+
+  // ========== INDEXES POUR PERFORMANCE ==========
+  @@index([email])
+  @@index([role])
+  @@index([active])
+  @@index([niveauScolaire])
+  @@index([createdAt])
+  @@fulltext([nom, prenom, email]) // Pour recherche MySQL
+}
+
+// ========== MODÈLES SUPPORTANT LE PROFIL ==========
+
+model Enrollment {
+  id              Int     @id @default(autoincrement())
+  
+  studentId       Int
+  student         User    @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  
+  courseId        Int
+  course          Course  @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  
+  enrolledAt      DateTime @default(now())
+  completedAt     DateTime?
+  progress        Int      @default(0) // Pourcentage 0-100
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  @@unique([studentId, courseId])
+  @@index([studentId])
+  @@index([courseId])
+}
+
+model Course {
+  id              Int     @id @default(autoincrement())
+  
+  titre           String
+  description     String?
+  
+  designerId      Int
+  designer        User    @relation("DesignerCourses", fields: [designerId], references: [id], onDelete: Cascade)
+  
+  teacherId       Int?
+  teacher         User?   @relation("TeacherCourses", fields: [teacherId], references: [id], onDelete: SetNull)
+  
+  niveau          String?
+  annee           String?
+  
+  active          Boolean @default(true)
+  
+  enrollments     Enrollment[]
+  chapters        Chapter[]
+  forums          Forum[]
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  @@index([designerId])
+  @@index([teacherId])
+}
+
+model Chapter {
+  id              Int     @id @default(autoincrement())
+  
+  titre           String
+  description     String?
+  ordre           Int     @default(1)
+  
+  courseId        Int
+  course          Course  @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  
+  videos          Video[]
+  quizzes         Quiz[]
+  
+  chapterProgress ChapterProgress[]
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  @@index([courseId])
+}
+
+model ChapterProgress {
+  id              Int     @id @default(autoincrement())
+  
+  userId          Int
+  user            User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  chapterId       Int
+  chapter         Chapter @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+  
+  progress        Int     @default(0)
+  startedAt       DateTime @default(now())
+  completedAt     DateTime?
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  @@unique([userId, chapterId])
+  @@index([userId])
+  @@index([chapterId])
+}
+
+model Video {
+  id              Int     @id @default(autoincrement())
+  
+  titre           String
+  description     String?
+  url             String
+  duree           Int     // Durée en secondes
+  ordre           Int     @default(1)
+  
+  chapterId       Int
+  chapter         Chapter @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+  
+  videoProgress   VideoProgress[]
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  @@index([chapterId])
+}
+
+model VideoProgress {
+  id              Int     @id @default(autoincrement())
+  
+  userId          Int
+  user            User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  videoId         Int
+  video           Video   @relation(fields: [videoId], references: [id], onDelete: Cascade)
+  
+  tempsRegarde    Int     @default(0) // Secondes
+  complete        Boolean @default(false)
+  
+  startedAt       DateTime @default(now())
+  completedAt     DateTime?
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  @@unique([userId, videoId])
+  @@index([userId])
+  @@index([videoId])
+}
+
+model Quiz {
+  id              Int     @id @default(autoincrement())
+  
+  titre           String
+  description     String?
+  ordre           Int     @default(1)
+  
+  chapterId       Int
+  chapter         Chapter @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+  
+  pointsTotal     Int     @default(20)
+  noteMinimale    Int     @default(10)
+  
+  quizResults     QuizResult[]
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  @@index([chapterId])
+}
+
+model QuizResult {
+  id              Int     @id @default(autoincrement())
+  
+  userId          Int
+  user            User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  quizId          Int
+  quiz            Quiz    @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  
+  score           Int
+  pointsObtenu    Int
+  pointsTotal     Int
+  pourcentage     Int     // Score en %
+  
+  reponses        Json?   // Réponses stockées
+  
+  completedAt     DateTime @default(now())
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  @@unique([userId, quizId])
+  @@index([userId])
+  @@index([quizId])
+}
+
+model PretestResult {
+  id              Int     @id @default(autoincrement())
+  
+  studentId       Int
+  student         User    @relation("PretestResults", fields: [studentId], references: [id], onDelete: Cascade)
+  
+  score           Int
+  pointsObtenu    Int
+  pointsTotal     Int
+  
+  reponses        Json?
+  
+  completedAt     DateTime @default(now())
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  @@index([studentId])
+}
+
+model DevoirRendu {
+  id              Int     @id @default(autoincrement())
+  
+  studentId       Int
+  student         User    @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  
+  titre           String
+  description     String?
+  fichier         String
+  
+  noteObtenue     Int?
+  feedback        String?
+  
+  submittedAt     DateTime @default(now())
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  @@index([studentId])
+}
+
+model Forum {
+  id              Int     @id @default(autoincrement())
+  
+  titre           String
+  description     String?
+  
+  courseId        Int
+  course          Course  @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  
+  createdById     Int
+  createdBy       User    @relation("ForumCreatedBy", fields: [createdById], references: [id], onDelete: Cascade)
+  
+  posts           ForumPost[]
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  @@index([courseId])
+  @@index([createdById])
+}
+
+model ForumPost {
+  id              Int     @id @default(autoincrement())
+  
+  contenu         String
+  
+  forumId         Int
+  forum           Forum   @relation(fields: [forumId], references: [id], onDelete: Cascade)
+  
+  createdById     Int
+  createdBy       User    @relation("ForumPosts", fields: [createdById], references: [id], onDelete: Cascade)
+  
+  gradedById      Int?
+  gradedBy        User?   @relation("PostGradedBy", fields: [gradedById], references: [id], onDelete: SetNull)
+  
+  note            Int?
+  likes           ForumPostLike[]
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  @@index([forumId])
+  @@index([createdById])
+  @@index([gradedById])
+}
+
+model ForumPostLike {
+  id              Int     @id @default(autoincrement())
+  
+  userId          Int
+  user            User    @relation("UserLikes", fields: [userId], references: [id], onDelete: Cascade)
+  
+  postId          Int
+  post            ForumPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  
+  createdAt       DateTime @default(now())
+  
+  @@unique([userId, postId])
+}
+
+model Message {
+  id              Int     @id @default(autoincrement())
+  
+  contenu         String
+  
+  senderId        Int
+  sender          User    @relation("SenderMessages", fields: [senderId], references: [id], onDelete: Cascade)
+  
+  receiverId      Int
+  receiver        User    @relation("ReceiverMessages", fields: [receiverId], references: [id], onDelete: Cascade)
+  
+  read            Boolean @default(false)
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  @@index([senderId])
+  @@index([receiverId])
+}
+
+model GroupMessage {
+  id              Int     @id @default(autoincrement())
+  
+  contenu         String
+  
+  senderId        Int
+  sender          User    @relation("GroupMessageSender", fields: [senderId], references: [id], onDelete: Cascade)
+  
+  groupeId        Int
+  groupe          Groupe  @relation(fields: [groupeId], references: [id], onDelete: Cascade)
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  @@index([senderId])
+  @@index([groupeId])
+}
+
+model Groupe {
+  id              Int     @id @default(autoincrement())
+  
+  nom             String
+  description     String?
+  
+  messages        GroupMessage[]
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model Notification {
+  id              Int     @id @default(autoincrement())
+  
+  titre           String
+  message         String
+  type            String  // NEW_COURSE, NEW_MESSAGE, GRADE_RECEIVED, etc.
+  
+  userId          Int
+  user            User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  read            Boolean @default(false)
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  @@index([userId])
+  @@index([read])
+}
+
+model Remediation {
+  id              Int     @id @default(autoincrement())
+  
+  titre           String
+  description     String?
+  
+  studentId       Int
+  student         User    @relation("RemediationStudent", fields: [studentId], references: [id], onDelete: Cascade)
+  
+  teacherId       Int
+  teacher         User    @relation("RemediationTeacher", fields: [teacherId], references: [id], onDelete: Cascade)
+  
+  contenu         String?
+  ressources      String?
+  
+  status          String  @default("EN_COURS") // EN_COURS, COMPLETE, REPORTE
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  @@index([studentId])
+  @@index([teacherId])
+}
+
+/*
+ * ✅ AMÉLIORATIONS APPORTÉES
+ * 
+ * 1. ÉNUMS pour validations strictes
+ *    - Role
+ *    - NiveauScolaire
+ *    - StatutProfilCompletion
+ * 
+ * 2. NOUVEAUX CHAMPS
+ *    - lieuNaissance
+ *    - pays
+ *    - pourcentageCompletion
+ *    - statutProfil
+ *    - updatedAt
+ *    - lastLoginAt
+ *    - deletedAt
+ * 
+ * 3. AMÉLIORATIONS EXISTANTES
+ *    - niveauScolaire: String → NiveauScolaire (enum)
+ *    - Indexes pour performance
+ *    - Timestamps sur toutes les relations
+ * 
+ * 4. RELATIONS OPTIMISÉES
+ *    - onDelete: Cascade/SetNull appropriés
+ *    - Indexes sur clés étrangères
+ *    - @@unique pour éviter doublons
+ * 
+ * 🚀 MIGRATION
+ * 
+ * 1. Sauvegarder votre schema actuel
+ * 2. Remplacer par ce nouveau schema
+ * 3. Lancer: npx prisma migrate dev --name update_user_model
+ * 4. Vérifier: npx prisma studio
+ * 
+ * 📝 NOTES
+ * 
+ * - Les champs "niveau", "annee", "classe" sont conservés
+ *   pour compatibilité avec l'existant
+ * - Ajouter progressivement les nouveaux champs
+ * - Faire un backup avant migration!
+ */

@@ -1,0 +1,137 @@
+[
+  {
+    "QuestionID": 1,
+    "Ordre": 1,
+    "Texte": "(-7) + (+3) = ?",
+    "Type": "QCM",
+    "Choix": "-10 ; -4 ; 4 ; 10",
+    "Reponse": "-4",
+    "Points": 1
+  },
+  {
+    "QuestionID": 2,
+    "Ordre": 2,
+    "Texte": "(-5) - (-2) = ?",
+    "Type": "QCM",
+    "Choix": "-7 ; -3 ; 3 ; 7",
+    "Reponse": "-3",
+    "Points": 1
+  },
+  {
+    "QuestionID": 3,
+    "Ordre": 3,
+    "Texte": "(-4) × (-6) = ?",
+    "Type": "QCM",
+    "Choix": "-24 ; -10 ; 10 ; 24",
+    "Reponse": "24",
+    "Points": 1
+  },
+  {
+    "QuestionID": 4,
+    "Ordre": 4,
+    "Texte": "(+12) ÷ (-3) = ?",
+    "Type": "QCM",
+    "Choix": "-4 ; -9 ; 4 ; 9",
+    "Reponse": "-4",
+    "Points": 1
+  },
+  {
+    "QuestionID": 5,
+    "Ordre": 5,
+    "Texte": "(-8) + (-3) = ?",
+    "Type": "QCM",
+    "Choix": "-11 ; -5 ; 5 ; 11",
+    "Reponse": "-11",
+    "Points": 1
+  },
+  {
+    "QuestionID": 6,
+    "Ordre": 6,
+    "Texte": "(-6) - (-4) = ?",
+    "Type": "QCM",
+    "Choix": "-10 ; -2 ; 2 ; 10",
+    "Reponse": "-2",
+    "Points": 1
+  },
+  {
+    "QuestionID": 7,
+    "Ordre": 7,
+    "Texte": "(-3) × (+5) = ?",
+    "Type": "QCM",
+    "Choix": "-15 ; -8 ; 8 ; 15",
+    "Reponse": "-15",
+    "Points": 1
+  },
+  {
+    "QuestionID": 8,
+    "Ordre": 8,
+    "Texte": "(-20) ÷ (-4) = ?",
+    "Type": "QCM",
+    "Choix": "-5 ; -4 ; 4 ; 5",
+    "Reponse": "5",
+    "Points": 1
+  },
+  {
+    "QuestionID": 9,
+    "Ordre": 9,
+    "Texte": "Le produit de deux nombres négatifs est :",
+    "Type": "QCU",
+    "Choix": "positif ; négatif ; nul ; indéfini",
+    "Reponse": "positif",
+    "Points": 1
+  },
+  {
+    "QuestionID": 10,
+    "Ordre": 10,
+    "Texte": "La somme de deux nombres négatifs est :",
+    "Type": "QCU",
+    "Choix": "positive ; négative ; nulle ; variable",
+    "Reponse": "négative",
+    "Points": 1
+  },
+  {
+    "QuestionID": 11,
+    "Ordre": 11,
+    "Texte": "(-2) × (-3) × (-4) = ?",
+    "Type": "QCM",
+    "Choix": "-24 ; -14 ; 14 ; 24",
+    "Reponse": "-24",
+    "Points": 1
+  },
+  {
+    "QuestionID": 12,
+    "Ordre": 12,
+    "Texte": "(+15) ÷ (-3) + (-2) = ?",
+    "Type": "QCM",
+    "Choix": "-7 ; -5 ; 5 ; 7",
+    "Reponse": "-7",
+    "Points": 1
+  },
+  {
+    "QuestionID": 13,
+    "Ordre": 13,
+    "Texte": "(-9) + (+4) - (-2) = ?",
+    "Type": "QCM",
+    "Choix": "-3 ; -7 ; 3 ; 7",
+    "Reponse": "-3",
+    "Points": 1
+  },
+  {
+    "QuestionID": 14,
+    "Ordre": 14,
+    "Texte": "(-5) × 0 × (-8) = ?",
+    "Type": "QCM",
+    "Choix": "-40 ; 0 ; 40 ; indéfini",
+    "Reponse": "0",
+    "Points": 1
+  },
+  {
+    "QuestionID": 15,
+    "Ordre": 15,
+    "Texte": "L'opposé de (-7) est :",
+    "Type": "QCM",
+    "Choix": "-7 ; 0 ; 7 ; 14",
+    "Reponse": "7",
+    "Points": 1
+  }
+]

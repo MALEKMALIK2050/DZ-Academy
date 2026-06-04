@@ -1,0 +1,125 @@
+import { useEffect, useState } from "react";
+
+// Passe ton courseId en props !
+export default function ChaptersList({ courseId }) {
+  const [chapters, setChapters] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [editId, setEditId] = useState(null);
+  const [editTitle, setEditTitle] = useState("");
+  const [editObj, setEditObj] = useState("");
+
+  // Charger les chapitres
+  const load = async () => {
+    const res = await fetch(`/api/courses/${courseId}/chapters`);
+    const data = await res.json();
+    setChapters(Array.isArray(data) ? data : []);
+  };
+  useEffect(() => {
+    if (courseId) load();
+  }, [courseId]);
+
+  // Editer
+  const startEdit = (ch) => {
+    setEditId(ch.id);
+    setEditTitle(ch.title);
+    setEditObj(ch.objectifs || "");
+  };
+
+  const saveEdit = async () => {
+    setLoading(true);
+    await fetch("/api/chapters", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        chapterId: editId,
+        title: editTitle,
+        objectifs: editObj,
+      }),
+    });
+    setLoading(false);
+    setEditId(null);
+    load();
+  };
+
+  const move = async (fromIdx, toIdx) => {
+    if (
+      fromIdx < 0 ||
+      toIdx < 0 ||
+      fromIdx >= chapters.length ||
+      toIdx >= chapters.length ||
+      fromIdx === toIdx
+    )
+      return;
+
+    // Echange l’ordre dans la base
+    const current = chapters[fromIdx];
+    const other = chapters[toIdx];
+    setLoading(true);
+
+    await fetch("/api/chapters", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ chapterId: current.id, ordre: other.ordre }),
+    });
+    await fetch("/api/chapters", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ chapterId: other.id, ordre: current.ordre }),
+    });
+
+    setLoading(false);
+    load();
+  };
+
+  const sorted = [...chapters].sort((a, b) => a.ordre - b.ordre);
+
+  return (
+    <div>
+      <h2>Liste des chapitres</h2>
+      <ul>
+        {sorted.map((ch, idx) => (
+          <li key={ch.id} style={{ marginBottom: 12 }}>
+            {editId === ch.id ? (
+              <>
+                <input
+                  value={editTitle}
+                  onChange={e => setEditTitle(e.target.value)}
+                  placeholder="Titre"
+                />
+                <input
+                  value={editObj}
+                  placeholder="Objectifs"
+                  onChange={e => setEditObj(e.target.value)}
+                />
+                <button disabled={loading} onClick={saveEdit}>
+                  Enregistrer
+                </button>
+                <button onClick={() => setEditId(null)}>Annuler</button>
+              </>
+            ) : (
+              <>
+                <b>{ch.title}</b>{" "}
+                <span style={{ color: "#666" }}>
+                  {ch.objectifs ? `- ${ch.objectifs}` : ""}
+                </span>
+                <button onClick={() => startEdit(ch)}>Modifier</button>
+                {/* Monter */}
+                {idx > 0 && (
+                  <button disabled={loading} onClick={() => move(idx, idx - 1)}>
+                    ↑
+                  </button>
+                )}
+                {/* Descendre */}
+                {idx < sorted.length - 1 && (
+                  <button disabled={loading} onClick={() => move(idx, idx + 1)}>
+                    ↓
+                  </button>
+                )}
+              </>
+            )}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}

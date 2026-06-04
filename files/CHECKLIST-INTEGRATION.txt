@@ -1,0 +1,72 @@
+═══════════════════════════════════════════════════════════════════════════════
+  CHECKLIST D'INTÉGRATION - IMPORT ZIP UNIFIÉ
+═══════════════════════════════════════════════════════════════════════════════
+
+1️⃣  DÉPENDANCES
+────────────────────────────────────────────────────────────────────────────────
+□ npm install archiver extract-zip
+
+
+2️⃣  BASE DE DONNÉES
+────────────────────────────────────────────────────────────────────────────────
+□ Ajouter le modèle ImportBatch à prisma/schema.prisma
+□ npx prisma migrate dev --name add_import_batch
+
+
+3️⃣  APIs À CRÉER
+────────────────────────────────────────────────────────────────────────────────
+□ pages/api/import-course/upload-zip.js
+  Fichier: upload-zip-api.js
+
+□ pages/api/import-course/process-batch.js
+  Fichier: process-batch-api.js
+
+□ pages/api/import-course/batch-status.js
+  Fichier: batch-status-api.js
+
+□ pages/api/import-course/batch-retry.js
+  Fichier: batch-retry-api.js
+
+
+4️⃣  PAGE FRONTEND
+────────────────────────────────────────────────────────────────────────────────
+□ pages/dashboard/designer/courses/[id]/import-zip.js
+  Fichier: import-zip-page.js
+
+
+5️⃣  AJOUTER LE BOUTON DANS LE COURS
+────────────────────────────────────────────────────────────────────────────────
+□ pages/dashboard/designer/courses/[id].js
+  Ajouter:
+  
+  <button onClick={() => router.push(`/dashboard/designer/courses/${id}/import-zip`)}>
+    📦 Import ZIP Unifié
+  </button>
+
+
+6️⃣  TESTER
+────────────────────────────────────────────────────────────────────────────────
+□ Créer un ZIP contenant:
+  - chapters.xlsx
+  - pretest.xlsx
+  - formative.xlsx
+  - summative.xlsx
+
+□ Uploader le ZIP
+□ Vérifier les statuts en temps réel
+□ Tester le retry sur modules échoués
+
+
+═══════════════════════════════════════════════════════════════════════════════
+FICHIERS À TÉLÉCHARGER
+═══════════════════════════════════════════════════════════════════════════════
+
+upload-zip-api.js
+process-batch-api.js
+batch-status-api.js
+batch-retry-api.js
+import-zip-page.js
+ARCHITECTURE-IMPORT-ZIP.md
+INSTALL.sh
+
+═══════════════════════════════════════════════════════════════════════════════
