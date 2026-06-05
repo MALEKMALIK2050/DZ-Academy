@@ -1,16 +1,16 @@
 import prisma from "@/lib/prisma";
 import jwt from "jsonwebtoken";
 
-const SEUIL_REUSSITE = 50; 
-const MAX_TENTATIVES = Infinity; 
+const SEUIL_REUSSITE = 50; // Seuil de passage (%)
+const MAX_TENTATIVES = Infinity; // Mettre un entier pour limiter (ex: 3)
 
 function getUser(req) {
   try {
     const token = req.cookies?.token;
     if (!token) return null;
     return jwt.verify(token, process.env.JWT_SECRET);
-  } catch { 
-    return null; 
+  } catch {
+    return null;
   }
 }
 
@@ -20,6 +20,7 @@ export default async function handler(req, res) {
     return res.status(401).json({ error: "Non autorisé" });
   }
 
+  // Droits autorisés
   if (user.role !== "STUDENT" && user.role !== "TEACHER" && user.role !== "DESIGNER") {
     return res.status(403).json({ error: "Accès refusé" });
   }
@@ -27,6 +28,7 @@ export default async function handler(req, res) {
   const { method } = req;
 
   try {
+    // GET : Charger les informations d'un quiz
     if (method === "GET") {
       const { quizId } = req.query;
       if (!quizId) {
@@ -71,6 +73,7 @@ export default async function handler(req, res) {
       });
     }
 
+    // POST : Soumission de réponses
     if (method === "POST") {
       const { quizId, answers } = req.body;
       if (!quizId || !answers) {
@@ -160,9 +163,8 @@ export default async function handler(req, res) {
     }
 
     return res.status(405).json({ error: "Méthode non autorisée" });
-
   } catch (error) {
-    console.error("API STUDENT QUIZ SUBMISSION ERROR:", error);
-    return res.status(500).json({ error: "Erreur serveur" });
+    console.error("API STUDENT QUIZ ERROR:", error);
+    return res.status(500).json({ error: "Erreur interne du serveur" });
   }
 }
