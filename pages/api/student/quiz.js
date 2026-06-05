@@ -17,17 +17,40 @@ export default async function handler(req, res) {
   if (!user) return res.status(401).json({ error: "Non autorisé" });
   if (user.role !== "STUDENT") return res.status(403).json({ error: "Accès refusé" });
 
-  // GET — vérifier les tentatives restantes du candidat
+  const studentId = parseInt(user.id);
+
+  // GET — vérifier tentatives + charger les questions du quiz (sans révéler les réponses)
   if (req.method === "GET") {
     try {
       const { quizId } = req.query;
       if (!quizId) return res.status(400).json({ error: "quizId manquant" });
 
+      const quizIdInt = parseInt(quizId);
+
+      // Récupère les métadonnées et questions du quiz
+      const quiz = await prisma.quiz.findUnique({
+        where: { id: quizIdInt },
+        include: {
+          questions: {
+            select: {
+              id: true,
+              type: true,
+              question: true,
+              options: true, // par ex. tableau de choix si QCM
+              points: true,
+            }
+          }
+        }
+      });
+
+      if (!quiz) return res.status(404).json({ error: "Quiz introuvable" });
+
       const existing = await prisma.quizResult.findUnique({
-        where: { studentId_quizId: { studentId: user.id, quizId: parseInt(quizId) } },
+        where: { studentId_quizId: { studentId, quizId: quizIdInt } },
       });
 
       return res.status(200).json({
+        quiz,
         tentatives:          existing?.tentatives || 0,
         maxTentatives:       MAX_TENTATIVES,
         score:               existing?.score || null,
@@ -35,26 +58,28 @@ export default async function handler(req, res) {
         bloque:              (existing?.tentatives || 0) >= MAX_TENTATIVES && (existing?.score || 0) < SEUIL_REUSSITE,
       });
     } catch (error) {
-      console.error(error);
+      console.error("GET API STUDENT QUIZ ERROR:", error);
       return res.status(500).json({ error: "Erreur serveur" });
     }
   }
 
-  // POST — soumettre le résultat d'un quiz
+  // POST — soumettre les réponses du quiz
   if (req.method === "POST") {
     try {
       const { quizId, reponses } = req.body;
       if (!quizId || !reponses) return res.status(400).json({ error: "quizId et reponses obligatoires" });
 
-      // Vérifier les tentatives existantes
+      const quizIdInt = parseInt(quizId);
+
+      // Vérifier tentatives existantes
       const existing = await prisma.quizResult.findUnique({
-        where: { studentId_quizId: { studentId: user.id, quizId: parseInt(quizId) } },
+        where: { studentId_quizId: { studentId, quizId: quizIdInt } },
       });
 
-      // Bloqué si tentatives max atteintes et non réussi
+      // Bloqué si tentatives expirées
       if (existing && existing.tentatives >= MAX_TENTATIVES && existing.score < SEUIL_REUSSITE) {
         return res.status(403).json({
-          error: "Contactez votre enseignant pour une remédiation pédagogique obligatoire.",
+          error: "Tentatives épuisées. Contactez votre enseignant pour une remédiation.",
           bloque: true,
           tentatives: existing.tentatives,
         });
@@ -70,14 +95,14 @@ export default async function handler(req, res) {
         });
       }
 
-      // Charger le quiz complet avec ses questions
+      // Charger le vrai quiz pour évaluer les réponses
       const quiz = await prisma.quiz.findUnique({
-        where: { id: parseInt(quizId) },
+        where: { id: quizIdInt },
         include: { questions: true },
       });
       if (!quiz) return res.status(404).json({ error: "Quiz introuvable" });
 
-      // Calcul du score
+      // Évaluation des réponses
       let correct = 0;
       const detail = [];
 
@@ -97,7 +122,7 @@ export default async function handler(req, res) {
             break;
           }
           case "OUVERTE":
-            isCorrect = repEtudiant?.toLowerCase().trim() === question.reponse.toLowerCase().trim();
+            isCorrect = repEtudiant?.toLowerCase().trim() === question.reponse?.toLowerCase().trim();
             break;
           case "GAP": {
             const bonnes  = JSON.parse(question.reponse || "[]");
@@ -128,14 +153,14 @@ export default async function handler(req, res) {
       const reussi      = score >= SEUIL_REUSSITE;
       const bloque      = !reussi && tentatives >= MAX_TENTATIVES;
 
-      // Sauvegarder les résultats dans la base de données
+      // Enregistrer résultat
       const result = await prisma.quizResult.upsert({
-        where:  { studentId_quizId: { studentId: user.id, quizId: parseInt(quizId) } },
+        where:  { studentId_quizId: { studentId, quizId: quizIdInt } },
         update: { score, reponses: detail, tentatives },
-        create: { studentId: user.id, quizId: parseInt(quizId), score, reponses: detail, tentatives: 1 },
+        create: { studentId, quizId: quizIdInt, score, reponses: detail, tentatives: 1 },
       });
 
-      // Message d'évaluation adapté au score obtenu
+      // Feedback personnalisé
       let feedbackMessage;
       if (reussi) {
         if (score === 100) {
@@ -146,15 +171,15 @@ export default async function handler(req, res) {
           feedbackMessage = "✅ Bien joué ! Vous avez réussi. Continuez sur cette lancée !";
         }
       } else if (bloque) {
-        feedbackMessage = "⛔ Vous avez épuisé vos tentatives. Contactez votre enseignant pour une remédiation pédagogique obligatoire.";
+        feedbackMessage = "⛔ Vous avez épuisé vos tentatives. Contactez votre enseignant pour une remédiation.";
       } else {
         const tentativesRestantes = Math.max(0, MAX_TENTATIVES - tentatives);
         if (score >= 75) {
           feedbackMessage = `👍 Bon début ! Score : ${score}%. Vous y êtes presque, encore un effort ! Il vous reste ${tentativesRestantes} tentative(s).`;
         } else if (score >= 50) {
-          feedbackMessage = `📖 Score : ${score}%. Nous vous recommandons de revoir les points clés du chapitre avant de réessayer. Il vous reste ${tentativesRestantes} tentative(s).`;
+          feedbackMessage = `📖 Score : ${score}%. Recommandé de revoir l'essentiel du chapitre avant de réessayer. Il vous reste ${tentativesRestantes} tentative(s).`;
         } else {
-          feedbackMessage = `📚 Score : ${score}%. Nous vous recommandons de revoir les bases du cours avant de retenter. Il vous reste ${tentativesRestantes} tentative(s).`;
+          feedbackMessage = `📚 Score : ${score}%. Recommandé de relire le cours attentivement avant d'insister. Il vous reste ${tentativesRestantes} tentative(s).`;
         }
       }
 
@@ -172,7 +197,7 @@ export default async function handler(req, res) {
       });
 
     } catch (error) {
-      console.error("API STUDENT QUIZ ERROR:", error);
+      console.error("POST API STUDENT QUIZ ERROR:", error);
       return res.status(500).json({ error: "Erreur serveur" });
     }
   }
