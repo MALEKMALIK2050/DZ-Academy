@@ -1,7 +1,7 @@
 import prisma from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
-import { sendEmail } from "@/lib/mail";
+
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {
