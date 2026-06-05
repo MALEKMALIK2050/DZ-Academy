@@ -1,5 +1,8 @@
 {
   "buildCommand": "prisma generate && next build",
-  "installCommand": "npm install",
-  "framework": "nextjs"
+  "functions": {
+    "pages/api/**/*.js": {
+      "memory": 1024
+    }
+  }
 }
