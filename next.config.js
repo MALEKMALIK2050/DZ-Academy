@@ -1,11 +1,8 @@
 /** @type {import('next').NextConfig} */
+/** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-
-  onDemandEntries: {
-    maxInactiveAge: 60 * 1000,
-    pagesBufferLength: 5,
-  },
+  transpilePackages: ['lucide-react'],
   webpack: (config, { isServer }) => {
     if (!isServer) {
       config.resolve.fallback = {
