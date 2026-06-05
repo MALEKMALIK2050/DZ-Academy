@@ -15,14 +15,13 @@ export default async function handler(req, res) {
   if (!user) return res.status(401).json({ error: "Non autorisé" });
   if (user.role !== "STUDENT") return res.status(403).json({ error: "Accès refusé" });
 
-  const studentId = parseInt(user.id); // ✅ garantir un Int
+  const studentId = parseInt(user.id);
 
   try {
     if (req.method === "GET") {
       const { niveau, annee, matiere } = req.query;
-      console.log("Filtres reçus:", { niveau, annee, matiere });
 
-      const where = { status: "PUBLISHED" }; // ✅ remettre
+      const where = { status: "PUBLISHED" };
       if (niveau)  where.niveau  = { equals: niveau,  mode: "insensitive" };
       if (annee)   where.annee   = { equals: annee,   mode: "insensitive" };
       if (matiere) where.matiere = { equals: matiere, mode: "insensitive" };
@@ -35,14 +34,14 @@ export default async function handler(req, res) {
             teachers:    { select: { id: true, nom: true, prenom: true } },
             chapters:    { select: { id: true } },
             enrollments: {
-              where:  { studentId }, // ✅ utilise studentId parsé
+              where:  { studentId },
               select: { id: true, progression: true, completed: true, statut: true, typePaiement: true },
             },
           },
           orderBy: { createdAt: "desc" },
         }),
         prisma.enrollment.findMany({
-          where: { studentId }, // ✅ utilise studentId parsé
+          where: { studentId },
           include: {
             course: {
               include: {
@@ -55,12 +54,6 @@ export default async function handler(req, res) {
         }),
       ]);
 
-      console.log("Where clause:", where); // ✅
-      console.log("catalogue count:", catalogue.length);     // ✅ debug
-      console.log("enrollments count:", enrollments.length); // ✅ debug
-      console.log("Cours trouvés:", catalogue.length);
-      catalogue.forEach(c => console.log("  -", c.title, c.niveau, c.annee, c.matiere, c.status));
-
       return res.status(200).json({ catalogue, enrollments });
     }
 
@@ -70,7 +63,6 @@ export default async function handler(req, res) {
 
       const courseIdInt = parseInt(courseId);
 
-      // Vérifier que le cours existe et est publié
       const course = await prisma.course.findFirst({
         where: { id: courseIdInt, status: "PUBLISHED" },
       });
@@ -107,7 +99,6 @@ export default async function handler(req, res) {
         },
       });
 
-      // ✅ Étape 8 : Notification Désinscription (Confirmation)
       await sendEmail({
         to: user.email,
         subject: `Désinscription confirmée : ${course?.title || "Cours"}`,
@@ -115,7 +106,7 @@ export default async function handler(req, res) {
           <h1>Désinscription confirmée</h1>
           <p>Bonjour,</p>
           <p>Votre demande d'inscription au cours <strong>"${course?.title || "le cours"}"</strong> a été annulée ou supprimée.</p>
-          <p>Vos accès à ce contenu sont désormais suspendus et vous ne recevrez plus de rappels pour ce cours.</p>
+          <p>Vos accès à ce contenu sont désormais suspendus.</p>
         `,
       });
 
@@ -126,6 +117,6 @@ export default async function handler(req, res) {
 
   } catch (error) {
     console.error("API STUDENT COURSES ERROR:", error.message);
-    return res.status(500).json({ error: error.message }); // ✅ retourne l'erreur réelle
+    return res.status(500).json({ error: error.message });
   }
 }

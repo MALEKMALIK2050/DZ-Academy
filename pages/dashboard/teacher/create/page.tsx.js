@@ -1,64 +1,61 @@
+import React, { Suspense } from "react";
 import prisma from "@/lib/prisma";
-import jwt from "jsonwebtoken";
+import CourseCreateForm from "./CourseCreateForm"; // Import du formulaire client
 
-function getUser(req) {
+// SÉCURITÉ CRUCIALE : On force l'analyse à être entièrement DYNAMIQUE au Runtime
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
+// On récupère les catégories de façon résistante aux pannes de build sur Vercel
+async function getCategories() {
   try {
-    const token = req.cookies?.token;
-    if (!token) return null;
-    return jwt.verify(token, process.env.JWT_SECRET);
-  } catch { return null; }
+    if (!process.env.DATABASE_URL) {
+      console.warn("⚠️ DATABASE_URL non définie sur Vercel à la compilation. Données temporaires configurées.");
+      return [
+        { id: 1, name: "Ingénierie Pédagogique" },
+        { id: 2, name: "Développement Web" },
+        { id: 3, name: "Sciences Cognitives" }
+      ];
+    }
+    return await prisma.category.findMany({
+      orderBy: { name: "asc" }
+    });
+  } catch (error) {
+    console.error("⚠️ Échec temporaire de connexion SQL, fallback utilisé :", error);
+    return [
+      { id: 1, name: "Ingénierie Pédagogique (Secours)" },
+      { id: 2, name: "Développement Web (Secours)" }
+    ];
+  }
 }
 
-export default async function handler(req, res) {
-  const user = getUser(req);
-  if (!user) return res.status(401).json({ error: "Non autorisé" });
-  if (user.role !== "DESIGNER") return res.status(403).json({ error: "Accès refusé" });
+export default async function TeacherCreatePage() {
+  const categories = await getCategories();
 
-  try {
-    // POST — créer chapitre
-    if (req.method === "POST") {
-      const { courseId, title, objectifs, ordre } = req.body;
-      if (!courseId || !title) return res.status(400).json({ error: "courseId et title obligatoires" });
+  return (
+    <div className="min-h-screen bg-slate-50 py-10 px-4 md:px-8">
+      <div className="max-w-4xl mx-auto">
+        <div className="mb-8">
+          <span className="text-xs font-bold text-indigo-700 bg-indigo-50 px-3 py-1 rounded-full uppercase tracking-wider">
+            Espace Enseignant
+          </span>
+          <h1 className="text-3xl font-black text-slate-900 mt-2">Création d'un Cours</h1>
+          <p className="text-slate-500 text-sm mt-1">
+            Complétez les informations pour initialiser la structure dans la base SQL.
+          </p>
+        </div>
 
-      const chapter = await prisma.chapter.create({
-        data: {
-          courseId: parseInt(courseId),
-          title,
-          objectifs: objectifs || null,
-          ordre:     ordre     || 0,
-        },
-      });
-      return res.status(201).json(chapter);
-    }
-
-    // PUT — modifier chapitre
-    if (req.method === "PUT") {
-      const { chapterId, title, objectifs } = req.body;
-      if (!chapterId) return res.status(400).json({ error: "chapterId manquant" });
-
-      const updated = await prisma.chapter.update({
-        where: { id: parseInt(chapterId) },
-        data: {
-          ...(title     && { title }),
-          ...(objectifs !== undefined && { objectifs }),
-        },
-      });
-      return res.status(200).json(updated);
-    }
-
-    // DELETE — supprimer chapitre
-    if (req.method === "DELETE") {
-      const { chapterId } = req.body;
-      if (!chapterId) return res.status(400).json({ error: "chapterId manquant" });
-
-      await prisma.chapter.delete({ where: { id: parseInt(chapterId) } });
-      return res.status(200).json({ message: "Chapitre supprimé" });
-    }
-
-    return res.status(405).json({ error: "Méthode non autorisée" });
-
-  } catch (error) {
-    console.error("API CHAPTERS ERROR:", error);
-    return res.status(500).json({ error: "Erreur serveur" });
-  }
+        {/* Tout composant utilisant useSearchParams() DOIT être enveloppé dans Suspense pour ne pas planter Next.js au build ! */}
+        <Suspense fallback={
+          <div className="p-8 bg-white border border-slate-200 rounded-3xl animate-pulse space-y-4">
+            <div className="h-6 w-1/4 bg-slate-200 rounded" />
+            <div className="h-12 w-full bg-slate-100 rounded" />
+            <div className="h-12 w-full bg-slate-100 rounded" />
+          </div>
+        }>
+          <CourseCreateForm categories={categories} />
+        </Suspense>
+      </div>
+    </div>
+  );
 }

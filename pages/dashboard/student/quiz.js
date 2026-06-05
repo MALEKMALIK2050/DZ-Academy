@@ -1,225 +1,391 @@
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/router";
+import Link from "next/link";
+import { 
+  CheckCircle, 
+  XCircle, 
+  AlertTriangle, 
+  RotateCcw, 
+  ChevronRight,
+  FileText,
+  Clock,
+  Award,
+  BookOpen
+} from "lucide-react";
 
 export default function StudentQuizPage() {
   const router = useRouter();
-  const { quizId } = router.query;
+  const { id: quizId } = router.query;
 
-  const [quizInfo, setQuizInfo] = useState(null);
-  const [reponses, setReponses] = useState({});
-  const [tentativeState, setTentativeState] = useState(null);
-  const [submitting, setSubmitting] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [feedback, setFeedback] = useState(null);
+  const [error, setError] = useState(null);
+  const [quizInfo, setQuizInfo] = useState(null);
+  const [answers, setAnswers] = useState({});
+  const [submitted, setSubmitted] = useState(false);
+  const [result, setResult] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
 
+  // Charger les données dynamiquement depuis l'API sécurisée au montage
   useEffect(() => {
     if (!quizId) return;
 
-    // Charger les informations et l'état des tentatives du quiz
-    Promise.all([
-      fetch(`/api/student/quiz?quizId=${quizId}`).then((res) => res.json()),
-      fetch(`/api/quiz/${quizId}`).then((res) => (res.ok ? res.json() : { title: "Évaluation", questions: [] }))
-    ])
-      .then(([statusData, quizData]) => {
-        setTentativeState(statusData);
-        setQuizInfo(quizData);
+    async function loadQuiz() {
+      try {
+        setLoading(true);
+        const res = await fetch(`/api/student/quiz?quizId=${quizId}`);
+        if (!res.ok) {
+          const errData = await res.json();
+          throw new Error(errData.error || "Erreur de chargement du quiz");
+        }
+        const data = await res.json();
+        setQuizInfo(data);
+      } catch (err) {
+        console.error("Erreur de récupération du Quiz :", err);
+        setError(err.message);
+      } finally {
         setLoading(false);
-      })
-      .catch((err) => {
-        console.error(err);
-        setError("Erreur lors de la récupération des données du quiz.");
-        setLoading(false);
-      });
+      }
+    }
+
+    loadQuiz();
   }, [quizId]);
 
-  const handleReponseChange = (questionId, value) => {
-    setReponses((prev) => ({
+  const handleAnswerChange = (questionId, value) => {
+    setAnswers(prev => ({
       ...prev,
-      [questionId]: value,
+      [questionId]: value
     }));
   };
 
-  const submitQuiz = async (e) => {
-    e.preventDefault();
-    if (submitting) return;
+  const handleCheckboxChange = (questionId, option, checked) => {
+    const currentAnswers = answers[questionId] || [];
+    let updated;
+    if (checked) {
+      updated = [...currentAnswers, option];
+    } else {
+      updated = currentAnswers.filter(item => item !== option);
+    }
+    handleAnswerChange(questionId, updated);
+  };
 
-    setSubmitting(true);
-    setError("");
-    setFeedback(null);
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!quizId) return;
+
+    const unanswered = quizInfo.quiz.questions.filter(
+      q => answers[q.id] === undefined || answers[q.id] === "" || (Array.isArray(answers[q.id]) && answers[q.id].length === 0)
+    );
+
+    if (unanswered.length > 0) {
+      if (!confirm(`Il vous reste ${unanswered.length} question(s) non répondue(s). Voulez-vous soumettre ?`)) {
+        return;
+      }
+    }
 
     try {
-      const response = await fetch("/api/student/quiz", {
+      setSubmitting(true);
+      const res = await fetch("/api/student/quiz", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ quizId, reponses }),
+        body: JSON.stringify({
+          quizId: parseInt(quizId),
+          answers
+        })
       });
 
-      const result = await response.json();
-      if (!response.ok) {
-        throw new Error(result.error || "Une erreur est survenue lors de la soumission.");
+      if (!res.ok) {
+        const errData = await res.json();
+        throw new Error(errData.error || "Erreur de soumission");
       }
 
-      setFeedback(result);
-      setTentativeState({
-        tentatives: result.tentatives,
-        maxTentatives: result.tentatives + result.tentativesRestantes,
-        score: result.score,
-        reussi: result.reussi,
-        bloque: result.bloque,
-      });
+      const data = await res.json();
+      setResult(data);
+      setSubmitted(true);
+      
+      setQuizInfo(prev => ({
+        ...prev,
+        attemptsCount: data.attemptsCount,
+        bestScore: Math.max(prev.bestScore || 0, data.score),
+        dejaReussi: prev.dejaReussi || data.reussi
+      }));
     } catch (err) {
-      setError(err.message);
+      alert(err.message);
     } finally {
       setSubmitting(false);
     }
   };
 
+  const handleRetry = () => {
+    setAnswers({});
+    setSubmitted(false);
+    setResult(null);
+  };
+
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-screen bg-slate-50">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-slate-600 font-medium font-sans">Chargement du quiz...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4">
+        <div className="max-w-md w-full bg-white rounded-3xl border border-slate-200 p-6 text-center shadow-sm">
+          <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4 text-red-650">
+            <XCircle className="w-6 h-6" />
+          </div>
+          <h2 className="text-lg font-bold text-slate-900 mb-2">Accès Impossible</h2>
+          <p className="text-sm text-slate-500 mb-6">{error}</p>
+          <button 
+            onClick={() => router.back()} 
+            className="w-full py-2.5 px-4 bg-slate-950 text-white font-semibold rounded-xl hover:bg-slate-800 transition"
+          >
+            Retour
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  const { quiz, attemptsCount, maxAttempts, seuilReussite, bestScore, dejaReussi } = quizInfo;
+  const limitsExceeded = attemptsCount >= maxAttempts;
+
+  if (submitted && result) {
+    return (
+      <div className="min-h-screen bg-slate-50 py-10 px-4 md:px-8">
+        <div className="max-w-3xl mx-auto bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
+          <div className={`p-8 text-center text-white ${result.reussi ? 'bg-emerald-600' : 'bg-rose-600'}`}>
+            <span className="inline-block px-3 py-1 bg-white/20 rounded-full text-xs font-semibold uppercase tracking-wider mb-2">
+              {result.reussi ? "Validation Réussie !" : "Assimilation incomplète"}
+            </span>
+            <h1 className="text-4xl font-black mb-1">{result.score}%</h1>
+            <p className="text-white/80 text-xs">
+              Seuil requis : {result.seuil}% • Tentative #{result.attemptsCount}
+            </p>
+          </div>
+
+          <div className="p-8">
+            {result.reussi ? (
+              <div className="p-5 bg-emerald-50 border border-emerald-100 rounded-2xl flex gap-4 items-start mb-8">
+                <CheckCircle className="w-6 h-6 text-emerald-600 shrink-0 mt-0.5" />
+                <div>
+                  <h3 className="font-bold text-emerald-950">Validé !</h3>
+                  <p className="text-sm text-emerald-800 mt-1">
+                    Félicitations, vous avez validé ce module avec succès !
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <div className="p-5 bg-rose-50 border border-rose-100 rounded-2xl flex gap-4 items-start mb-8">
+                <AlertTriangle className="w-6 h-6 text-rose-600 shrink-0 mt-0.5" />
+                <div>
+                  <h3 className="font-bold text-rose-950 font-sans">Seuil non atteint</h3>
+                  <p className="text-sm text-rose-800 mt-1">
+                    Vous n'avez pas atteint le seuil requis de {result.seuil}%. Relisez vos leçons avant de réessayer.
+                  </p>
+                </div>
+              </div>
+            )}
+
+            <h2 className="font-bold text-lg text-slate-900 mb-4 flex items-center gap-2">
+              <FileText className="w-5 h-5 text-indigo-500" /> Correction détaillée
+            </h2>
+
+            <div className="space-y-6">
+              {quiz.questions.map((q, idx) => {
+                const stepResult = result.details.find(d => d.questionId === q.id);
+                const answerIsCorrect = stepResult?.isCorrect;
+                return (
+                  <div key={q.id} className={`p-5 rounded-2xl border ${answerIsCorrect ? 'bg-emerald-50/20 border-emerald-100' : 'bg-rose-50/20 border-rose-100'}`}>
+                    <div className="flex justify-between items-start mb-2">
+                      <span className="font-bold text-xs text-slate-500">Question {idx + 1} ({q.points || 1} pt)</span>
+                      {answerIsCorrect ? (
+                        <span className="text-xs font-bold text-emerald-700 bg-emerald-100 px-2.5 py-0.5 rounded-full">Correct</span>
+                      ) : (
+                        <span className="text-xs font-bold text-rose-700 bg-rose-100 px-2.5 py-0.5 rounded-full">Incorrect</span>
+                      )}
+                    </div>
+                    <p className="text-slate-900 font-semibold mb-3">{q.questionText}</p>
+                    <div className="text-sm space-y-1">
+                      <p className="text-slate-600">
+                        <span className="font-medium text-slate-700">Votre réponse :</span>{" "}
+                        {Array.isArray(stepResult?.userAnswer) ? stepResult.userAnswer.join(", ") : String(stepResult?.userAnswer || "(vide)")}
+                      </p>
+                      {!answerIsCorrect && q.reponseCorrecte && (
+                        <p className="text-emerald-700 font-medium">
+                          <span className="font-medium text-slate-600">Réponse attendue :</span>{" "}
+                          {Array.isArray(q.reponseCorrecte) ? q.reponseCorrecte.join(", ") : String(q.reponseCorrecte)}
+                        </p>
+                      )}
+                      {q.explanation && (
+                        <p className="text-xs text-slate-500 mt-2 bg-slate-50 p-3 rounded-xl border border-slate-100 italic">
+                          💡 Explication : {q.explanation}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="mt-10 pt-6 border-t border-slate-100 flex justify-between gap-4">
+              <Link 
+                href="/dashboard/student"
+                className="py-3 px-6 bg-slate-100 text-slate-750 font-semibold rounded-xl text-center hover:bg-slate-200 transition text-sm flex items-center justify-center gap-2"
+              >
+                <BookOpen className="w-4 h-4" /> Retour aux cours
+              </Link>
+              {!result.reussi && result.attemptsCount < result.maxAttempts && (
+                <button 
+                  onClick={handleRetry}
+                  className="py-3 px-6 bg-indigo-600 text-white font-semibold rounded-xl hover:bg-indigo-700 transition text-sm flex justify-center items-center gap-2"
+                >
+                  <RotateCcw className="w-4 h-4" /> Nouvelle tentative
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (limitsExceeded && !dejaReussi) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
+        <div className="max-w-lg w-full bg-white rounded-3xl border border-slate-200 p-8 text-center shadow-sm">
+          <div className="w-16 h-16 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-4">
+            <AlertTriangle className="w-8 h-8" />
+          </div>
+          <h1 className="text-2xl font-extrabold text-slate-900 mb-2">Tentatives Épuisées</h1>
+          <p className="text-slate-600 text-sm mb-6 leading-relaxed">
+            Vous avez atteint votre limite de {attemptsCount} tentatives autorisées sans valider le seuil de réussite de {seuilReussite}%. 
+            Veuillez vous rapprocher de l'un de vos formateurs.
+          </p>
+          <Link 
+            href="/dashboard/student"
+            className="inline-block py-3 px-6 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold rounded-xl transition"
+          >
+            Retour au menu
+          </Link>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="max-w-4xl mx-auto p-6 md:p-10 font-sans">
-      <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-8 mb-8">
-        <h1 className="text-3xl font-bold text-slate-800 mb-3">{quizInfo?.title || "Quiz Évaluation"}</h1>
-        <p className="text-slate-500 mb-6">Testez vos connaissances et valisez ce chapitre.</p>
-
-        {/* Bloc Tentatives et Statistiques */}
-        {tentativeState && (
-          <div className="bg-slate-50 rounded-xl p-5 mb-8 border border-slate-100 grid grid-cols-1 md:grid-cols-3 gap-4">
+    <div className="min-h-screen bg-slate-50 py-10 px-4 md:px-8">
+      <div className="max-w-3xl mx-auto">
+        <div className="bg-white rounded-3xl p-6 md:p-8 border border-slate-100 shadow-sm mb-8">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
-              <div className="text-sm text-slate-500 font-medium">Tentatives :</div>
-              <div className="text-xl font-bold text-slate-800">
-                {tentativeState.tentatives} / {tentativeState.maxTentatives === Infinity ? "Illimitées" : tentativeState.maxTentatives}
-              </div>
+              <span className="text-xs font-bold text-indigo-700 bg-indigo-50 px-3 py-1 rounded-full uppercase tracking-wider">
+                Module de validation
+              </span>
+              <h1 className="text-2xl md:text-3xl font-black text-slate-900 mt-2">{quiz ? quiz.title : "Validation de compétence"}</h1>
+              <p className="text-slate-500 text-sm mt-1">Lisez attentivement l'énoncé de chaque question avant de choisir.</p>
             </div>
-            <div>
-              <div className="text-sm text-slate-500 font-medium">Dernier Score :</div>
-              <div className="text-xl font-bold text-slate-800">
-                {tentativeState.score !== null ? `${tentativeState.score}%` : "Aucun"}
+            <div className="shrink-0 bg-slate-50 rounded-2xl p-4 border border-slate-100 flex gap-4 md:flex-col text-xs text-slate-600 justify-between">
+              <div className="flex items-center gap-2">
+                <Clock className="w-4 h-4 text-slate-400" />
+                <span>Essais : {attemptsCount} / {maxAttempts === Infinity ? "Illimités" : maxAttempts}</span>
               </div>
-            </div>
-            <div>
-              <div className="text-sm text-slate-500 font-medium">Statut :</div>
-              <div className="text-xl font-bold">
-                {tentativeState.reussi ? (
-                  <span className="text-emerald-600">✅ Réussi</span>
-                ) : tentativeState.bloque ? (
-                  <span className="text-rose-600">❌ Bloqué</span>
-                ) : (
-                  <span className="text-amber-500">⚙️ En cours</span>
-                )}
+              <div className="flex items-center gap-2">
+                <Award className="w-4 h-4 text-slate-400" />
+                <span>Score requis : {seuilReussite}%</span>
               </div>
+              {bestScore !== null && (
+                <div className="flex items-center gap-2 font-bold text-indigo-600">
+                  <CheckCircle className="w-4 h-4 text-indigo-500" />
+                  <span>Meilleur : {bestScore}% {dejaReussi && "✅"}</span>
+                </div>
+              )}
             </div>
           </div>
-        )}
+        </div>
 
-        {error && (
-          <div className="bg-rose-50 border border-rose-100 text-rose-700 px-4 py-3 rounded-xl mb-6">
-            {error}
-          </div>
-        )}
-
-        {/* Message de Feedback de soumission */}
-        {feedback && (
-          <div className={`p-6 rounded-xl border mb-8 ${feedback.reussi ? 'bg-emerald-50 border-emerald-100 text-emerald-800' : 'bg-amber-50 border-amber-100 text-amber-805'}`}>
-            <h3 className="font-bold text-lg mb-2">{feedback.message}</h3>
-            {feedback.score !== undefined && (
-              <p className="text-sm font-medium">
-                Score obtenu : <span className="font-bold">{feedback.score}%</span> ({feedback.correct} réponses correctes sur {feedback.total} points)
-              </p>
-            )}
-          </div>
-        )}
-
-        {tentativeState?.bloque ? (
-          <div className="text-center py-6">
-            <p className="text-rose-600 font-semibold mb-4">Vous avez atteint le nombre maximum de tentatives pour ce quiz.</p>
-            <p className="text-slate-500">Veuillez contacter votre professeur pour initier une remédiation d'accompagnement.</p>
-          </div>
-        ) : (
-          <form onSubmit={submitQuiz}>
-            <div className="space-y-8">
-              {quizInfo?.questions?.map((q, idx) => (
-                <div key={q.id} className="p-6 border border-slate-100 rounded-2xl bg-slate-50/20 hover:bg-slate-50/50 transition duration-150">
-                  <div className="flex items-center gap-2 mb-3">
-                    <span className="inline-block px-3 py-1 text-xs font-semibold bg-indigo-50 text-indigo-700 rounded-full">
-                      Question {idx + 1}
-                    </span>
-                    <span className="text-xs text-slate-400 font-medium">
-                      ({q.points || 1} {q.points > 1 ? "points" : "point"})
-                    </span>
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {quiz?.questions?.map((q, idx) => {
+            const currentVal = answers[q.id];
+            return (
+              <div key={q.id} className="bg-white rounded-3xl p-6 md:p-8 border border-slate-100 shadow-sm">
+                <div className="flex items-start gap-4 mb-4">
+                  <span className="flex items-center justify-center w-8 h-8 rounded-full bg-slate-100 text-slate-705 font-bold text-sm shrink-0">
+                    {idx + 1}
+                  </span>
+                  <div>
+                    <h3 className="font-bold text-slate-900 text-lg leading-snug">{q.questionText}</h3>
+                    <p className="text-xs text-slate-450 mt-1 uppercase tracking-wider font-semibold">
+                      {q.type === "QCM" ? "Choix unique" : q.type === "QCM_MULTIPLE" ? "Choix multiple" : "Vrai ou Faux"} • {q.points || 1} pt(s)
+                    </p>
                   </div>
-                  <h3 className="text-lg font-semibold text-slate-800 mb-4">{q.enonce}</h3>
+                </div>
 
-                  {q.type === "QCM" && (
-                    <div className="space-y-2">
-                      {JSON.parse(q.options || "[]").map((option) => (
-                        <label key={option} className="flex items-center gap-3 p-3 rounded-xl border border-slate-100 bg-white hover:bg-slate-50 cursor-pointer transition">
-                          <input
-                            type="radio"
-                            name={`q-${q.id}`}
-                            value={option}
-                            checked={reponses[q.id] === option}
-                            onChange={(e) => handleReponseChange(q.id, e.target.value)}
-                            className="text-indigo-600 focus:ring-indigo-500 h-4 w-4"
-                            disabled={tentativeState?.reussi}
-                          />
-                          <span className="text-sm text-slate-700 font-medium">{option}</span>
-                        </label>
-                      ))}
-                    </div>
-                  )}
+                <div className="pl-0 md:pl-12 mt-4 grid grid-cols-1 gap-3">
+                  {q.type === "QCM" && q.options && (typeof q.options === "string" ? JSON.parse(q.options) : q.options).map((option, oIdx) => (
+                    <label key={oIdx} className={`flex items-center gap-3 p-4 rounded-xl border cursor-pointer transition ${currentVal === option ? 'border-indigo-500 bg-indigo-50/20 font-medium' : 'border-slate-100 hover:bg-slate-50'}`}>
+                      <input 
+                        type="radio" 
+                        name={`sim-q-${q.id}`} 
+                        checked={currentVal === option} 
+                        onChange={() => handleAnswerChange(q.id, option)}
+                        className="w-4 h-4 text-indigo-600"
+                      />
+                      <span className="text-slate-800 text-sm font-sans">{option}</span>
+                    </label>
+                  ))}
+
+                  {q.type === "QCM_MULTIPLE" && q.options && (typeof q.options === "string" ? JSON.parse(q.options) : q.options).map((option, oIdx) => {
+                    const isChecked = (currentVal || []).includes(option);
+                    return (
+                      <label key={oIdx} className={`flex items-center gap-3 p-4 rounded-xl border cursor-pointer transition ${isChecked ? 'border-indigo-500 bg-indigo-50/20 font-medium' : 'border-slate-100 hover:bg-slate-50'}`}>
+                        <input 
+                          type="checkbox" 
+                          checked={isChecked} 
+                          onChange={(e) => handleCheckboxChange(q.id, option, e.target.checked)}
+                          className="w-4 h-4 text-indigo-600 rounded"
+                        />
+                        <span className="text-slate-800 text-sm font-sans">{option}</span>
+                      </label>
+                    );
+                  })}
 
                   {q.type === "VRAI_FAUX" && (
-                    <div className="flex gap-4">
-                      {["Vrai", "Faux"].map((val) => (
-                        <label key={val} className="flex-1 flex items-center justify-center gap-3 p-3 rounded-xl border border-slate-100 bg-white hover:bg-slate-50 cursor-pointer transition">
-                          <input
-                            type="radio"
-                            name={`q-${q.id}`}
-                            value={val}
-                            checked={reponses[q.id] === val}
-                            onChange={(e) => handleReponseChange(q.id, e.target.value)}
-                            className="text-indigo-600 focus:ring-indigo-500 h-4 w-4"
-                            disabled={tentativeState?.reussi}
-                          />
-                          <span className="text-sm font-semibold text-slate-700">{val}</span>
-                        </label>
+                    <div className="grid grid-cols-2 gap-4">
+                      {["Vrai", "Faux"].map((choice) => (
+                        <button
+                          type="button"
+                          key={choice}
+                          onClick={() => handleAnswerChange(q.id, choice)}
+                          className={`py-4 px-6 rounded-xl border text-center font-bold text-sm transition ${currentVal === choice ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'}`}
+                        >
+                          {choice}
+                        </button>
                       ))}
                     </div>
                   )}
-
-                  {q.type === "OUVERTE" && (
-                    <textarea
-                      rows={3}
-                      value={reponses[q.id] || ""}
-                      onChange={(e) => handleReponseChange(q.id, e.target.value)}
-                      placeholder="Saisissez votre réponse ici..."
-                      className="w-full p-4 rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm"
-                      disabled={tentativeState?.reussi}
-                    />
-                  )}
                 </div>
-              ))}
-            </div>
+              </div>
+            );
+          })}
 
-            {!tentativeState?.reussi && (
-              <button
-                type="submit"
-                disabled={submitting}
-                className="mt-8 w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 px-6 rounded-xl shadow-md transition duration-150 disabled:opacity-50"
-              >
-                {submitting ? "Soumission en cours..." : "Soumettre le Quiz"}
-              </button>
-            )}
-          </form>
-        )}
+          <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm flex justify-between items-center">
+            <span className="text-xs text-slate-400 font-sans">Répondez à toutes les questions avant de valider.</span>
+            <button
+              type="submit"
+              disabled={submitting}
+              className="py-3 px-8 bg-slate-950 hover:bg-slate-800 text-white text-sm font-semibold rounded-2xl shadow-sm transition flex items-center gap-2 cursor-pointer disabled:opacity-50"
+            >
+              Exécuter la correction
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   );

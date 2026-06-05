@@ -1,172 +1,171 @@
 import prisma from "@/lib/prisma";
 import jwt from "jsonwebtoken";
 
-const SEUIL_REUSSITE = 90;
-const MAX_TENTATIVES = 3;
+const SEUIL_REUSSITE = 50; // Seuil à 50% de réussite
+const MAX_TENTATIVES = Infinity; // Tentatives illimitées (ou définissez une valeur numérique)
 
 function getUser(req) {
   try {
     const token = req.cookies?.token;
     if (!token) return null;
     return jwt.verify(token, process.env.JWT_SECRET);
-  } catch { return null; }
+  } catch { 
+    return null; 
+  }
 }
 
 export default async function handler(req, res) {
   const user = getUser(req);
-  if (!user) return res.status(401).json({ error: "Non autorisé" });
-  if (user.role !== "STUDENT") return res.status(403).json({ error: "Accès refusé" });
-
-  if (req.method === "GET") {
-    try {
-      const { quizId } = req.query;
-      if (!quizId) return res.status(400).json({ error: "quizId manquant" });
-
-      const existing = await prisma.quizResult.findUnique({
-        where: { studentId_quizId: { studentId: user.id, quizId: parseInt(quizId) } },
-      });
-
-      return res.status(200).json({
-        tentatives:          existing?.tentatives || 0,
-        maxTentatives:       MAX_TENTATIVES,
-        score:               existing?.score || null,
-        reussi:              (existing?.score || 0) >= SEUIL_REUSSITE,
-        bloque:              (existing?.tentatives || 0) >= MAX_TENTATIVES && (existing?.score || 0) < SEUIL_REUSSITE,
-      });
-    } catch (error) {
-      console.error(error);
-      return res.status(500).json({ error: "Erreur serveur" });
-    }
+  if (!user) {
+    return res.status(401).json({ error: "Non autorisé" });
   }
 
-  if (req.method === "POST") {
-    try {
-      const { quizId, reponses } = req.body;
-      if (!quizId || !reponses) return res.status(400).json({ error: "quizId et reponses obligatoires" });
+  if (user.role !== "STUDENT" && user.role !== "TEACHER" && user.role !== "DESIGNER") {
+    return res.status(403).json({ error: "Accès refusé" });
+  }
 
-      const existing = await prisma.quizResult.findUnique({
-        where: { studentId_quizId: { studentId: user.id, quizId: parseInt(quizId) } },
-      });
+  const { method } = req;
 
-      if (existing && existing.tentatives >= MAX_TENTATIVES && existing.score < SEUIL_REUSSITE) {
-        return res.status(403).json({
-          error: "Contactez votre enseignant pour une remédiation pédagogique obligatoire.",
-          bloque: true,
-          tentatives: existing.tentatives,
-        });
-      }
-
-      if (existing && existing.score >= SEUIL_REUSSITE) {
-        return res.status(200).json({
-          score:   existing.score,
-          reussi:  true,
-          message: "Vous avez déjà réussi ce quiz !",
-          result:  existing,
-        });
+  try {
+    // GET : Charger les informations d'un quiz et l'historique de l'étudiant
+    if (method === "GET") {
+      const { quizId } = req.query;
+      if (!quizId) {
+        return res.status(400).json({ error: "quizId manquant" });
       }
 
       const quiz = await prisma.quiz.findUnique({
         where: { id: parseInt(quizId) },
-        include: { questions: true },
-      });
-      if (!quiz) return res.status(404).json({ error: "Quiz introuvable" });
-
-      let correct = 0;
-      const detail = [];
-
-      for (const question of quiz.questions) {
-        const repEtudiant = reponses[question.id];
-        let isCorrect = false;
-
-        switch (question.type) {
-          case "QCM":
-          case "VRAI_FAUX":
-            isCorrect = repEtudiant === question.reponse;
-            break;
-          case "QCM_MULTIPLE": {
-            const bonnes  = JSON.parse(question.reponse || "[]");
-            const donnees = Array.isArray(repEtudiant) ? repEtudiant : [];
-            isCorrect = bonnes.length === donnees.length && bonnes.every((b) => donnees.includes(b));
-            break;
-          }
-          case "OUVERTE":
-            isCorrect = repEtudiant?.toLowerCase().trim() === question.reponse.toLowerCase().trim();
-            break;
-          case "GAP": {
-            const bonnes  = JSON.parse(question.reponse || "[]");
-            const donnees = Array.isArray(repEtudiant) ? repEtudiant : [];
-            isCorrect = bonnes.every((b, i) => b.toLowerCase().trim() === (donnees[i] || "").toLowerCase().trim());
-            break;
-          }
-          case "MATCHING": {
-            const bonnes = JSON.parse(question.reponse || "{}");
-            isCorrect = Object.entries(bonnes).every(([k, v]) => repEtudiant?.[k] === v);
-            break;
-          }
-          case "ORDERING": {
-            const bonnes  = JSON.parse(question.reponse || "[]");
-            const donnees = Array.isArray(repEtudiant) ? repEtudiant : [];
-            isCorrect = bonnes.every((b, i) => b === donnees[i]);
-            break;
+        include: {
+          questions: {
+            orderBy: { ordre: "asc" }
           }
         }
-
-        if (isCorrect) correct += question.points || 1;
-        detail.push({ questionId: question.id, correct: isCorrect, repEtudiant });
-      }
-
-      const totalPoints = quiz.questions.reduce((acc, q) => acc + (q.points || 1), 0);
-      const score       = totalPoints > 0 ? Math.round((correct / totalPoints) * 100) : 0;
-      const tentatives  = (existing?.tentatives || 0) + 1;
-      const reussi      = score >= SEUIL_REUSSITE;
-      const bloque      = !reussi && tentatives >= MAX_TENTATIVES;
-
-      const result = await prisma.quizResult.upsert({
-        where:  { studentId_quizId: { studentId: user.id, quizId: parseInt(quizId) } },
-        update: { score, reponses: detail, tentatives },
-        create: { studentId: user.id, quizId: parseInt(quizId), score, reponses: detail, tentatives: 1 },
       });
 
-      let feedbackMessage;
-      if (reussi) {
-        if (score === 100) {
-          feedbackMessage = "🏆 Parfait ! Score maximal ! Vous maîtrisez ce chapitre à la perfection. Passez au suivant !";
-        } else if (score >= 95) {
-          feedbackMessage = "🎉 Excellent ! Très belle performance. Vous pouvez passer au chapitre suivant.";
-        } else {
-          feedbackMessage = "✅ Bien joué ! Vous avez réussi. Continuez sur cette lancée !";
-        }
-      } else if (bloque) {
-        feedbackMessage = "⛔ Vous avez épuisé vos tentatives. Contactez votre enseignant pour une remédiation pédagogique obligatoire.";
-      } else {
-        const tentativesRestantes = Math.max(0, MAX_TENTATIVES - tentatives);
-        if (score >= 75) {
-          feedbackMessage = `👍 Bon début ! Score : ${score}%. Vous y êtes presque, encore un effort ! Il vous reste ${tentativesRestantes} tentative(s).`;
-        } else if (score >= 50) {
-          feedbackMessage = `📖 Score : ${score}%. Nous vous recommandons de revoir les points clés du chapitre avant de réessayer. Il vous reste ${tentativesRestantes} tentative(s).`;
-        } else {
-          feedbackMessage = `📚 Score : ${score}%. Nous vous recommandons de revoir les bases du cours avant de retenter. Il vous reste ${tentativesRestantes} tentative(s).`;
-        }
+      if (!quiz) {
+        return res.status(404).json({ error: "Quiz introuvable" });
       }
+
+      const attemptsCount = await prisma.quizAttempt.count({
+        where: {
+          quizId: parseInt(quizId),
+          studentId: user.id
+        }
+      });
+
+      const bestAttempt = await prisma.quizAttempt.findFirst({
+        where: {
+          quizId: parseInt(quizId),
+          studentId: user.id
+        },
+        orderBy: { score: "desc" }
+      });
 
       return res.status(200).json({
-        score,
-        correct,
-        total:      totalPoints,
-        tentatives,
-        tentativesRestantes: Math.max(0, MAX_TENTATIVES - tentatives),
-        reussi,
-        bloque,
-        detail,
-        result,
-        message: feedbackMessage,
+        quiz,
+        attemptsCount,
+        maxAttempts: MAX_TENTATIVES,
+        seuilReussite: SEUIL_REUSSITE,
+        bestScore: bestAttempt ? bestAttempt.score : null,
+        dejaReussi: bestAttempt ? bestAttempt.score >= SEUIL_REUSSITE : false
+      });
+    }
+
+    // POST : Soumettre et valider les réponses d'un étudiant
+    if (method === "POST") {
+      const { quizId, answers } = req.body;
+      if (!quizId || !answers) {
+        return res.status(400).json({ error: "quizId et answers requis" });
+      }
+
+      const quiz = await prisma.quiz.findUnique({
+        where: { id: parseInt(quizId) },
+        include: { questions: true }
       });
 
-    } catch (error) {
-      console.error("API STUDENT QUIZ ERROR:", error);
-      return res.status(500).json({ error: "Erreur serveur" });
-    }
-  }
+      if (!quiz) {
+        return res.status(404).json({ error: "Quiz introuvable" });
+      }
 
-  return res.status(405).json({ error: "Méthode non autorisée" });
+      const attemptsCount = await prisma.quizAttempt.count({
+        where: {
+          quizId: parseInt(quizId),
+          studentId: user.id
+        }
+      });
+
+      if (attemptsCount >= MAX_TENTATIVES) {
+        return res.status(403).json({ error: "Nombre maximum de tentatives épuisé !" });
+      }
+
+      let scoreObtenu = 0;
+      let totalPoints = 0;
+      const detailsReponses = [];
+
+      for (const question of quiz.questions) {
+        const qId = question.id;
+        const uAns = answers[qId];
+        const correctAnswers = question.reponseCorrecte;
+        const qPoints = question.points || 1;
+        totalPoints += qPoints;
+
+        let isCorrect = false;
+
+        // Validation standard selon le format de la réponse
+        if (question.type === "QCM" || question.type === "VRAI_FAUX") {
+          isCorrect = String(uAns).trim().toLowerCase() === String(correctAnswers).trim().toLowerCase();
+        } else if (question.type === "QCM_MULTIPLE") {
+          const uArr = Array.isArray(uAns) ? uAns.map(x => String(x).trim().toLowerCase()).sort() : [];
+          const cArr = Array.isArray(correctAnswers) ? correctAnswers.map(x => String(x).trim().toLowerCase()).sort() : [String(correctAnswers).trim().toLowerCase()];
+          isCorrect = JSON.stringify(uArr) === JSON.stringify(cArr);
+        } else if (question.type === "OUVERTE") {
+          const keywords = String(correctAnswers).split(";").map(kw => kw.trim().toLowerCase());
+          isCorrect = keywords.some(kw => String(uAns || "").toLowerCase().includes(kw));
+        } else {
+          isCorrect = String(uAns).trim() === String(correctAnswers).trim();
+        }
+
+        if (isCorrect) scoreObtenu += qPoints;
+
+        detailsReponses.push({
+          questionId: qId,
+          userAnswer: uAns,
+          isCorrect,
+          pointsObtenus: isCorrect ? qPoints : 0
+        });
+      }
+
+      const scorePercentage = totalPoints > 0 ? Math.round((scoreObtenu / totalPoints) * 100) : 0;
+      const reussi = scorePercentage >= SEUIL_REUSSITE;
+
+      const attempt = await prisma.quizAttempt.create({
+        data: {
+          quizId: parseInt(quizId),
+          studentId: user.id,
+          score: scorePercentage,
+          conforme: reussi,
+          reponses: JSON.stringify(detailsReponses),
+          dateTentative: new Date()
+        }
+      });
+
+      return res.status(201).json({
+        attemptId: attempt.id,
+        score: scorePercentage,
+        totalPoints,
+        reussi,
+        seuil: SEUIL_REUSSITE,
+        attemptsCount: attemptsCount + 1,
+        maxAttempts: MAX_TENTATIVES,
+        details: detailsReponses
+      });
+    }
+
+    return res.status(405).json({ error: "Méthode non autorisée" });
+
+  } catch (error) {
+    console.error("API STUDENT QUIZ ERROR:", error);
+    return res.status(500).json({ error: "Erreur serveur" });
+  }
 }
