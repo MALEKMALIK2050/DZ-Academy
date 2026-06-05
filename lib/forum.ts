@@ -47,21 +47,26 @@ export function buildPostTree(posts: ForumPost[]): ForumPost[] {
 
 export async function createForum(
   payload: CreateForumPayload,
-  teacherId: string
+  teacherId: string | number
 ) {
+  const { title, description, chapitreId, isModerated } = payload
+  
   return prisma.forum.create({
     data: {
-      ...payload,
-      createdById: teacherId,
+      title,
+      description: description || "",
+      chapitreId: typeof chapitreId === 'string' ? parseInt(chapitreId, 10) : chapitreId,
+      isModerated: isModerated ?? false,
+      createdById: typeof teacherId === 'string' ? parseInt(teacherId, 10) : teacherId,
       status: 'DRAFT',
     },
   })
 }
 
-export async function getForumByChapitreId(chapitreId: string) {
+export async function getForumByChapitreId(chapitreId: string | number) {
   return prisma.forum.findFirst({
     where: {
-      chapitreId,
+      chapitreId: typeof chapitreId === 'string' ? parseInt(chapitreId, 10) : chapitreId,
       status: 'PUBLISHED',
     },
     include: {
@@ -72,17 +77,18 @@ export async function getForumByChapitreId(chapitreId: string) {
   })
 }
 
-export async function getForumWithPosts(forumId: string) {
+export async function getForumWithPosts(forumId: string | number) {
+  const forumIdNum = typeof forumId === 'string' ? parseInt(forumId, 10) : forumId
+  
   const forum = await prisma.forum.findUnique({
-    where: { id: forumId },
+    where: { id: forumIdNum },
   })
 
   if (!forum) return null
 
-  // Récupère tous les posts à plat, triés par date
   const flatPosts = await prisma.forumPost.findMany({
     where: {
-      forumId,
+      forumId: forumIdNum,
       ...(forum.isModerated ? { isApproved: true } : {}),
     },
     include: {
@@ -95,31 +101,40 @@ export async function getForumWithPosts(forumId: string) {
     orderBy: { createdAt: 'asc' },
   })
 
-  // Convertit en arbre
   const rootPosts = buildPostTree(flatPosts as unknown as ForumPost[])
 
   return { forum, rootPosts }
 }
 
 export async function updateForum(
-  forumId: string,
+  forumId: string | number,
   payload: UpdateForumPayload
 ) {
+  const forumIdNum = typeof forumId === 'string' ? parseInt(forumId, 10) : forumId
+  
+  const updateData: any = {}
+  if (payload.title !== undefined) updateData.title = payload.title
+  if (payload.description !== undefined) updateData.description = payload.description
+  if (payload.status !== undefined) updateData.status = payload.status
+  if (payload.isModerated !== undefined) updateData.isModerated = payload.isModerated
+  
   return prisma.forum.update({
-    where: { id: forumId },
-    data: payload,
+    where: { id: forumIdNum },
+    data: updateData,
   })
 }
 
-export async function deleteForum(forumId: string) {
+export async function deleteForum(forumId: string | number) {
+  const forumIdNum = typeof forumId === 'string' ? parseInt(forumId, 10) : forumId
   return prisma.forum.delete({
-    where: { id: forumId },
+    where: { id: forumIdNum },
   })
 }
 
-export async function publishForum(forumId: string) {
+export async function publishForum(forumId: string | number) {
+  const forumIdNum = typeof forumId === 'string' ? parseInt(forumId, 10) : forumId
   return prisma.forum.update({
-    where: { id: forumId },
+    where: { id: forumIdNum },
     data: { status: 'PUBLISHED' },
   })
 }
@@ -127,34 +142,37 @@ export async function publishForum(forumId: string) {
 // ─── Posts CRUD ──────────────────────────────────────
 
 export async function createPost(
-  forumId: string,
-  authorId: string,
+  forumId: string | number,
+  authorId: string | number,
   payload: CreatePostPayload
 ) {
-  // Calcule la profondeur selon le parent
+  const forumIdNum = typeof forumId === 'string' ? parseInt(forumId, 10) : forumId
+  const authorIdNum = typeof authorId === 'string' ? parseInt(authorId, 10) : authorId
+  
   let depth = 0
   if (payload.parentId) {
+    const parentIdNum = typeof payload.parentId === 'string' ? parseInt(payload.parentId, 10) : payload.parentId
     const parent = await prisma.forumPost.findUnique({
-      where: { id: payload.parentId },
+      where: { id: parentIdNum },
       select: { depth: true },
     })
     depth = (parent?.depth ?? 0) + 1
   }
 
   const forum = await prisma.forum.findUnique({
-    where: { id: forumId },
+    where: { id: forumIdNum },
     select: { isModerated: true },
   })
 
   return prisma.forumPost.create({
     data: {
-      forumId,
-      authorId,
+      forumId: forumIdNum,
+      authorId: authorIdNum,
       content: payload.content,
-      parentId: payload.parentId ?? null,
+      parentId: payload.parentId ? (typeof payload.parentId === 'string' ? parseInt(payload.parentId, 10) : payload.parentId) : null,
       isAnonymous: payload.isAnonymous ?? false,
-      isApproved: !forum?.isModerated,  // auto-approuvé si pas de modération
-      isFeedback: false,
+      isApproved: !forum?.isModerated,
+      isFeedback: payload.isFeedback ?? false,
       depth,
     },
     include: {
@@ -165,34 +183,46 @@ export async function createPost(
 }
 
 export async function updatePost(
-  postId: string,
+  postId: string | number,
   payload: UpdatePostPayload
 ) {
+  const postIdNum = typeof postId === 'string' ? parseInt(postId, 10) : postId
+  
+  const updateData: any = {}
+  if (payload.content !== undefined) updateData.content = payload.content
+  if (payload.isFeedback !== undefined) updateData.isFeedback = payload.isFeedback
+  if (payload.isApproved !== undefined) updateData.isApproved = payload.isApproved
+  if (payload.grade !== undefined) updateData.grade = payload.grade
+  if (payload.feedback !== undefined) updateData.feedback = payload.feedback
+  
   return prisma.forumPost.update({
-    where: { id: postId },
-    data: payload,
+    where: { id: postIdNum },
+    data: updateData,
     include: {
       author: { select: authorSelect },
     },
   })
 }
 
-export async function deletePost(postId: string) {
+export async function deletePost(postId: string | number) {
+  const postIdNum = typeof postId === 'string' ? parseInt(postId, 10) : postId
   return prisma.forumPost.delete({
-    where: { id: postId },
+    where: { id: postIdNum },
   })
 }
 
-export async function approvePost(postId: string) {
+export async function approvePost(postId: string | number) {
+  const postIdNum = typeof postId === 'string' ? parseInt(postId, 10) : postId
   return prisma.forumPost.update({
-    where: { id: postId },
+    where: { id: postIdNum },
     data: { isApproved: true },
   })
 }
 
-export async function markAsFeedback(postId: string) {
+export async function markAsFeedback(postId: string | number) {
+  const postIdNum = typeof postId === 'string' ? parseInt(postId, 10) : postId
   return prisma.forumPost.update({
-    where: { id: postId },
+    where: { id: postIdNum },
     data: { isFeedback: true },
   })
 }
@@ -200,25 +230,28 @@ export async function markAsFeedback(postId: string) {
 // ─── Likes ───────────────────────────────────────────
 
 export async function toggleLike(
-  postId: string,
-  userId: string
+  postId: string | number,
+  userId: string | number
 ): Promise<{ liked: boolean; count: number }> {
+  const postIdNum = typeof postId === 'string' ? parseInt(postId, 10) : postId
+  const userIdNum = typeof userId === 'string' ? parseInt(userId, 10) : userId
+  
   const existing = await prisma.forumPostLike.findUnique({
-    where: { postId_userId: { postId, userId } },
+    where: { postId_userId: { postId: postIdNum, userId: userIdNum } },
   })
 
   if (existing) {
     await prisma.forumPostLike.delete({
-      where: { postId_userId: { postId, userId } },
+      where: { postId_userId: { postId: postIdNum, userId: userIdNum } },
     })
   } else {
     await prisma.forumPostLike.create({
-      data: { postId, userId },
+      data: { postId: postIdNum, userId: userIdNum },
     })
   }
 
   const count = await prisma.forumPostLike.count({
-    where: { postId },
+    where: { postId: postIdNum },
   })
 
   return { liked: !existing, count }
@@ -226,10 +259,11 @@ export async function toggleLike(
 
 // ─── Modération ──────────────────────────────────────
 
-export async function getPendingPosts(forumId: string) {
+export async function getPendingPosts(forumId: string | number) {
+  const forumIdNum = typeof forumId === 'string' ? parseInt(forumId, 10) : forumId
   return prisma.forumPost.findMany({
     where: {
-      forumId,
+      forumId: forumIdNum,
       isApproved: false,
     },
     include: {
@@ -241,13 +275,15 @@ export async function getPendingPosts(forumId: string) {
 
 // ─── Stats pour le dashboard teacher ─────────────────
 
-export async function getForumStats(forumId: string) {
+export async function getForumStats(forumId: string | number) {
+  const forumIdNum = typeof forumId === 'string' ? parseInt(forumId, 10) : forumId
+  
   const [totalPosts, pendingPosts, participants] = await Promise.all([
-    prisma.forumPost.count({ where: { forumId } }),
-    prisma.forumPost.count({ where: { forumId, isApproved: false } }),
+    prisma.forumPost.count({ where: { forumId: forumIdNum } }),
+    prisma.forumPost.count({ where: { forumId: forumIdNum, isApproved: false } }),
     prisma.forumPost.groupBy({
       by: ['authorId'],
-      where: { forumId },
+      where: { forumId: forumIdNum },
     }),
   ])
 

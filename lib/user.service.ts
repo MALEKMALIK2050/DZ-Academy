@@ -1,9 +1,7 @@
 /**
  * 🛠️ FONCTIONS UTILITAIRES - GESTION DU PROFIL UTILISATEUR
  * 
- * Fichier: lib/user.service.ts (ou .js)
- * 
- * Fonctions réutilisables pour la gestion du profil
+ * Fichier: lib/user.service.ts
  */
 
 import prisma from "@/lib/prisma";
@@ -15,9 +13,6 @@ import bcrypt from "bcryptjs";
 // 📊 PROFIL COMPLETION
 // ============================================
 
-/**
- * Calculer le pourcentage de complétude du profil
- */
 export async function calculateProfileCompletion(userId: number): Promise<number> {
   const user = await db.user.findUnique({
     where: { id: userId }
@@ -25,7 +20,6 @@ export async function calculateProfileCompletion(userId: number): Promise<number
 
   if (!user) return 0;
 
-  // Champs à vérifier
   const fields = [
     user.prenom,
     user.nom,
@@ -40,24 +34,17 @@ export async function calculateProfileCompletion(userId: number): Promise<number
     user.niveauScolaire
   ];
 
-  // Compter les champs remplis (Typé explicitement avec 'any' pour éviter les avertissements)
-  const filledFields = fields.filter(
-    (f: any) => f && f !== null && f !== ""
+  const filledFields = fields.filter((f): f is NonNullable<typeof f> => 
+    f !== null && f !== undefined && f !== ""
   ).length;
 
-  // Calculer le pourcentage
   const percentage = Math.round((filledFields / fields.length) * 100);
-
   return percentage;
 }
 
-/**
- * Mettre à jour le statut de complétude du profil
- */
 export async function updateProfileCompletion(userId: number): Promise<void> {
   const percentage = await calculateProfileCompletion(userId);
 
-  // Déterminer le statut
   let status: StatutProfil;
   if (percentage === 0) {
     status = StatutProfil.INCOMPLET;
@@ -67,7 +54,6 @@ export async function updateProfileCompletion(userId: number): Promise<void> {
     status = StatutProfil.COMPLET;
   }
 
-  // Mettre à jour en BD
   await db.user.update({
     where: { id: userId },
     data: {
@@ -78,9 +64,6 @@ export async function updateProfileCompletion(userId: number): Promise<void> {
   });
 }
 
-/**
- * Obtenir le profil complet d'un utilisateur avec stats
- */
 export async function getUserProfile(userId: number) {
   const user = await db.user.findUnique({
     where: { id: userId },
@@ -111,23 +94,20 @@ export async function getUserProfile(userId: number) {
       createdAt: true,
       updatedAt: true,
       lastLoginAt: true,
-      // Stats
       enrollments: {
         select: {
           id: true,
-          course: { select: { id: true, titre: true } },
-          progress: true,
-          completedAt: true
+          course: { select: { id: true, title: true } },
+          progress: true
         }
       },
       quizResults: {
         select: {
           id: true,
           score: true,
-          pourcentage: true,
-          completedAt: true
+          createdAt: true
         },
-        orderBy: { completedAt: "desc" },
+        orderBy: { createdAt: "desc" },
         take: 5
       }
     }
@@ -135,14 +115,13 @@ export async function getUserProfile(userId: number) {
 
   if (!user) return null;
 
-  // Calculer les stats (Typage strict appliqué ici)
   const totalCourses = user.enrollments.length;
-  const completedCourses = user.enrollments.filter((e: any) => e.completedAt).length;
+  const completedCourses = user.enrollments.filter((e) => e.progress === 100).length;
   const averageQuizScore = user.quizResults.length > 0
     ? Math.round(
-      user.quizResults.reduce((sum: number, q: any) => sum + q.score, 0) /
-      user.quizResults.length
-    )
+        user.quizResults.reduce((sum, q) => sum + q.score, 0) /
+        user.quizResults.length
+      )
     : 0;
 
   return {
@@ -160,15 +139,11 @@ export async function getUserProfile(userId: number) {
 // 🔐 MOT DE PASSE
 // ============================================
 
-/**
- * Changer le mot de passe utilisateur
- */
 export async function changePassword(
   userId: number,
   currentPassword: string,
   newPassword: string
 ): Promise<{ success: boolean; message: string }> {
-  // Récupérer l'utilisateur
   const user = await db.user.findUnique({
     where: { id: userId }
   });
@@ -177,17 +152,15 @@ export async function changePassword(
     return { success: false, message: "Utilisateur introuvable" };
   }
 
-  // Vérifier l'ancien mot de passe
   const isValidPassword = await bcrypt.compare(
     currentPassword,
-    user.password
+    user.password || ""
   );
 
   if (!isValidPassword) {
     return { success: false, message: "Le mot de passe actuel est incorrect" };
   }
 
-  // Vérifier que le nouveau est différent
   if (currentPassword === newPassword) {
     return {
       success: false,
@@ -195,16 +168,13 @@ export async function changePassword(
     };
   }
 
-  // Valider la force du mot de passe
   const validation = validatePasswordStrength(newPassword);
   if (!validation.valid) {
     return { success: false, message: validation.message };
   }
 
-  // Hasher le nouveau mot de passe
   const hashedPassword = await bcrypt.hash(newPassword, 10);
 
-  // Mettre à jour
   await db.user.update({
     where: { id: userId },
     data: {
@@ -216,22 +186,17 @@ export async function changePassword(
   return { success: true, message: "Mot de passe changé avec succès" };
 }
 
-/**
- * Valider la force du mot de passe
- */
 export function validatePasswordStrength(password: string): {
   valid: boolean;
   message: string;
   strength: "VERY_WEAK" | "WEAK" | "FAIR" | "GOOD" | "STRONG" | "VERY_STRONG";
 } {
-  // Critères
   const hasMinLength = password.length >= 8;
   const hasUppercase = /[A-Z]/.test(password);
   const hasLowercase = /[a-z]/.test(password);
   const hasNumber = /[0-9]/.test(password);
   const hasSpecialChar = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password);
 
-  // Compter les critères remplis
   const criteriaCount = [
     hasMinLength,
     hasUppercase,
@@ -240,7 +205,6 @@ export function validatePasswordStrength(password: string): {
     hasSpecialChar
   ].filter(Boolean).length;
 
-  // Déterminer la force
   let strength: "VERY_WEAK" | "WEAK" | "FAIR" | "GOOD" | "STRONG" | "VERY_STRONG";
   let valid = true;
   let message = "";
@@ -267,7 +231,6 @@ export function validatePasswordStrength(password: string): {
     message = "Mot de passe très fort";
   }
 
-  // Messages d'erreur spécifiques
   if (!valid) {
     if (!hasMinLength) message += " (min 8 caractères)";
     if (!hasUppercase) message += " (min 1 majuscule)";
@@ -278,17 +241,14 @@ export function validatePasswordStrength(password: string): {
   return { valid, message, strength };
 }
 
-/**
- * Obtenir la couleur de force du mot de passe
- */
 export function getPasswordStrengthColor(strength: string): string {
   switch (strength) {
-    case "VERY_WEAK": return "#dc2626"; // Rouge
-    case "WEAK": return "#f97316"; // Orange
-    case "FAIR": return "#eab308"; // Jaune
-    case "GOOD": return "#84cc16"; // Vert clair
-    case "STRONG": return "#22c55e"; // Vert
-    case "VERY_STRONG": return "#059669"; // Vert foncé
+    case "VERY_WEAK": return "#dc2626";
+    case "WEAK": return "#f97316";
+    case "FAIR": return "#eab308";
+    case "GOOD": return "#84cc16";
+    case "STRONG": return "#22c55e";
+    case "VERY_STRONG": return "#059669";
     default: return "#6b7280";
   }
 }
@@ -297,9 +257,6 @@ export function getPasswordStrengthColor(strength: string): string {
 // 📸 PHOTO DE PROFIL
 // ============================================
 
-/**
- * Mettre à jour la photo de profil
- */
 export async function updateProfilePhoto(
   userId: number,
   photoPath: string
@@ -309,21 +266,14 @@ export async function updateProfilePhoto(
     data: { photo: photoPath },
     select: { id: true }
   });
-
-  // Mettre à jour la complétude
   await updateProfileCompletion(userId);
 }
 
-/**
- * Supprimer la photo de profil
- */
 export async function deleteProfilePhoto(userId: number): Promise<void> {
   await db.user.update({
     where: { id: userId },
     data: { photo: null }
   });
-
-  // Mettre à jour la complétude
   await updateProfileCompletion(userId);
 }
 
@@ -331,9 +281,6 @@ export async function deleteProfilePhoto(userId: number): Promise<void> {
 // 👥 RECHERCHE UTILISATEUR
 // ============================================
 
-/**
- * Rechercher des utilisateurs par niveau scolaire
- */
 export async function getUsersByLevel(
   niveau: NiveauScolaire,
   limit = 20,
@@ -355,9 +302,6 @@ export async function getUsersByLevel(
   });
 }
 
-/**
- * Rechercher des utilisateurs par rôle
- */
 export async function getUsersByRole(
   role: Role,
   limit = 20,
@@ -378,9 +322,6 @@ export async function getUsersByRole(
   });
 }
 
-/**
- * Recherche globale d'utilisateurs
- */
 export async function searchUsers(
   query: string,
   limit = 20
@@ -411,9 +352,6 @@ export async function searchUsers(
 // 📊 STATISTIQUES
 // ============================================
 
-/**
- * Obtenir les stats globales de l'utilisateur
- */
 export async function getUserStats(userId: number) {
   const user = await db.user.findUnique({
     where: { id: userId }
@@ -421,41 +359,32 @@ export async function getUserStats(userId: number) {
 
   if (!user) return null;
 
-  const [enrollments, quizzes, forums, messages] = await Promise.all([
+  const [enrollments, quizzes] = await Promise.all([
     db.enrollment.findMany({
       where: { studentId: userId },
-      select: { progress: true, completedAt: true }
+      select: { progress: true }
     }),
     db.quizResult.findMany({
-      where: { userId },
+      where: { studentId: userId },
       select: { score: true }
-    }),
-    db.forumPost.findMany({
-      where: { createdById: userId }
-    }),
-    db.message.findMany({
-      where: { senderId: userId }
     })
   ]);
 
-  // Typages stricts ajoutés dans les reduces de statistiques
   const averageProgress = enrollments.length > 0
-    ? Math.round(enrollments.reduce((sum: number, e: any) => sum + e.progress, 0) / enrollments.length)
+    ? Math.round(enrollments.reduce((sum, e) => sum + (e.progress || 0), 0) / enrollments.length)
     : 0;
 
   const averageScore = quizzes.length > 0
-    ? Math.round(quizzes.reduce((sum: number, q: any) => sum + q.score, 0) / quizzes.length)
+    ? Math.round(quizzes.reduce((sum, q) => sum + (q.score || 0), 0) / quizzes.length)
     : 0;
 
   return {
     profileCompletion: user.pourcentageCompletion,
     coursesEnrolled: enrollments.length,
-    coursesCompleted: enrollments.filter((e: any) => e.completedAt).length,
+    coursesCompleted: enrollments.filter((e) => e.progress === 100).length,
     averageProgress,
     quizzesTaken: quizzes.length,
     averageScore,
-    forumPostsCreated: forums.length,
-    messagesSent: messages.length,
     lastActive: user.lastLoginAt,
     profileStatus: user.statutProfil
   };
@@ -465,9 +394,6 @@ export async function getUserStats(userId: number) {
 // 📊 MISE À JOUR DE PROFIL
 // ============================================
 
-/**
- * Mettre à jour les informations personnelles
- */
 export async function updateUserProfile(
   userId: number,
   data: {
@@ -489,14 +415,9 @@ export async function updateUserProfile(
       updatedAt: new Date()
     }
   });
-
-  // Mettre à jour la complétude
   await updateProfileCompletion(userId);
 }
 
-/**
- * Enregistrer la dernière connexion
- */
 export async function recordLogin(userId: number): Promise<void> {
   await db.user.update({
     where: { id: userId },
@@ -507,9 +428,6 @@ export async function recordLogin(userId: number): Promise<void> {
   });
 }
 
-/**
- * Soft delete d'un utilisateur
- */
 export async function deleteUserSoftly(userId: number): Promise<void> {
   await db.user.update({
     where: { id: userId },
@@ -520,9 +438,6 @@ export async function deleteUserSoftly(userId: number): Promise<void> {
   });
 }
 
-/**
- * Restaurer un utilisateur soft-deleted
- */
 export async function restoreUser(userId: number): Promise<void> {
   await db.user.update({
     where: { id: userId },
@@ -537,29 +452,22 @@ export async function restoreUser(userId: number): Promise<void> {
 // 📋 HELPER FUNCTIONS
 // ============================================
 
-/**
- * Formater le nom complet
- */
 export function formatFullName(user: {
-  prenom: string;
-  nom: string;
+  prenom: string | null;
+  nom: string | null;
 }): string {
-  return `${user.prenom} ${user.nom}`.trim();
+  return `${user.prenom || ""} ${user.nom || ""}`.trim();
 }
 
-/**
- * Obtenir les initiales
- */
 export function getInitials(user: {
-  prenom: string;
-  nom: string;
+  prenom: string | null;
+  nom: string | null;
 }): string {
-  return `${user.prenom[0]}${user.nom[0]}`.toUpperCase();
+  const prenomFirst = user.prenom ? user.prenom[0] : "";
+  const nomFirst = user.nom ? user.nom[0] : "";
+  return `${prenomFirst}${nomFirst}`.toUpperCase();
 }
 
-/**
- * Traduire le niveau scolaire en français
- */
 export const niveauScolaireLabels: Record<NiveauScolaire, string> = {
   [NiveauScolaire.PRIMAIRE]: "Primaire",
   [NiveauScolaire.CEM]: "CEM",
@@ -570,9 +478,6 @@ export const niveauScolaireLabels: Record<NiveauScolaire, string> = {
   [NiveauScolaire.DOCTORAT]: "Doctorat"
 };
 
-/**
- * Traduire le rôle en français
- */
 export const roleLabels: Record<Role, string> = {
   [Role.STUDENT]: "Étudiant",
   [Role.TEACHER]: "Enseignant",
@@ -580,9 +485,6 @@ export const roleLabels: Record<Role, string> = {
   [Role.ADMIN]: "Administrateur"
 };
 
-/**
- * Traduire le statut du profil
- */
 export const statutProfilLabels: Record<StatutProfil, string> = {
   [StatutProfil.INCOMPLET]: "Incomplet",
   [StatutProfil.PARTIELLEMENT_COMPLET]: "Partiellement complété",
