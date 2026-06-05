@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/router";
 import { useAuth } from "@/context/AuthContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
@@ -33,8 +33,6 @@ export default function StudentCourse() {
   const [pretestFeedback, setPretestFeedback] = useState(null);
   const [pretestAnswers, setPretestAnswers] = useState({});
   const [pretestSubmitting, setPretestSubmitting] = useState(false);
- 
-
 
   // État des chapitres et quizzes
   const [activeChapter, setActiveChapter] = useState(null);
@@ -106,44 +104,42 @@ export default function StudentCourse() {
   };
 
   // ====== PRETEST ======
-  
-const handlePretestSubmit = async (answers) => {
-  try {
-    setPretestSubmitting(true);
-    setError("");
+  const handlePretestSubmit = async (answers) => {
+    try {
+      setPretestSubmitting(true);
+      setError("");
 
-    const res = await fetch(`/api/student/submit-pretest?courseId=${course.id}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      credentials: "include",
-      body: JSON.stringify({ reponses: answers }),
-    });
+      const res = await fetch(`/api/student/submit-pretest?courseId=${course.id}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ reponses: answers }),
+      });
 
-    const data = await res.json();
+      const data = await res.json();
 
-    if (!res.ok) {
-      setError(data.error || "Erreur soumission");
-      return;
+      if (!res.ok) {
+        setError(data.error || "Erreur soumission");
+        return;
+      }
+
+      setPretestCompleted(true);
+      if (data.data && data.data.feedback) setPretestFeedback(data.data.feedback);
+
+      if (course?.chapters?.length > 0) {
+        setActiveChapter(course.chapters[0]);
+      }
+
+    } catch (error) {
+      console.error("Erreur:", error);
+      setError("Erreur de connexion");
+    } finally {
+      setPretestSubmitting(false);
     }
-
-    setPretestCompleted(true);
-    if (data.data && data.data.feedback) setPretestFeedback(data.data.feedback);
-
-    if (course?.chapters?.length > 0) {
-      setActiveChapter(course.chapters[0]);
-    }
-
-  } catch (error) {
-    console.error("Erreur:", error);
-    setError("Erreur de connexion");
-  } finally {
-    setPretestSubmitting(false);
-  }
-};
+  };
 
   // ====== CHAPITRES ======
   const isChapterUnlocked = (index) => {
-    // Pretest obligatoire: tous les chapitres bloqués tant qu'il n'est pas complété
     if (pretest && !pretestCompleted) {
       return false;
     }
@@ -153,11 +149,9 @@ const handlePretestSubmit = async (answers) => {
     const prevChapter = course?.chapters?.[index - 1];
     if (!prevChapter) return false;
 
-    // Le chapitre précédent doit être lu
     const prevLu = chapterProgress[prevChapter.id]?.lu;
     if (!prevLu) return false;
 
-    // Si le chapitre précédent a un quiz, il doit être réussi
     if (prevChapter.quiz) {
       const prevQuizStat = quizStats[prevChapter.quiz.id];
       if (!prevQuizStat?.reussi) return false;
@@ -228,10 +222,8 @@ const handlePretestSubmit = async (answers) => {
         setQuizResult(data);
         window.scrollTo({ top: 0, behavior: "smooth" });
 
-        // Afficher automatiquement les corrections si score insuffisant
         if (!data.reussi) setShowCorrections(true);
 
-        // Mettre à jour les stats
         setQuizStats((prev) => ({
           ...prev,
           [quiz.id]: {
@@ -242,7 +234,6 @@ const handlePretestSubmit = async (answers) => {
           },
         }));
 
-        // Si réussi, recharger le cours pour déverrouiller le chapitre suivant
         if (data.reussi) fetchCourse();
       } else {
         setError(data.error || "Erreur soumission");
@@ -255,7 +246,6 @@ const handlePretestSubmit = async (answers) => {
     }
   };
 
-  // ====== RENDER ======
   if (loading) return <p style={{ padding: "2rem" }}>Chargement...</p>;
   if (error && !course) return <p style={{ color: "red", padding: "2rem" }}>{error}</p>;
 
@@ -489,15 +479,15 @@ const handlePretestSubmit = async (answers) => {
           {/* ── CONTENU PRINCIPAL ── */}
           <div style={{ padding: "2rem", overflowY: "auto" }}>
 
-{pretest && !pretestCompleted && (
-  <PretestModern
-    pretest={pretest}
-    course={course}
-    user={user}
-    loading={pretestSubmitting}
-    onSubmit={handlePretestSubmit}
-  />
-)}
+            {pretest && !pretestCompleted && (
+              <PretestModern
+                pretest={pretest}
+                course={course}
+                user={user}
+                loading={pretestSubmitting}
+                onSubmit={handlePretestSubmit}
+              />
+            )}
 
             {/* PRETEST COMPLÉTÉ */}
             {pretest && pretestCompleted && (
@@ -937,7 +927,7 @@ function QuizDisplay({ quiz, answers, setAnswers, result, submitting, onSubmit, 
   );
 }
 
-function DevoirCard({ devoir, userId }) {
+function DevoirCard({ devoir, userId, course, id, router }) {
   const deadline = new Date(devoir.dateLimit);
   const depasse = new Date() > deadline;
   const monRendu = devoir.rendus?.find((r) => r.studentId === userId);
@@ -1024,25 +1014,23 @@ function DevoirCard({ devoir, userId }) {
             ⛔ Délai dépassé
           </p>
         </div>
-        
       )}
       {course?.quizFinal && (
-  <button
-    onClick={() => router.push(`/dashboard/student/courses/${id}/final-exam`)}
-    style={{
-      padding: "0.75rem 1.5rem",
-      background: "linear-gradient(135deg, #dc2626, #ef4444)",
-      color: "white",
-      border: "none",
-      borderRadius: "12px",
-      cursor: "pointer",
-      fontWeight: "700",
-    }}
-  >
-    🏁 Test Final (75% requis)
-  </button>
-)}
+        <button
+          onClick={() => router.push(`/dashboard/student/courses/${id}/final-exam`)}
+          style={{
+            padding: "0.75rem 1.5rem",
+            background: "linear-gradient(135deg, #dc2626, #ef4444)",
+            color: "white",
+            border: "none",
+            borderRadius: "12px",
+            cursor: "pointer",
+            fontWeight: "700",
+          }}
+        >
+          🏁 Test Final (75% requis)
+        </button>
+      )}
     </div>
   );
 }
-
