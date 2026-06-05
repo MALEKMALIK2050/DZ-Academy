@@ -5,50 +5,48 @@ export default function StudentQuizPage() {
   const router = useRouter();
   const { quizId } = router.query;
 
-  const [isLoading, setIsLoading] = useState(true);
-  const [data, setData] = useState(null);
+  const [quizInfo, setQuizInfo] = useState(null);
   const [reponses, setReponses] = useState({});
-  const [resultat, setResultat] = useState(null);
-  const [erreur, setErreur] = useState("");
-  const [soumissionEnCours, setSoumissionEnCours] = useState(false);
+  const [tentativeState, setTentativeState] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [feedback, setFeedback] = useState(null);
 
-  // Charger le quiz uniquement si le component est monté
   useEffect(() => {
     if (!quizId) return;
 
-    setIsLoading(true);
-    setErreur("");
-
-    fetch(`/api/student/quiz?quizId=${quizId}`)
-      .then((res) => {
-        if (!res.ok) throw new Error("Impossible de récupérer les informations du quiz");
-        return res.json();
-      })
-      .then((json) => {
-        setData(json);
-        setIsLoading(false);
+    // Charger les informations et l'état des tentatives du quiz
+    Promise.all([
+      fetch(`/api/student/quiz?quizId=${quizId}`).then((res) => res.json()),
+      fetch(`/api/quiz/${quizId}`).then((res) => (res.ok ? res.json() : { title: "Évaluation", questions: [] }))
+    ])
+      .then(([statusData, quizData]) => {
+        setTentativeState(statusData);
+        setQuizInfo(quizData);
+        setLoading(false);
       })
       .catch((err) => {
-        setErreur(err.message);
-        setIsLoading(false);
+        console.error(err);
+        setError("Erreur lors de la récupération des données du quiz.");
+        setLoading(false);
       });
   }, [quizId]);
 
-  // Gérer la saisie ou sélection de réponse de l'élève
-  const handleReponseChange = (questionId, valeur) => {
+  const handleReponseChange = (questionId, value) => {
     setReponses((prev) => ({
       ...prev,
-      [questionId]: valeur,
+      [questionId]: value,
     }));
   };
 
-  const soumettreQuiz = async (e) => {
+  const submitQuiz = async (e) => {
     e.preventDefault();
-    if (!quizId) return;
+    if (submitting) return;
 
-    setSoumissionEnCours(true);
-    setErreur("");
-    setResultat(null);
+    setSubmitting(true);
+    setError("");
+    setFeedback(null);
 
     try {
       const response = await fetch("/api/student/quiz", {
@@ -57,174 +55,171 @@ export default function StudentQuizPage() {
         body: JSON.stringify({ quizId, reponses }),
       });
 
-      const resultData = await response.json();
+      const result = await response.json();
       if (!response.ok) {
-        throw new Error(resultData.error || "Une erreur est survenue.");
+        throw new Error(result.error || "Une erreur est survenue lors de la soumission.");
       }
 
-      setResultat(resultData);
-      
-      // Mettre à jour localement l'historique
-      setData((prev) => ({
-        ...prev,
-        tentatives: resultData.tentatives,
-        score: resultData.score,
-        reussi: resultData.reussi,
-        bloque: resultData.bloque,
-      }));
+      setFeedback(result);
+      setTentativeState({
+        tentatives: result.tentatives,
+        maxTentatives: result.tentatives + result.tentativesRestantes,
+        score: result.score,
+        reussi: result.reussi,
+        bloque: result.bloque,
+      });
     } catch (err) {
-      setErreur(err.message);
+      setError(err.message);
     } finally {
-      setSoumissionEnCours(false);
+      setSubmitting(false);
     }
   };
 
-  if (!quizId) {
+  if (loading) {
     return (
-      <div className="p-8 text-center bg-slate-50 min-h-screen flex items-center justify-center">
-        <div className="bg-white p-6 rounded-xl shadow border border-slate-100 max-w-sm">
-          <p className="text-gray-500 mb-4">Aucun identifiant de quiz spécifié.</p>
-          <button 
-            onClick={() => router.push("/dashboard/student/courses")}
-            className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-medium transition"
-          >
-            Retour aux cours
-          </button>
-        </div>
+      <div className="flex justify-center items-center h-screen bg-slate-50">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
       </div>
     );
   }
-
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-slate-50">
-        <div className="text-center">
-          <div className="w-10 h-10 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-500 font-medium">Chargement du quiz en cours...</p>
-        </div>
-      </div>
-    );
-  }
-
-  const quizInfo = data?.quiz;
 
   return (
-    <div className="min-h-screen bg-slate-50 py-10 px-4 md:px-8">
-      <div className="max-w-3xl mx-auto bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
-        
-        {/* Header du Quiz */}
-        <div className="bg-indigo-900 px-6 py-8 text-white">
-          <button 
-            onClick={() => router.push("/dashboard/student/courses")}
-            className="text-xs text-indigo-200 hover:text-white transition uppercase font-bold tracking-wider mb-3 block"
-          >
-            ← Retour à mes cours
-          </button>
-          <h1 className="text-2xl font-bold">{quizInfo?.title || "Quiz interactif"}</h1>
-          <p className="text-sm text-indigo-200 mt-2">
-            Seuil de réussite requis : 90% • Tentatives effectuées : {data?.tentatives || 0}/{data?.maxTentatives}
-          </p>
-        </div>
+    <div className="max-w-4xl mx-auto p-6 md:p-10 font-sans">
+      <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-8 mb-8">
+        <h1 className="text-3xl font-bold text-slate-800 mb-3">{quizInfo?.title || "Quiz Évaluation"}</h1>
+        <p className="text-slate-500 mb-6">Testez vos connaissances et valisez ce chapitre.</p>
 
-        {/* Corps principal */}
-        <div className="p-6 md:p-8">
-          {erreur && (
-            <div className="p-4 mb-6 bg-red-50 text-red-700 rounded-xl border border-red-100 text-sm font-medium">
-              ⚠️ {erreur}
-            </div>
-          )}
-
-          {/* Déjà réussi ou bloqué */}
-          {data?.reussi && (
-            <div className="p-6 mb-8 bg-green-50 text-green-800 rounded-xl border border-green-100 text-center">
-              <h3 className="text-lg font-bold mb-1">🎉 Quiz réussi !</h3>
-              <p className="text-sm font-medium">Vous avez obtenu {data?.score}% et validé cette étape.</p>
-            </div>
-          )}
-
-          {data?.bloque && (
-            <div className="p-6 mb-8 bg-red-50 text-red-800 rounded-xl border border-red-100 text-center">
-              <h3 className="text-lg font-bold mb-2">⛔ Tentatives épuisées</h3>
-              <p className="text-sm">Votre accès à ce quiz est bloqué. Veuillez contacter votre coordinateur pédagogique.</p>
-            </div>
-          )}
-
-          {/* Résultats de la soumission récente */}
-          {resultat && (
-            <div className={`p-6 mb-8 rounded-xl border text-center ${resultat.reussi ? 'bg-green-50 border-green-200 text-green-900' : 'bg-orange-50 border-orange-200 text-orange-900'}`}>
-              <h3 className="text-xl font-bold mb-3">{resultat.reussi ? 'Bravo !' : 'Essayez encore'}</h3>
-              <p className="text-3xl font-extrabold mb-2">{resultat.score}%</p>
-              <p className="text-sm font-medium mb-4">{resultat.message}</p>
-              <div className="text-xs text-slate-500">
-                Score : {resultat.correct} / {resultat.total} points
+        {/* Bloc Tentatives et Statistiques */}
+        {tentativeState && (
+          <div className="bg-slate-50 rounded-xl p-5 mb-8 border border-slate-100 grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <div className="text-sm text-slate-500 font-medium">Tentatives :</div>
+              <div className="text-xl font-bold text-slate-800">
+                {tentativeState.tentatives} / {tentativeState.maxTentatives === Infinity ? "Illimitées" : tentativeState.maxTentatives}
               </div>
             </div>
-          )}
+            <div>
+              <div className="text-sm text-slate-500 font-medium">Dernier Score :</div>
+              <div className="text-xl font-bold text-slate-800">
+                {tentativeState.score !== null ? `${tentativeState.score}%` : "Aucun"}
+              </div>
+            </div>
+            <div>
+              <div className="text-sm text-slate-500 font-medium">Statut :</div>
+              <div className="text-xl font-bold">
+                {tentativeState.reussi ? (
+                  <span className="text-emerald-600">✅ Réussi</span>
+                ) : tentativeState.bloque ? (
+                  <span className="text-rose-600">❌ Bloqué</span>
+                ) : (
+                  <span className="text-amber-500">⚙️ En cours</span>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
 
-          {/* Formulaire contenant les questions */}
-          {!data?.reussi && !data?.bloque && quizInfo?.questions && (
-            <form onSubmit={soumettreQuiz} className="space-y-8">
-              {quizInfo.questions.map((q, idx) => (
-                <div key={q.id} className="p-6 border border-slate-100 rounded-xl bg-slate-50/50">
-                  <span className="inline-block px-2.5 py-1 text-xs font-semibold bg-indigo-100 text-indigo-800 rounded-full mb-3">
-                    Question {idx + 1} ({q.points || 1} point{q.points > 1 ? 's' : ''})
-                  </span>
-                  <p className="text-base font-semibold text-slate-900 mb-4">{q.question}</p>
+        {error && (
+          <div className="bg-rose-50 border border-rose-100 text-rose-700 px-4 py-3 rounded-xl mb-6">
+            {error}
+          </div>
+        )}
 
-                  {/* QCM / VRAI-FAUX */}
-                  {(q.type === "QCM" || q.type === "VRAI_FAUX") && q.options && (
+        {/* Message de Feedback de soumission */}
+        {feedback && (
+          <div className={`p-6 rounded-xl border mb-8 ${feedback.reussi ? 'bg-emerald-50 border-emerald-100 text-emerald-800' : 'bg-amber-50 border-amber-100 text-amber-805'}`}>
+            <h3 className="font-bold text-lg mb-2">{feedback.message}</h3>
+            {feedback.score !== undefined && (
+              <p className="text-sm font-medium">
+                Score obtenu : <span className="font-bold">{feedback.score}%</span> ({feedback.correct} réponses correctes sur {feedback.total} points)
+              </p>
+            )}
+          </div>
+        )}
+
+        {tentativeState?.bloque ? (
+          <div className="text-center py-6">
+            <p className="text-rose-600 font-semibold mb-4">Vous avez atteint le nombre maximum de tentatives pour ce quiz.</p>
+            <p className="text-slate-500">Veuillez contacter votre professeur pour initier une remédiation d'accompagnement.</p>
+          </div>
+        ) : (
+          <form onSubmit={submitQuiz}>
+            <div className="space-y-8">
+              {quizInfo?.questions?.map((q, idx) => (
+                <div key={q.id} className="p-6 border border-slate-100 rounded-2xl bg-slate-50/20 hover:bg-slate-50/50 transition duration-150">
+                  <div className="flex items-center gap-2 mb-3">
+                    <span className="inline-block px-3 py-1 text-xs font-semibold bg-indigo-50 text-indigo-700 rounded-full">
+                      Question {idx + 1}
+                    </span>
+                    <span className="text-xs text-slate-400 font-medium">
+                      ({q.points || 1} {q.points > 1 ? "points" : "point"})
+                    </span>
+                  </div>
+                  <h3 className="text-lg font-semibold text-slate-800 mb-4">{q.enonce}</h3>
+
+                  {q.type === "QCM" && (
                     <div className="space-y-2">
-                      {(typeof q.options === "string" ? JSON.parse(q.options) : q.options).map((opt) => (
-                        <label key={opt} className="flex items-center gap-3 p-3 bg-white border border-slate-200 rounded-lg cursor-pointer hover:bg-slate-100/50 transition">
+                      {JSON.parse(q.options || "[]").map((option) => (
+                        <label key={option} className="flex items-center gap-3 p-3 rounded-xl border border-slate-100 bg-white hover:bg-slate-50 cursor-pointer transition">
                           <input
                             type="radio"
                             name={`q-${q.id}`}
-                            value={opt}
-                            checked={reponses[q.id] === opt}
-                            onChange={() => handleReponseChange(q.id, opt)}
-                            required
-                            className="w-4 h-4 text-indigo-600 focus:ring-indigo-500"
+                            value={option}
+                            checked={reponses[q.id] === option}
+                            onChange={(e) => handleReponseChange(q.id, e.target.value)}
+                            className="text-indigo-600 focus:ring-indigo-500 h-4 w-4"
+                            disabled={tentativeState?.reussi}
                           />
-                          <span className="text-sm font-medium text-slate-755">{opt}</span>
+                          <span className="text-sm text-slate-700 font-medium">{option}</span>
                         </label>
                       ))}
                     </div>
                   )}
 
-                  {/* OUVERTE */}
+                  {q.type === "VRAI_FAUX" && (
+                    <div className="flex gap-4">
+                      {["Vrai", "Faux"].map((val) => (
+                        <label key={val} className="flex-1 flex items-center justify-center gap-3 p-3 rounded-xl border border-slate-100 bg-white hover:bg-slate-50 cursor-pointer transition">
+                          <input
+                            type="radio"
+                            name={`q-${q.id}`}
+                            value={val}
+                            checked={reponses[q.id] === val}
+                            onChange={(e) => handleReponseChange(q.id, e.target.value)}
+                            className="text-indigo-600 focus:ring-indigo-500 h-4 w-4"
+                            disabled={tentativeState?.reussi}
+                          />
+                          <span className="text-sm font-semibold text-slate-700">{val}</span>
+                        </label>
+                      ))}
+                    </div>
+                  )}
+
                   {q.type === "OUVERTE" && (
-                    <input
-                      type="text"
-                      placeholder="Votre réponse ici..."
+                    <textarea
+                      rows={3}
                       value={reponses[q.id] || ""}
                       onChange={(e) => handleReponseChange(q.id, e.target.value)}
-                      required
-                      className="w-full p-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition text-sm bg-white"
+                      placeholder="Saisissez votre réponse ici..."
+                      className="w-full p-4 rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm"
+                      disabled={tentativeState?.reussi}
                     />
                   )}
                 </div>
               ))}
-
-              <div className="pt-4 border-t border-slate-100">
-                <button
-                  type="submit"
-                  disabled={soumissionEnCours}
-                  className={`w-full py-4 rounded-xl text-white font-bold text-base transition ${soumissionEnCours ? 'bg-indigo-300 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-700 shadow-md'}`}
-                >
-                  {soumissionEnCours ? "Vérification en cours..." : "Soumettre mes réponses"}
-                </button>
-              </div>
-            </form>
-          )}
-
-          {/* Statut si déjà soumis mais non réussi, tentatives restantes */}
-          {!data?.reussi && !data?.bloque && data?.tentatives > 0 && !resultat && (
-            <div className="mt-8 p-4 bg-slate-100/80 rounded-xl text-center text-sm text-slate-600 font-medium">
-              Note précédente : {data?.score}% (Seuil requis : 90%)
             </div>
-          )}
 
-        </div>
+            {!tentativeState?.reussi && (
+              <button
+                type="submit"
+                disabled={submitting}
+                className="mt-8 w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 px-6 rounded-xl shadow-md transition duration-150 disabled:opacity-50"
+              >
+                {submitting ? "Soumission en cours..." : "Soumettre le Quiz"}
+              </button>
+            )}
+          </form>
+        )}
       </div>
     </div>
   );
