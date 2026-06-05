@@ -1,84 +1,118 @@
-import prisma from "@/lib/prisma";
-import bcrypt from "bcryptjs";
-import crypto from "crypto";
+import { useState } from "react";
+import { useRouter } from "next/router";
 
+export default function RegisterPage() {
+  const router = useRouter();
+  const [form, setForm] = useState({
+    nom: "",
+    prenom: "",
+    email: "",
+    password: "",
+    role: "STUDENT",
+  });
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
-export default async function handler(req, res) {
-  if (req.method !== "POST") {
-    return res.status(405).json({ error: "Method not allowed" });
-  }
+  const handleChange = (e) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
+  };
 
-  try {
-    const {
-      nom,
-      prenom,
-      email,
-      password,
-      role,
-      niveau,
-      classe,
-      tuteur,
-    } = req.body || {};
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError("");
 
-    if (!email || !password || !nom || !prenom) {
-      return res.status(400).json({ error: "Missing fields" });
+    try {
+      // On appelle l'API backend sécurisée que l'on a placée dans pages/api/auth/register.js
+      const res = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || "Une erreur est survenue");
+      }
+
+      alert("🎉 Compte créé avec succès ! Vos identifiants ont été envoyés par e-mail.");
+      router.push("/login"); // Redirection vers votre page de connexion après succès
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
     }
+  };
 
-    const existingUser = await prisma.user.findUnique({
-      where: { email },
-    });
+  return (
+    <div style={{
+      minHeight: "100vh",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      background: "linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%)",
+      fontFamily: "system-ui, sans-serif"
+    }}>
+      <div style={{
+        background: "white",
+        padding: "2.5rem",
+        borderRadius: "20px",
+        boxShadow: "0 10px 25px rgba(0,0,0,0.05)",
+        width: "100%",
+        maxWidth: "450px",
+        border: "1px solid #e2e8f0"
+      }}>
+        <h2 style={{ textAlign: "center", color: "#059669", margin: "0 0 1.5rem" }}>📝 Inscription</h2>
+        
+        {error && (
+          <div style={{ background: "#fef2f2", color: "#dc2626", padding: "0.75rem", borderRadius: "8px", marginBottom: "1rem", fontSize: "0.9rem", border: "1px solid #fecaca" }}>
+            ❌ {error}
+          </div>
+        )}
 
-    if (existingUser) {
-      return res.status(400).json({ error: "Email already used" });
-    }
+        <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+          <div>
+            <label style={{ display: "block", marginBottom: "0.3rem", fontWeight: "600", fontSize: "0.9rem" }}>Prénom</label>
+            <input name="prenom" required value={form.prenom} onChange={handleChange} style={inputStyle} />
+          </div>
+          <div>
+            <label style={{ display: "block", marginBottom: "0.3rem", fontWeight: "600", fontSize: "0.9rem" }}>Nom</label>
+            <input name="nom" required value={form.nom} onChange={handleChange} style={inputStyle} />
+          </div>
+          <div>
+            <label style={{ display: "block", marginBottom: "0.3rem", fontWeight: "600", fontSize: "0.9rem" }}>Email</label>
+            <input name="email" type="email" required value={form.email} onChange={handleChange} style={inputStyle} />
+          </div>
+          <div>
+            <label style={{ display: "block", marginBottom: "0.3rem", fontWeight: "600", fontSize: "0.9rem" }}>Mot de passe</label>
+            <input name="password" type="password" required value={form.password} onChange={handleChange} style={inputStyle} />
+          </div>
 
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    const token = crypto.randomBytes(32).toString("hex");
-    const expires = new Date(Date.now() + 1000 * 60 * 60 * 24); // 24h
-
-    const user = await prisma.user.create({
-      data: {
-        nom,
-        prenom,
-        email,
-        password: hashedPassword,
-        role: role?.toUpperCase() || "STUDENT",
-        niveau,
-        classe,
-        tuteurNom: tuteur?.nom || "",
-        tuteurPrenom: tuteur?.prenom || "",
-        tuteurTelephone: tuteur?.telephone || "",
-        status: "PENDING",
-        verifyToken: token,
-        verifyExpires: expires,
-      },
-    });
-
-    const confirmLink = `${process.env.NEXT_PUBLIC_BASE_URL}/verify-email?token=${token}`;
-
-    await sendEmail({
-      to: email,
-      subject: "Confirme ton compte - LMS Bouamama Academy",
-      html: `
-        <div style="font-family: Arial;">
-          <h2>Bienvenue ${prenom}</h2>
-          <p>Merci pour ton inscription.</p>
-          <p>Confirme ton compte en cliquant ici :</p>
-          <a href="${confirmLink}" style="padding:10px 20px;background:#4f46e5;color:#fff;text-decoration:none;border-radius:5px;">
-            Confirmer mon compte
-          </a>
-          <p>Ce lien expire dans 24h.</p>
-        </div>
-      `,
-    });
-
-    return res.status(201).json({
-      message: "Account created. Check your email.",
-    });
-
-  } catch (error) {
-    console.error(error);
-    return res.status(500).json({ error: "Server error" });
-  }
+          <button type="submit" disabled={loading} style={{
+            background: "linear-gradient(135deg, #059669, #10b981)",
+            color: "white",
+            padding: "0.75rem",
+            border: "none",
+            borderRadius: "8px",
+            cursor: "pointer",
+            fontWeight: "700",
+            fontSize: "1rem",
+            marginTop: "0.5rem"
+          }}>
+            {loading ? "Inscription en cours..." : "S'inscrire"}
+          </button>
+        </form>
+      </div>
+    </div>
+  );
 }
+
+const inputStyle = {
+  width: "100%",
+  padding: "0.6rem",
+  border: "1px solid #cbd5e0",
+  borderRadius: "8px",
+  boxSizing: "border-box",
+  fontSize: "0.95rem"
+};
