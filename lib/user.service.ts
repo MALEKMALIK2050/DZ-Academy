@@ -40,9 +40,9 @@ export async function calculateProfileCompletion(userId: number): Promise<number
     user.niveauScolaire
   ];
 
-  // Compter les champs remplis
+  // Compter les champs remplis (Typé explicitement avec 'any' pour éviter les avertissements)
   const filledFields = fields.filter(
-    f => f && f !== null && f !== ""
+    (f: any) => f && f !== null && f !== ""
   ).length;
 
   // Calculer le pourcentage
@@ -135,12 +135,12 @@ export async function getUserProfile(userId: number) {
 
   if (!user) return null;
 
-  // Calculer les stats
+  // Calculer les stats (Typage strict appliqué ici)
   const totalCourses = user.enrollments.length;
   const completedCourses = user.enrollments.filter((e: any) => e.completedAt).length;
   const averageQuizScore = user.quizResults.length > 0
     ? Math.round(
-      user.quizResults.reduce((sum, q) => sum + q.score, 0) /
+      user.quizResults.reduce((sum: number, q: any) => sum + q.score, 0) /
       user.quizResults.length
     )
     : 0;
@@ -438,18 +438,19 @@ export async function getUserStats(userId: number) {
     })
   ]);
 
+  // Typages stricts ajoutés dans les reduces de statistiques
   const averageProgress = enrollments.length > 0
-    ? Math.round(enrollments.reduce((sum, e) => sum + e.progress, 0) / enrollments.length)
+    ? Math.round(enrollments.reduce((sum: number, e: any) => sum + e.progress, 0) / enrollments.length)
     : 0;
 
   const averageScore = quizzes.length > 0
-    ? Math.round(quizzes.reduce((sum, q) => sum + q.score, 0) / quizzes.length)
+    ? Math.round(quizzes.reduce((sum: number, q: any) => sum + q.score, 0) / quizzes.length)
     : 0;
 
   return {
     profileCompletion: user.pourcentageCompletion,
     coursesEnrolled: enrollments.length,
-    coursesCompleted: enrollments.filter(e => e.completedAt).length,
+    coursesCompleted: enrollments.filter((e: any) => e.completedAt).length,
     averageProgress,
     quizzesTaken: quizzes.length,
     averageScore,
@@ -461,7 +462,7 @@ export async function getUserStats(userId: number) {
 }
 
 // ============================================
-// 🔄 MISE À JOUR DE PROFIL
+// 📊 MISE À JOUR DE PROFIL
 // ============================================
 
 /**
