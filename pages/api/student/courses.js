@@ -19,16 +19,13 @@ export default async function handler(req, res) {
 
   try {
     if (req.method === "GET") {
-  const { niveau, annee, matiere } = req.query;
-  console.log("Filtres reçus:", { niveau, annee, matiere });
+      const { niveau, annee, matiere } = req.query;
+      console.log("Filtres reçus:", { niveau, annee, matiere });
 
-  const where = { status: "PUBLISHED" }; // ✅ remettre
-  if (niveau)  where.niveau  = { equals: niveau,  mode: "insensitive" };
-  if (annee)   where.annee   = { equals: annee,   mode: "insensitive" };
-  if (matiere) where.matiere = { equals: matiere, mode: "insensitive" };
-        
-
-        
+      const where = { status: "PUBLISHED" }; // ✅ remettre
+      if (niveau)  where.niveau  = { equals: niveau,  mode: "insensitive" };
+      if (annee)   where.annee   = { equals: annee,   mode: "insensitive" };
+      if (matiere) where.matiere = { equals: matiere, mode: "insensitive" };
 
       const [catalogue, enrollments] = await Promise.all([
         prisma.course.findMany({
@@ -58,8 +55,11 @@ export default async function handler(req, res) {
         }),
       ]);
 
+      console.log("Where clause:", where); // ✅
       console.log("catalogue count:", catalogue.length);     // ✅ debug
       console.log("enrollments count:", enrollments.length); // ✅ debug
+      console.log("Cours trouvés:", catalogue.length);
+      catalogue.forEach(c => console.log("  -", c.title, c.niveau, c.annee, c.matiere, c.status));
 
       return res.status(200).json({ catalogue, enrollments });
     }
@@ -127,15 +127,5 @@ export default async function handler(req, res) {
   } catch (error) {
     console.error("API STUDENT COURSES ERROR:", error.message);
     return res.status(500).json({ error: error.message }); // ✅ retourne l'erreur réelle
-  }
-
-  if (req.method === "GET") {
-  const { niveau, annee, matiere } = req.query;
-  console.log("Filtres reçus:", { niveau, annee, matiere }); // ✅
-  console.log("Where clause:", where); // ✅
-
-  // après la requête prisma :
-  console.log("Cours trouvés:", catalogue.length);
-  catalogue.forEach(c => console.log("  -", c.title, c.niveau, c.annee, c.matiere, c.status));
   }
 }
