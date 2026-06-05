@@ -1,5 +1,5 @@
 import crypto from 'crypto';
-import { sendMail } from '../../services/sendMail.js'; // adapte le chemin
+
 
 // Génère un token sécurisé
 function generateResetToken() {
