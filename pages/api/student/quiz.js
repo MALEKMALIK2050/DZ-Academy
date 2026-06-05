@@ -1,10 +1,8 @@
-// pages/api/student/quiz.js
 import prisma from "@/lib/prisma";
 import jwt from "jsonwebtoken";
 
-// Ajustez ces seuils comme vous le souhaitez :
-const SEUIL_REUSSITE = 90; // Niveau de réussite (ex: 90%)
-const MAX_TENTATIVES = 3;  // Nombre de tentatives max (ex: 3)
+const SEUIL_REUSSITE = 90;
+const MAX_TENTATIVES = 3;
 
 function getUser(req) {
   try {
@@ -19,7 +17,7 @@ export default async function handler(req, res) {
   if (!user) return res.status(401).json({ error: "Non autorisé" });
   if (user.role !== "STUDENT") return res.status(403).json({ error: "Accès refusé" });
 
-  // GET — vérifier tentatives restantes et statut actuel
+  // GET — vérifier les tentatives restantes du candidat
   if (req.method === "GET") {
     try {
       const { quizId } = req.query;
@@ -37,25 +35,23 @@ export default async function handler(req, res) {
         bloque:              (existing?.tentatives || 0) >= MAX_TENTATIVES && (existing?.score || 0) < SEUIL_REUSSITE,
       });
     } catch (error) {
-      console.error("GET QUIZ ERROR:", error);
+      console.error(error);
       return res.status(500).json({ error: "Erreur serveur" });
     }
   }
 
-  // POST — soumettre résultat quiz
+  // POST — soumettre le résultat d'un quiz
   if (req.method === "POST") {
     try {
       const { quizId, reponses } = req.body;
       if (!quizId || !reponses) return res.status(400).json({ error: "quizId et reponses obligatoires" });
 
-      const quizIdInt = parseInt(quizId);
-
-      // Vérifier tentatives existantes
+      // Vérifier les tentatives existantes
       const existing = await prisma.quizResult.findUnique({
-        where: { studentId_quizId: { studentId: user.id, quizId: quizIdInt } },
+        where: { studentId_quizId: { studentId: user.id, quizId: parseInt(quizId) } },
       });
 
-      // Bloqué si tentatives max épuisées et non réussi
+      // Bloqué si tentatives max atteintes et non réussi
       if (existing && existing.tentatives >= MAX_TENTATIVES && existing.score < SEUIL_REUSSITE) {
         return res.status(403).json({
           error: "Contactez votre enseignant pour une remédiation pédagogique obligatoire.",
@@ -74,14 +70,14 @@ export default async function handler(req, res) {
         });
       }
 
-      // Charger le quiz avec questions
+      // Charger le quiz complet avec ses questions
       const quiz = await prisma.quiz.findUnique({
-        where: { id: quizIdInt },
+        where: { id: parseInt(quizId) },
         include: { questions: true },
       });
       if (!quiz) return res.status(404).json({ error: "Quiz introuvable" });
 
-      // Calculer le score
+      // Calcul du score
       let correct = 0;
       const detail = [];
 
@@ -132,19 +128,19 @@ export default async function handler(req, res) {
       const reussi      = score >= SEUIL_REUSSITE;
       const bloque      = !reussi && tentatives >= MAX_TENTATIVES;
 
-      // Sauvegarder dans la base
+      // Sauvegarder les résultats dans la base de données
       const result = await prisma.quizResult.upsert({
-        where:  { studentId_quizId: { studentId: user.id, quizId: quizIdInt } },
+        where:  { studentId_quizId: { studentId: user.id, quizId: parseInt(quizId) } },
         update: { score, reponses: detail, tentatives },
-        create: { studentId: user.id, quizId: quizIdInt, score, reponses: detail, tentatives: 1 },
+        create: { studentId: user.id, quizId: parseInt(quizId), score, reponses: detail, tentatives: 1 },
       });
 
-      // Feedback adapté au score obtenu
+      // Message d'évaluation adapté au score obtenu
       let feedbackMessage;
       if (reussi) {
         if (score === 100) {
           feedbackMessage = "🏆 Parfait ! Score maximal ! Vous maîtrisez ce chapitre à la perfection. Passez au suivant !";
-        } else if (score >= 90) {
+        } else if (score >= 95) {
           feedbackMessage = "🎉 Excellent ! Très belle performance. Vous pouvez passer au chapitre suivant.";
         } else {
           feedbackMessage = "✅ Bien joué ! Vous avez réussi. Continuez sur cette lancée !";
@@ -165,7 +161,7 @@ export default async function handler(req, res) {
       return res.status(200).json({
         score,
         correct,
-        total: totalPoints,
+        total:      totalPoints,
         tentatives,
         tentativesRestantes: Math.max(0, MAX_TENTATIVES - tentatives),
         reussi,
