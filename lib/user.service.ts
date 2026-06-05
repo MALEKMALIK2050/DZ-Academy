@@ -137,7 +137,7 @@ export async function getUserProfile(userId: number) {
 
   // Calculer les stats
   const totalCourses = user.enrollments.length;
-  const completedCourses = user.enrollments.filter(e => e.completedAt).length;
+  const completedCourses = user.enrollments.filter((e: any) => e.completedAt).length;
   const averageQuizScore = user.quizResults.length > 0
     ? Math.round(
       user.quizResults.reduce((sum, q) => sum + q.score, 0) /
