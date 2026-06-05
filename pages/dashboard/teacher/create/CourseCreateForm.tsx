@@ -12,7 +12,6 @@ interface Category {
 export default function CourseCreateForm({ categories }: { categories: Category[] }) {
   const router = useRouter();
   
-  // Sécurisé par le parent Suspense dans le fichier page.tsx d'origine
   const searchParams = useSearchParams();
   const templateId = searchParams.get("templateId") || "";
 
@@ -24,7 +23,7 @@ export default function CourseCreateForm({ categories }: { categories: Category[
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title || !categoryId) {
-      alert("Veuillez saisir un titre et choisir une catégorie academique !");
+      alert("Veuillez remplir le titre et sélectionner une catégorie !");
       return;
     }
 
@@ -43,7 +42,7 @@ export default function CourseCreateForm({ categories }: { categories: Category[
 
       if (!res.ok) {
         const err = await res.json();
-        throw new Error(err.error || "Erreur de persistence lors de l'enregistrement...");
+        throw new Error(err.error || "Une erreur est survenue lors de l'enregistrement");
       }
 
       const newCourse = await res.json();
@@ -62,27 +61,27 @@ export default function CourseCreateForm({ categories }: { categories: Category[
       {templateId && (
         <div className="p-4 bg-amber-50 border border-amber-200 text-amber-800 rounded-2xl flex items-center gap-3 text-xs">
           <BookOpen className="w-5 h-5 shrink-0 text-amber-600" />
-          <span>Création basée sur le modèle ID <strong>#{templateId}</strong>.</span>
+          <span>Création basée sur le modèle temporaire ID <strong>#{templateId}</strong>. Les chapitres par défaut seront pré-générés.</span>
         </div>
       )}
 
       <div>
-        <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Titre du Cours</label>
+        <label className="block text-xs font-bold text-slate-705 uppercase tracking-wider mb-2">Titre du Cours</label>
         <input 
           type="text" 
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          placeholder="ex: Introduction aux réseaux neuronaux..."
+          placeholder="ex: Fondamentaux du Développement Web..."
           className="w-full px-4 py-3 border border-slate-200 rounded-xl text-slate-900 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-600 transition"
         />
       </div>
 
       <div>
-        <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Catégorie Académique</label>
+        <label className="block text-xs font-bold text-slate-705 uppercase tracking-wider mb-2">Catégorie Académique</label>
         <select 
           value={categoryId} 
           onChange={(e) => setCategoryId(e.target.value)}
-          className="w-full px-4 py-3 border border-slate-200 rounded-xl text-slate-900 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-600 transition cursor-pointer font-sans"
+          className="w-full px-4 py-3 border border-slate-200 rounded-xl text-slate-900 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-600 transition cursor-pointer"
         >
           <option value="">Sélectionnez une catégorie...</option>
           {categories.map((cat) => (
@@ -92,11 +91,11 @@ export default function CourseCreateForm({ categories }: { categories: Category[
       </div>
 
       <div>
-        <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Description / Syllabus</label>
+        <label className="block text-xs font-bold text-slate-705 uppercase tracking-wider mb-2">Description</label>
         <textarea 
           value={description}
           onChange={(e) => setDescription(e.target.value)}
-          placeholder="Présentation générale..."
+          placeholder="Présentation du syllabus et compétences visées..."
           rows={4}
           className="w-full px-4 py-3 border border-slate-200 rounded-xl text-slate-900 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-600 transition resize-none"
         />
@@ -106,7 +105,7 @@ export default function CourseCreateForm({ categories }: { categories: Category[
         <button
           type="submit"
           disabled={submitting}
-          className="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm rounded-xl transition flex items-center gap-2 cursor-pointer disabled:opacity-50"
+          className="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-sm rounded-xl transition flex items-center gap-2 cursor-pointer disabled:opacity-50"
         >
           {submitting ? (
             <>

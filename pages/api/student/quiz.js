@@ -1,8 +1,8 @@
 import prisma from "@/lib/prisma";
 import jwt from "jsonwebtoken";
 
-const SEUIL_REUSSITE = 50; // Seuil à 50% de réussite
-const MAX_TENTATIVES = Infinity; // Tentatives illimitées (ou définissez une valeur numérique)
+const SEUIL_REUSSITE = 50; 
+const MAX_TENTATIVES = Infinity; 
 
 function getUser(req) {
   try {
@@ -27,7 +27,6 @@ export default async function handler(req, res) {
   const { method } = req;
 
   try {
-    // GET : Charger les informations d'un quiz et l'historique de l'étudiant
     if (method === "GET") {
       const { quizId } = req.query;
       if (!quizId) {
@@ -72,7 +71,6 @@ export default async function handler(req, res) {
       });
     }
 
-    // POST : Soumettre et valider les réponses d'un étudiant
     if (method === "POST") {
       const { quizId, answers } = req.body;
       if (!quizId || !answers) {
@@ -112,7 +110,6 @@ export default async function handler(req, res) {
 
         let isCorrect = false;
 
-        // Validation standard selon le format de la réponse
         if (question.type === "QCM" || question.type === "VRAI_FAUX") {
           isCorrect = String(uAns).trim().toLowerCase() === String(correctAnswers).trim().toLowerCase();
         } else if (question.type === "QCM_MULTIPLE") {
@@ -165,7 +162,7 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: "Méthode non autorisée" });
 
   } catch (error) {
-    console.error("API STUDENT QUIZ ERROR:", error);
+    console.error("API STUDENT QUIZ SUBMISSION ERROR:", error);
     return res.status(500).json({ error: "Erreur serveur" });
   }
 }

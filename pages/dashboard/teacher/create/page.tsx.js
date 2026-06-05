@@ -1,27 +1,26 @@
 import React, { Suspense } from "react";
-import prisma from "@/lib/prisma";
-import CourseCreateForm from "./CourseCreateForm"; // Import du formulaire client
+import prisma from "@/lib/prisma"; 
+import CourseCreateForm from "./CourseCreateForm"; 
 
-// SÉCURITÉ CRUCIALE : On force l'analyse à être entièrement DYNAMIQUE au Runtime
+// FORCE LE RENDU DYNAMIQUE AU BUILD POUR ÉVITER LES SOUCIS DE BASE DE DONNÉES SUR VERCEL
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-// On récupère les catégories de façon résistante aux pannes de build sur Vercel
 async function getCategories() {
   try {
     if (!process.env.DATABASE_URL) {
-      console.warn("⚠️ DATABASE_URL non définie sur Vercel à la compilation. Données temporaires configurées.");
+      console.warn("⚠️ DATABASE_URL manquante au build. Utilisation de données de secours.");
       return [
         { id: 1, name: "Ingénierie Pédagogique" },
         { id: 2, name: "Développement Web" },
-        { id: 3, name: "Sciences Cognitives" }
+        { id: 3, name: "Management du Changement" }
       ];
     }
     return await prisma.category.findMany({
       orderBy: { name: "asc" }
     });
   } catch (error) {
-    console.error("⚠️ Échec temporaire de connexion SQL, fallback utilisé :", error);
+    console.error("⚠️ Échec d'accès à la base de données, retour de données temporaires :", error);
     return [
       { id: 1, name: "Ingénierie Pédagogique (Secours)" },
       { id: 2, name: "Développement Web (Secours)" }
@@ -41,14 +40,14 @@ export default async function TeacherCreatePage() {
           </span>
           <h1 className="text-3xl font-black text-slate-900 mt-2">Création d'un Cours</h1>
           <p className="text-slate-500 text-sm mt-1">
-            Complétez les informations pour initialiser la structure dans la base SQL.
+            Concevez un nouveau module et liez-le à votre base de données Prisma de manière sécurisée.
           </p>
         </div>
 
-        {/* Tout composant utilisant useSearchParams() DOIT être enveloppé dans Suspense pour ne pas planter Next.js au build ! */}
+        {/* Suspense externe obligatoire pour useSearchParams au moment du build Next.js */}
         <Suspense fallback={
           <div className="p-8 bg-white border border-slate-200 rounded-3xl animate-pulse space-y-4">
-            <div className="h-6 w-1/4 bg-slate-200 rounded" />
+            <div className="h-6 w-1/3 bg-slate-200 rounded" />
             <div className="h-12 w-full bg-slate-100 rounded" />
             <div className="h-12 w-full bg-slate-100 rounded" />
           </div>
