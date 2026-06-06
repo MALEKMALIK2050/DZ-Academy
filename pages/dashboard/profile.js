@@ -4,16 +4,23 @@ import { useRouter } from "next/router";
 import ProtectedRoute from "@/components/ProtectedRoute";
 
 export default function Profile() {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
   const router = useRouter();
   
-  // Rediriger vers le bon profil selon le rôle
   useEffect(() => {
-    if (!user) return;
-    if (user.role === "STUDENT") router.push("/dashboard/profile/student");
-    else if (user.role === "TEACHER") router.push("/dashboard/profile/teacher");
-    else if (user.role === "DESIGNER") router.push("/dashboard/profile/designer");
-  }, [user]);
+    if (loading) return;
+    if (!user) {
+      router.push("/login");
+      return;
+    }
+    
+    const role = user.role?.toLowerCase();
+    if (role === "student") router.replace("/dashboard/student");
+    else if (role === "teacher") router.replace("/dashboard/teacher");
+    else if (role === "designer") router.replace("/dashboard/designer");
+    else if (role === "admin") router.replace("/dashboard/admin");
+    else router.replace("/dashboard");
+  }, [user, loading]);
 
   return (
     <ProtectedRoute>
