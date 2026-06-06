@@ -10,12 +10,15 @@ function getUser(req) {
     
     if (!decoded || typeof decoded === 'string') return null;
     
+    console.log("Decoded token:", decoded); // DEBUG
+    
     return {
       id: typeof decoded.id === 'string' ? parseInt(decoded.id, 10) : decoded.id,
       role: decoded.role,
       email: decoded.email,
     };
-  } catch {
+  } catch (err) {
+    console.error("Token error:", err);
     return null;
   }
 }
@@ -42,8 +45,8 @@ export default async function handler(req, res) {
   }
 
   if (req.method === "POST") {
-    if (user.role !== "DESIGNER" && user.role !== "TEACHER") {
-      return res.status(403).json({ error: "Accès refusé" });
+    if (user.role !== "DESIGNER" && user.role !== "TEACHER" && user.role !== "ADMIN") {
+      return res.status(403).json({ error: "Accès refusé. Rôle: " + user.role });
     }
     
     try {
@@ -52,6 +55,8 @@ export default async function handler(req, res) {
       if (!title || !matiere || !niveau || !annee) {
         return res.status(400).json({ error: "Champs obligatoires manquants" });
       }
+
+      console.log("Creating course for user:", user.id, user.role);
 
       const course = await prisma.course.create({
         data: {
@@ -67,8 +72,8 @@ export default async function handler(req, res) {
       
       return res.status(201).json(course);
     } catch (error) {
-      console.error(error);
-      return res.status(500).json({ error: "Erreur création" });
+      console.error("Create course error:", error);
+      return res.status(500).json({ error: error.message });
     }
   }
 
