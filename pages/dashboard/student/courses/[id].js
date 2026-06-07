@@ -45,6 +45,9 @@ export default function StudentCourse() {
   // Progression et stats
   const [chapterProgress, setChapterProgress] = useState({});
   const [quizStats, setQuizStats] = useState({});
+  
+  // État pour le menu mobile
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // ====== FETCH INITIAL ======
   useEffect(() => {
@@ -167,6 +170,7 @@ export default function StudentCourse() {
     setQuizResult(null);
     setQuizAnswers({});
     setError("");
+    setMobileMenuOpen(false); // Fermer le menu mobile sur sélection
   };
 
   const handleMarkRead = async (chapterId) => {
@@ -202,6 +206,7 @@ export default function StudentCourse() {
     setQuizResult(null);
     setQuizAnswers({});
     setError("");
+    setMobileMenuOpen(false);
   };
 
   const handleSubmitQuiz = async (quiz) => {
@@ -251,233 +256,288 @@ export default function StudentCourse() {
 
   const sommatifUnlocked = isSommatifUnlocked();
 
+  // Styles responsives
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+
   return (
     <ProtectedRoute allowedRoles={["STUDENT"]}>
       <div style={{ minHeight: "100vh", background: "#f8fafc" }}>
 
         {/* Header cours */}
-        <div style={{ background: "#f36528", color: "white", padding: "1rem 2rem", display: "flex", alignItems: "center", gap: "10rem" }}>
-          <button onClick={() => router.push("/dashboard/student")} style={{ background: "none", border: "none", color: "#eef2f7", cursor: "pointer", fontSize: "1.3rem" }}>
+        <div style={{ 
+          background: "#f36528", 
+          color: "white", 
+          padding: isMobile ? "0.8rem 1rem" : "1rem 2rem", 
+          display: "flex", 
+          alignItems: "center", 
+          justifyContent: "space-between",
+          flexWrap: "wrap",
+          gap: "0.5rem"
+        }}>
+          <button 
+            onClick={() => router.push("/dashboard/student")} 
+            style={{ 
+              background: "none", 
+              border: "none", 
+              color: "#eef2f7", 
+              cursor: "pointer", 
+              fontSize: isMobile ? "1rem" : "1.3rem",
+              padding: "0.5rem"
+            }}
+          >
             ← Retour
           </button>
-          <div>
-            <h1 style={{ margin: 0.9, fontSize: "1.9rem" }}>{course?.title}</h1>
-            <p style={{ margin: 0.9, fontSize: "1.5rem", color: "#1ed83a" }}>
+          
+          <div style={{ flex: 1, textAlign: "center" }}>
+            <h1 style={{ margin: 0, fontSize: isMobile ? "1.2rem" : "1.9rem" }}>{course?.title}</h1>
+            <p style={{ margin: "0.2rem 0 0", fontSize: isMobile ? "0.8rem" : "1rem", color: "#1ed83a" }}>
               {[course?.matiere, course?.niveau, course?.annee].filter(Boolean).join(" • ")}
             </p>
           </div>
+
+          {/* Bouton menu mobile */}
+          {isMobile && (
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              style={{
+                background: "rgba(255,255,255,0.2)",
+                border: "none",
+                color: "white",
+                fontSize: "1.5rem",
+                padding: "0.5rem",
+                borderRadius: "8px",
+                cursor: "pointer"
+              }}
+            >
+              {mobileMenuOpen ? "✕" : "☰"}
+            </button>
+          )}
         </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "450px 1fr", minHeight: "calc(100vh - 60px)" }}>
+        {/* Container principal responsive */}
+        <div style={{
+          display: "flex",
+          flexDirection: isMobile ? "column" : "row",
+          minHeight: "calc(100vh - 60px)"
+        }}>
 
-          {/* ── SIDEBAR ── */}
-          <div style={{
-            background: "linear-gradient(135deg, #f0f3f2 0%, #faf9f7 100%)",
-            padding: "3rem 0.5rem",
-            overflowY: "auto",
-            minHeight: "calc(300vh - 60px)"
-          }}>
-
-            {/* Header Sidebar */}
+          {/* SIDEBAR - conditionnelle sur mobile */}
+          {(!isMobile || mobileMenuOpen) && (
             <div style={{
-              background: "rgba(222, 231, 221, 0.1)",
-              backdropFilter: "blur(10px)",
-              padding: "1.5rem",
-              borderRadius: "15px",
-              marginBottom: "2rem",
-              border: "1px solid rgba(86, 155, 101, 0.2)",
+              background: "linear-gradient(135deg, #f0f3f2 0%, #faf9f7 100%)",
+              padding: isMobile ? "1rem" : "2rem 1rem",
+              overflowY: "auto",
+              width: isMobile ? "100%" : "350px",
+              minHeight: isMobile ? "auto" : "calc(100vh - 60px)",
+              borderRight: isMobile ? "none" : "1px solid rgba(0,0,0,0.05)",
+              boxSizing: "border-box"
             }}>
-              <div style={{ fontSize: "3rem", marginBottom: "1rem" }}>
-                {pretestCompleted ? "🚀" : "🎯"}
+
+              {/* Header Sidebar */}
+              <div style={{
+                background: "rgba(222, 231, 221, 0.1)",
+                backdropFilter: "blur(10px)",
+                padding: isMobile ? "1rem" : "1.5rem",
+                borderRadius: "15px",
+                marginBottom: "1.5rem",
+                border: "1px solid rgba(86, 155, 101, 0.2)",
+              }}>
+                <div style={{ fontSize: isMobile ? "2rem" : "3rem", marginBottom: "0.5rem" }}>
+                  {pretestCompleted ? "🚀" : "🎯"}
+                </div>
+                <h3 style={{
+                  margin: "0 0 0.3rem",
+                  color: "green",
+                  fontSize: isMobile ? "1rem" : "1.25rem",
+                  fontWeight: "700",
+                }}>
+                  {pretestCompleted ? "Prêt à apprendre!" : "Évalue-toi d'abord"}
+                </h3>
+                <p style={{
+                  margin: 0,
+                  color: "rgba(2, 60, 56, 0.8)",
+                  fontSize: isMobile ? "0.75rem" : "0.9rem",
+                  lineHeight: "1.4",
+                }}>
+                  {pretestCompleted
+                    ? "Tu as les bases. Explore les chapitres!"
+                    : "Le pretest t'aidera à vérifier tes connaissances."}
+                </p>
               </div>
-              <h3 style={{
-                margin: "0 0 0.5rem",
-                color: "green",
-                fontSize: "1.25rem",
-                fontWeight: "1500",
-              }}>
-                {pretestCompleted ? "Prêt à apprendre!" : "Évalue-toi d'abord"}
-              </h3>
-              <p style={{
-                margin: 0,
-                color: "rgba(2, 60, 56, 0.8)",
-                fontSize: "0.90rem",
-                lineHeight: "1.9",
-              }}>
-                {pretestCompleted
-                  ? "Tu as les bases. Explore les chapitres!"
-                  : "Le pretest t'aidera à vérifier tes connaissances."}
-              </p>
-            </div>
 
-            {/* Progression */}
-            <div style={{ marginBottom: "2rem" }}>
-              {(() => {
-                const total = course?.chapters?.length || 0;
-                const done = course?.chapters?.filter((ch) => chapterProgress[ch.id]?.lu && (!ch.quiz || quizStats[ch.quiz.id]?.reussi)).length || 0;
-                const pct = total > 0 ? Math.round((done / total) * 100) : 0;
-                return (
-                  <>
-                    <div style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      color: "rgba(4, 53, 26, 0.9)",
-                      fontSize: "1rem",
-                      marginBottom: "1.5rem",
-                      fontWeight: "600",
-                    }}>
-                      <span>Progression</span>
-                      <span style={{ background: "rgb(82, 237, 224)", padding: "0.2rem 0.6rem", borderRadius: "12px" }}>
-                        {pct}%
-                      </span>
-                    </div>
-                    <div style={{
-                      background: "rgb(214, 226, 224)",
-                      borderRadius: "12px",
-                      height: "8px",
-                      overflow: "hidden",
-                      border: "1px solid rgb(13, 69, 65)",
-                    }}>
+              {/* Progression */}
+              <div style={{ marginBottom: "1.5rem" }}>
+                {(() => {
+                  const total = course?.chapters?.length || 0;
+                  const done = course?.chapters?.filter((ch) => chapterProgress[ch.id]?.lu && (!ch.quiz || quizStats[ch.quiz.id]?.reussi)).length || 0;
+                  const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+                  return (
+                    <>
                       <div style={{
-                        background: "linear-gradient(150deg, #2ded74, #22c55e)",
-                        width: `${pct}%`,
-                        height: "100%",
-                        transition: "width 0.3s ease"
-                      }} />
+                        display: "flex",
+                        justifyContent: "space-between",
+                        color: "rgba(4, 53, 26, 0.9)",
+                        fontSize: isMobile ? "0.85rem" : "1rem",
+                        marginBottom: "0.8rem",
+                        fontWeight: "600",
+                      }}>
+                        <span>Progression</span>
+                        <span style={{ background: "rgb(82, 237, 224)", padding: "0.2rem 0.6rem", borderRadius: "12px" }}>
+                          {pct}%
+                        </span>
+                      </div>
+                      <div style={{
+                        background: "rgb(214, 226, 224)",
+                        borderRadius: "12px",
+                        height: "8px",
+                        overflow: "hidden",
+                        border: "1px solid rgb(13, 69, 65)",
+                      }}>
+                        <div style={{
+                          background: "linear-gradient(150deg, #2ded74, #22c55e)",
+                          width: `${pct}%`,
+                          height: "100%",
+                          transition: "width 0.3s ease"
+                        }} />
+                      </div>
+                    </>
+                  );
+                })()}
+              </div>
+
+              {/* Chapitres */}
+              <h2 style={{
+                color: "rgba(13, 28, 18, 0.7)",
+                fontSize: isMobile ? "1rem" : "1.2rem",
+                textTransform: "uppercase",
+                letterSpacing: "0.2em",
+                marginBottom: "1rem",
+                fontWeight: "700",
+              }}>
+                📖 Chapitres
+              </h2>
+
+              <div style={{ display: "flex", flexDirection: "column", gap: "0.6rem" }}>
+                {course?.chapters?.map((ch, i) => {
+                  const unlocked = isChapterUnlocked(i);
+                  const lu = chapterProgress[ch.id]?.lu;
+                  const quizOk = !ch.quiz || quizStats[ch.quiz.id]?.reussi;
+                  const completed = lu && quizOk;
+                  const active = activeChapter?.id === ch.id && !activeQuiz;
+                  const bloque = ch.quiz && quizStats[ch.quiz.id]?.bloque;
+
+                  return (
+                    <div
+                      key={ch.id}
+                      onClick={() => handleOpenChapter(ch, i)}
+                      style={{
+                        padding: isMobile ? "0.75rem" : "1rem",
+                        borderRadius: "12px",
+                        cursor: unlocked ? "pointer" : "not-allowed",
+                        background: active
+                          ? "rgba(15, 31, 20, 0.33)"
+                          : completed
+                          ? "rgba(152, 225, 178, 0.2)"
+                          : unlocked
+                          ? "rgba(158, 224, 181, 0.1)"
+                          : "rgba(7, 18, 13, 0.2)",
+                        color: unlocked ? "white" : "rgba(179, 239, 199, 0.5)",
+                        opacity: unlocked ? 1 : 0.6,
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "0.75rem",
+                        border: active ? "3px solid rgba(16, 229, 58, 0.41)" : "2px solid transparent",
+                        transition: "all 0.2s ease",
+                        backdropFilter: "blur(10px)",
+                      }}>
+                      <span style={{ fontSize: isMobile ? "1rem" : "1.3rem" }}>
+                        {!unlocked ? "🔒" : completed ? "✨" : bloque ? "⚠️" : "📚"}
+                      </span>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{
+                          fontSize: isMobile ? "0.85rem" : "1rem",
+                          fontWeight: active ? "700" : "600",
+                          color: "rgba(2, 60, 56, 0.8)",
+                          whiteSpace: "normal",
+                          wordBreak: "break-word"
+                        }}>
+                          {i + 1}. {ch.title}
+                        </div>
+                        {ch.quiz && unlocked && (
+                          <div style={{
+                            fontSize: "0.65rem",
+                            color: "rgba(23, 3, 3, 0.7)",
+                            marginTop: "0.2rem",
+                          }}>
+                            Quiz {quizStats[ch.quiz.id]?.reussi ? "✅" : quizStats[ch.quiz.id]?.bloque ? "⛔" : quizStats[ch.quiz.id]?.tentatives ? `(${quizStats[ch.quiz.id].tentatives}/3)` : ""}
+                          </div>
+                        )}
+                      </div>
                     </div>
-                  </>
-                );
-              })()}
-            </div>
+                  );
+                })}
+              </div>
 
-            {/* Chapitres */}
-            <h1 style={{
-              color: "rgba(13, 28, 18, 0.7)",
-              fontSize: "1.5rem",
-              textTransform: "uppercase",
-              letterSpacing: "0.25em",
-              marginBottom: "1rem",
-              fontWeight: "700",
-            }}>
-              📖 Chapitres :
-            </h1>
-
-            <div style={{ display: "flex", flexDirection: "column", gap: "0.6rem" }}>
-              {course?.chapters?.map((ch, i) => {
-                const unlocked = isChapterUnlocked(i);
-                const lu = chapterProgress[ch.id]?.lu;
-                const quizOk = !ch.quiz || quizStats[ch.quiz.id]?.reussi;
-                const completed = lu && quizOk;
-                const active = activeChapter?.id === ch.id && !activeQuiz;
-                const bloque = ch.quiz && quizStats[ch.quiz.id]?.bloque;
-
-                return (
+              {/* Test Sommatif */}
+              {course?.quizFinal && (
+                <div style={{ marginTop: "1.5rem" }}>
+                  <h3 style={{
+                    color: "rgba(11, 7, 1, 0.7)",
+                    fontSize: isMobile ? "0.85rem" : "1rem",
+                    textTransform: "uppercase",
+                    letterSpacing: "0.3em",
+                    fontWeight: "700",
+                    marginBottom: "1rem",
+                  }}>
+                    🏆 Final
+                  </h3>
                   <div
-                    key={ch.id}
-                    onClick={() => handleOpenChapter(ch, i)}
+                    onClick={handleOpenSommatif}
                     style={{
-                      padding: "1rem",
-                      borderRadius: "12px",
-                      cursor: unlocked ? "pointer" : "not-allowed",
-                      background: active
-                        ? "rgba(15, 31, 20, 0.33)"
-                        : completed
-                        ? "rgba(152, 225, 178, 0.2)"
-                        : unlocked
-                        ? "rgba(158, 224, 181, 0.1)"
-                        : "rgba(7, 18, 13, 0.2)",
-                      color: unlocked ? "white" : "rgba(179, 239, 199, 0.5)",
-                      opacity: unlocked ? 1 : 0.6,
+                      padding: isMobile ? "0.75rem" : "1rem",
+                      borderRadius: "20px",
+                      cursor: sommatifUnlocked ? "pointer" : "not-allowed",
+                      background: activeQuiz?.id === course.quizFinal.id
+                        ? "rgba(181, 171, 171, 0.25)"
+                        : sommatifUnlocked
+                        ? "rgba(220, 132, 24, 0.2)"
+                        : "rgba(0,0,0,0.2)",
+                      color: sommatifUnlocked ? "white" : "rgba(11, 87, 85, 0.5)",
+                      opacity: sommatifUnlocked ? 1 : 1,
                       display: "flex",
                       alignItems: "center",
-                      gap: "0.75rem",
-                      border: active ? "3px solid rgba(16, 229, 58, 0.41)" : "2px solid transparent",
+                      gap: "1rem",
+                      border: activeQuiz?.id === course.quizFinal.id ? "2px solid rgba(255,255,255,0.4)" : "2px solid transparent",
                       transition: "all 0.2s ease",
                       backdropFilter: "blur(10px)",
                     }}>
-                    <span style={{ fontSize: "1.3rem" }}>
-                      {!unlocked ? "🔒" : completed ? "✨" : bloque ? "⚠️" : "📚"}
+                    <span style={{ fontSize: isMobile ? "1.5rem" : "2rem" }}>
+                      {!sommatifUnlocked ? "🔒" : quizStats[course.quizFinal.id]?.reussi ? "🏆" : "📝"}
                     </span>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{
-                        fontSize: "1.3rem",
-                        fontWeight: active ? "700" : "600",
-                        color: "rgba(2, 60, 56, 0.8)",
-                        whiteSpace: "nowrap",
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                      }}>
-                        {i + 1}. {ch.title}
+                    <div>
+                      <div style={{ fontWeight: "700", fontSize: isMobile ? "0.9rem" : "1.2rem", color: "green" }}>
+                        Test Final
                       </div>
-                      {ch.quiz && unlocked && (
-                        <div style={{
-                          fontSize: "0.7rem",
-                          color: "rgba(23, 3, 3, 0.7)",
-                          marginTop: "0.2rem",
-                        }}>
-                          Quiz {quizStats[ch.quiz.id]?.reussi ? "✅" : quizStats[ch.quiz.id]?.bloque ? "⛔" : quizStats[ch.quiz.id]?.tentatives ? `(${quizStats[ch.quiz.id].tentatives}/3)` : ""}
+                      {sommatifUnlocked && quizStats[course.quizFinal.id]?.tentatives && (
+                        <div style={{ fontSize: "0.65rem", color: "rgba(178, 23, 23, 0.7)" }}>
+                          {quizStats[course.quizFinal.id]?.reussi ? "Réussi ✅" : `${quizStats[course.quizFinal.id].tentatives}/3`}
                         </div>
                       )}
                     </div>
                   </div>
-                );
-              })}
-            </div>
-
-            {/* Test Sommatif */}
-            {course?.quizFinal && (
-              <div style={{ marginTop: "2rem" }}>
-                <h3 style={{
-                  color: "rgba(11, 7, 1, 0.7)",
-                  fontSize: "1rem",
-                  textTransform: "uppercase",
-                  letterSpacing: "0.5em",
-                  fontWeight: "700",
-                  marginBottom: "1.5rem",
-                }}>
-                  🏆 Final 🏆
-                </h3>
-                <div
-                  onClick={handleOpenSommatif}
-                  style={{
-                    padding: "1rem",
-                    borderRadius: "20px",
-                    marginTop: "2rem",
-                    cursor: sommatifUnlocked ? "pointer" : "not-allowed",
-                    background: activeQuiz?.id === course.quizFinal.id
-                      ? "rgba(181, 171, 171, 0.25)"
-                      : sommatifUnlocked
-                      ? "rgba(220, 132, 24, 0.2)"
-                      : "rgba(0,0,0,0.2)",
-                    color: sommatifUnlocked ? "white" : "rgba(11, 87, 85, 0.5)",
-                    opacity: sommatifUnlocked ? 1 : 1,
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "9rem",
-                    border: activeQuiz?.id === course.quizFinal.id ? "2px solid rgba(255,255,255,0.4)" : "2px solid transparent",
-                    transition: "all 0.2s ease",
-                    backdropFilter: "blur(10px)",
-                  }}>
-                  <span style={{ fontSize: "2rem" }}>
-                    {!sommatifUnlocked ? "🔒" : quizStats[course.quizFinal.id]?.reussi ? "🏆" : "📝"}
-                  </span>
-                  <div>
-                    <div style={{ fontWeight: "700", fontSize: "1.5rem", color: "green" }}>
-                      Test Final
-                    </div>
-                    {sommatifUnlocked && quizStats[course.quizFinal.id]?.tentatives && (
-                      <div style={{ fontSize: "0.7rem", color: "rgba(178, 23, 23, 0.7)" }}>
-                        {quizStats[course.quizFinal.id]?.reussi ? "Réussi ✅" : `${quizStats[course.quizFinal.id].tentatives}/3`}
-                      </div>
-                    )}
-                  </div>
                 </div>
-              </div>
-            )}
-          </div>
+              )}
+            </div>
+          )}
 
-          {/* ── CONTENU PRINCIPAL ── */}
-          <div style={{ padding: "2rem", overflowY: "auto" }}>
+          {/* CONTENU PRINCIPAL */}
+          <div style={{
+            padding: isMobile ? "1rem" : "2rem",
+            overflowY: "auto",
+            flex: 1,
+            width: "100%",
+            boxSizing: "border-box"
+          }}>
 
             {pretest && !pretestCompleted && (
               <PretestModern
@@ -494,22 +554,22 @@ export default function StudentCourse() {
               <div style={{
                 background: pretestFeedback?.color === 'red' ? '#fff5f5' : pretestFeedback?.color === 'yellow' ? '#fffff0' : '#f0fff4',
                 border: `2px solid ${pretestFeedback?.color === 'red' ? '#e53e3e' : pretestFeedback?.color === 'yellow' ? '#ecc94b' : '#059669'}`,
-                padding: "1.5rem",
+                padding: isMobile ? "1rem" : "1.5rem",
                 borderRadius: "12px",
                 marginBottom: "1.5rem"
               }}>
-                <h3 style={{ margin: "0 0 0.5rem", color: pretestFeedback?.color === 'red' ? '#c53030' : pretestFeedback?.color === 'yellow' ? '#b7791f' : '#059669' }}>
+                <h3 style={{ margin: "0 0 0.5rem", fontSize: isMobile ? "1rem" : "1.2rem", color: pretestFeedback?.color === 'red' ? '#c53030' : pretestFeedback?.color === 'yellow' ? '#b7791f' : '#059669' }}>
                   {pretestFeedback?.level === 'critique' ? '⚠️ Attention !' : '✅ Pretest complété!'}
                 </h3>
                 {pretestFeedback && (
-                  <div style={{ marginBottom: "1rem", fontSize: "1.1rem", fontWeight: "600", color: "#2d3748", padding: "0.75rem", background: "white", borderRadius: "8px", border: "1px dashed #cbd5e0" }}>
+                  <div style={{ marginBottom: "0.75rem", fontSize: isMobile ? "0.9rem" : "1.1rem", fontWeight: "600", color: "#2d3748", padding: "0.75rem", background: "white", borderRadius: "8px", border: "1px dashed #cbd5e0" }}>
                     {pretestFeedback.message}
                   </div>
                 )}
-                <p style={{ color: "#4a5568", margin: "0 0 1rem", fontSize: "0.95rem" }}>
+                <p style={{ color: "#4a5568", margin: "0 0 1rem", fontSize: isMobile ? "0.85rem" : "0.95rem" }}>
                   {pretestFeedback?.level === 'critique' 
-                    ? "Nous vous conseillons de revoir les bases avant d'attaquer ce cours. N'hésitez pas à refaire le pretest."
-                    : "Vous pouvez maintenant accéder aux chapitres. Vous pouvez refaire le pretest pour suivre votre progression."}
+                    ? "Nous vous conseillons de revoir les bases avant d'attaquer ce cours."
+                    : "Vous pouvez maintenant accéder aux chapitres."}
                 </p>
                 <button
                   onClick={() => {
@@ -517,7 +577,7 @@ export default function StudentCourse() {
                     setPretestAnswers({});
                     setPretestFeedback(null);
                   }}
-                  style={btnPrimary}
+                  style={{ ...btnPrimary, padding: isMobile ? "0.5rem 1rem" : "0.75rem 1.5rem", fontSize: isMobile ? "0.85rem" : "1rem" }}
                 >
                   🔄 Refaire le pretest
                 </button>
@@ -527,7 +587,7 @@ export default function StudentCourse() {
             {/* CHAPITRE ACTIF */}
             {activeChapter && !activeQuiz && (
               <div>
-                <h2 style={{ marginTop: 0 }}>{activeChapter.title}</h2>
+                <h2 style={{ marginTop: 0, fontSize: isMobile ? "1.3rem" : "1.8rem" }}>{activeChapter.title}</h2>
 
                 {activeChapter.objectifs && (
                   <div style={{ background: "#42be63", border: "1px solid #9ae6b4", padding: "0.75rem 1rem", borderRadius: "8px", marginBottom: "1.5rem", fontSize: "0.9rem" }}>
@@ -537,20 +597,20 @@ export default function StudentCourse() {
 
                 {/* Supports */}
                 {activeChapter.supports?.length > 0 && (
-                  <div style={{ marginBottom: "3rem" }}>
-                    <div style={{ display: "grid", gap: "2rem" }}>
+                  <div style={{ marginBottom: "2rem" }}>
+                    <div style={{ display: "grid", gap: "1.5rem" }}>
                       {activeChapter.supports.map((s) => {
                         if (s.type === "TEXTE") {
                           return (
-                            <div key={s.id} style={{ background: "white", border: "1px solid #13a74b", padding: "2rem", borderRadius: "10px" }}>
+                            <div key={s.id} style={{ background: "white", border: "1px solid #13a74b", padding: isMobile ? "1rem" : "2rem", borderRadius: "10px", overflowX: "auto" }}>
                               {s.nom && (
-                                <h2 style={{ margin: "0 0 3rem", color: "#0b5f0a", borderBottom: "2px solid #bed2ed", paddingBottom: "0.5rem" }}>
+                                <h3 style={{ margin: "0 0 1rem", color: "#0b5f0a", borderBottom: "2px solid #bed2ed", paddingBottom: "0.5rem", fontSize: isMobile ? "1rem" : "1.2rem" }}>
                                   {s.nom}
-                                </h2>
+                                </h3>
                               )}
                               <div
                                 dangerouslySetInnerHTML={{ __html: s.contenu }}
-                                style={{ lineHeight: "1.6", color: "#012720af" }}
+                                style={{ lineHeight: "1.6", color: "#012720af", fontSize: isMobile ? "0.9rem" : "1rem", overflowX: "auto" }}
                               />
                             </div>
                           );
@@ -592,13 +652,14 @@ export default function StudentCourse() {
                               alignItems: "center",
                               gap: "1rem",
                               textDecoration: "none",
-                              color: "#2d3748"
+                              color: "#2d3748",
+                              flexWrap: "wrap"
                             }}
                           >
                             <span style={{ background: typeColor(s.type), color: "white", padding: "0.3rem 0.8rem", borderRadius: "6px", fontSize: "0.8rem", fontWeight: "bold" }}>
                               {s.type}
                             </span>
-                            <span style={{ color: "#3182ce", fontWeight: "500" }}>{s.nom || s.url}</span>
+                            <span style={{ color: "#3182ce", fontWeight: "500", wordBreak: "break-word", flex: 1 }}>{s.nom || s.url}</span>
                             <span style={{ marginLeft: "auto", color: "#a0aec0" }}>→</span>
                           </a>
                         );
@@ -608,13 +669,13 @@ export default function StudentCourse() {
                 )}
 
                 {/* Marquer comme lu */}
-                <div style={{ background: "white", border: "1px solid #e2e8f0", padding: "1.5rem", borderRadius: "10px", marginBottom: "1.5rem" }}>
+                <div style={{ background: "white", border: "1px solid #e2e8f0", padding: isMobile ? "1rem" : "1.5rem", borderRadius: "10px", marginBottom: "1.5rem" }}>
                   {!chapterProgress[activeChapter.id]?.lu ? (
                     <div>
                       <p style={{ margin: "0 0 1rem", color: "#011503" }}>
-                        <h3>Avez-vous consulté toutes les ressources de ce chapitre ?</h3>
+                        <strong>Avez-vous consulté toutes les ressources de ce chapitre ?</strong>
                       </p>
-                      <button onClick={() => handleMarkRead(activeChapter.id)} style={btnSuccess}>
+                      <button onClick={() => handleMarkRead(activeChapter.id)} style={{ ...btnSuccess, padding: isMobile ? "0.5rem 1rem" : "0.75rem 1.5rem", fontSize: isMobile ? "0.85rem" : "1rem" }}>
                         ✅ J'ai terminé ce chapitre
                       </button>
                     </div>
@@ -627,8 +688,8 @@ export default function StudentCourse() {
 
                 {/* Quiz formatif */}
                 {activeChapter.quiz && chapterProgress[activeChapter.id]?.lu && (
-                  <div style={{ background: "white", border: "1px solid #e2e8f0", padding: "1.5rem", borderRadius: "10px" }}>
-                    <h3 style={{ margin: "0 0 0.5rem" }}>📝 Quiz formatif</h3>
+                  <div style={{ background: "white", border: "1px solid #e2e8f0", padding: isMobile ? "1rem" : "1.5rem", borderRadius: "10px" }}>
+                    <h3 style={{ margin: "0 0 0.5rem", fontSize: isMobile ? "1rem" : "1.2rem" }}>📝 Quiz formatif</h3>
 
                     {quizStats[activeChapter.quiz.id]?.reussi ? (
                       <p style={{ color: "#38a169", margin: 0 }}>
@@ -647,7 +708,7 @@ export default function StudentCourse() {
                             setQuizResult(null);
                             setQuizAnswers({});
                           }}
-                          style={btnPrimary}
+                          style={{ ...btnPrimary, padding: isMobile ? "0.5rem 1rem" : "0.75rem 1.5rem", fontSize: isMobile ? "0.85rem" : "1rem" }}
                         >
                           {quizStats[activeChapter.quiz.id]?.tentatives ? "🔄 Réessayer" : "📝 Passer le quiz"}
                         </button>
@@ -702,17 +763,25 @@ export default function StudentCourse() {
 
             {/* MESSAGE ACCUEIL */}
             {!activeChapter && !activeQuiz && (
-              <div style={{ textAlign: "center", padding: "4rem 2rem", color: "#718096" }}>
+              <div style={{ textAlign: "center", padding: isMobile ? "2rem 1rem" : "4rem 2rem", color: "#718096" }}>
                 {pretestCompleted ? (
                   <>
-                    <div style={{ fontSize: "4rem", marginBottom: "1rem" }}>📚</div>
-                    <h2>Bienvenue dans ce cours !</h2>
-                    <p>Sélectionnez un chapitre dans le menu de gauche pour commencer.</p>
+                    <div style={{ fontSize: isMobile ? "3rem" : "4rem", marginBottom: "1rem" }}>📚</div>
+                    <h2 style={{ fontSize: isMobile ? "1.3rem" : "1.8rem" }}>Bienvenue dans ce cours !</h2>
+                    <p>Sélectionnez un chapitre dans le menu pour commencer.</p>
+                    {isMobile && mobileMenuOpen === false && (
+                      <button
+                        onClick={() => setMobileMenuOpen(true)}
+                        style={{ ...btnPrimary, marginTop: "1rem" }}
+                      >
+                        📖 Voir les chapitres
+                      </button>
+                    )}
                   </>
                 ) : (
                   <>
-                    <div style={{ fontSize: "4rem", marginBottom: "1rem" }}>🎯</div>
-                    <h2>Avant de commencer...</h2>
+                    <div style={{ fontSize: isMobile ? "3rem" : "4rem", marginBottom: "1rem" }}>🎯</div>
+                    <h2 style={{ fontSize: isMobile ? "1.3rem" : "1.8rem" }}>Avant de commencer...</h2>
                     <p>Complétez le pretest ci-dessus pour évaluer vos connaissances !</p>
                   </>
                 )}
@@ -728,28 +797,30 @@ export default function StudentCourse() {
 
 // ====== COMPOSANT QUIZ ======
 function QuizDisplay({ quiz, answers, setAnswers, result, submitting, onSubmit, error, showCorrections, setShowCorrections, quizStats, onRetry, onNextChapter }) {
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+  
   return (
     <div>
-      <h2 style={{ marginTop: 0 }}>
+      <h2 style={{ marginTop: 0, fontSize: isMobile ? "1.3rem" : "1.8rem" }}>
         📝 {quiz.type === "SOMMATIF" ? "Test sommatif final" : "Quiz formatif"}
       </h2>
 
       {result ? (
         // RÉSULTAT
         <div>
-          <div style={{ textAlign: "center", padding: "3rem", background: "white", borderRadius: "12px", border: "1px solid #e2e8f0", marginBottom: "2rem" }}>
-            <div style={{ fontSize: "4rem", marginBottom: "1rem" }}>
+          <div style={{ textAlign: "center", padding: isMobile ? "1.5rem" : "3rem", background: "white", borderRadius: "12px", border: "1px solid #e2e8f0", marginBottom: "2rem" }}>
+            <div style={{ fontSize: isMobile ? "3rem" : "4rem", marginBottom: "1rem" }}>
               {result.reussi ? "🎉" : result.bloque ? "⛔" : "💪"}
             </div>
 
             {result.bloque ? (
               <>
-                <h2 style={{ color: "#e53e3e" }}>Tentatives épuisées</h2>
+                <h2 style={{ color: "#e53e3e", fontSize: isMobile ? "1.2rem" : "1.5rem" }}>Tentatives épuisées</h2>
                 <div style={{ background: "#fff5f5", border: "1.5px solid #feb2b2", padding: "1.5rem", borderRadius: "8px", maxWidth: "560px", margin: "0 auto" }}>
-                  <p style={{ color: "#742a2a", fontWeight: "700", fontSize: "1.1rem", marginBottom: "0.5rem" }}>
+                  <p style={{ color: "#742a2a", fontWeight: "700", fontSize: "1rem", marginBottom: "0.5rem" }}>
                     ⛔ Vous avez utilisé vos 3 tentatives sans atteindre le score requis (90%).
                   </p>
-                  <p style={{ color: "#9b2c2c", fontSize: "0.9rem", fontStyle: "italic", margin: "0 0 1rem" }}>
+                  <p style={{ color: "#9b2c2c", fontSize: "0.85rem", fontStyle: "italic", margin: "0 0 1rem" }}>
                     🔒 Le chapitre suivant restera verrouillé jusqu'au déblocage par votre enseignant.
                   </p>
                   <RemediationRequest quiz={quiz} quizResult={result} score={result.score} />
@@ -757,7 +828,7 @@ function QuizDisplay({ quiz, answers, setAnswers, result, submitting, onSubmit, 
               </>
             ) : (
               <>
-                <h2 style={{ color: result.reussi ? "#38a169" : "#dd6b20", fontSize: "3rem", margin: "0 0 0.5rem" }}>
+                <h2 style={{ color: result.reussi ? "#38a169" : "#dd6b20", fontSize: isMobile ? "2rem" : "3rem", margin: "0 0 0.5rem" }}>
                   {result.score}%
                 </h2>
                 <p style={{ color: "#718096", marginBottom: "0.5rem" }}>
@@ -773,7 +844,7 @@ function QuizDisplay({ quiz, answers, setAnswers, result, submitting, onSubmit, 
                       {result.message}
                     </p>
                     {onNextChapter && (
-                      <button onClick={onNextChapter} style={{ background: "#059669", color: "white", padding: "0.75rem 1.5rem", border: "none", borderRadius: "8px", cursor: "pointer", fontSize: "1rem", fontWeight: "700" }}>
+                      <button onClick={onNextChapter} style={{ background: "#059669", color: "white", padding: isMobile ? "0.5rem 1rem" : "0.75rem 1.5rem", border: "none", borderRadius: "8px", cursor: "pointer", fontSize: isMobile ? "0.85rem" : "1rem", fontWeight: "700" }}>
                         ➡️ Chapitre suivant
                       </button>
                     )}
@@ -789,7 +860,7 @@ function QuizDisplay({ quiz, answers, setAnswers, result, submitting, onSubmit, 
                 )}
 
                 {!result.reussi && result.tentativesRestantes > 0 && (
-                  <button onClick={onRetry} style={btnPrimary}>
+                  <button onClick={onRetry} style={{ ...btnPrimary, padding: isMobile ? "0.5rem 1rem" : "0.75rem 1.5rem", fontSize: isMobile ? "0.85rem" : "1rem" }}>
                     🔄 Réessayer
                   </button>
                 )}
@@ -804,11 +875,11 @@ function QuizDisplay({ quiz, answers, setAnswers, result, submitting, onSubmit, 
                 onClick={() => setShowCorrections(!showCorrections)}
                 style={{
                   width: "100%",
-                  padding: "1.5rem",
+                  padding: isMobile ? "1rem" : "1.5rem",
                   background: "#f8fafc",
                   border: "none",
                   borderBottom: "1px solid #edf2f7",
-                  fontSize: "1.1rem",
+                  fontSize: isMobile ? "0.9rem" : "1.1rem",
                   fontWeight: "700",
                   cursor: "pointer",
                   display: "flex",
@@ -822,7 +893,7 @@ function QuizDisplay({ quiz, answers, setAnswers, result, submitting, onSubmit, 
               </button>
 
               {showCorrections && (
-                <div style={{ padding: "1.5rem" }}>
+                <div style={{ padding: isMobile ? "1rem" : "1.5rem" }}>
                   {quiz.questions?.map((q, idx) => {
                     const detail = result.detail?.find((d) => d.questionId === q.id);
                     const isCorrect = detail?.correct;
@@ -834,7 +905,7 @@ function QuizDisplay({ quiz, answers, setAnswers, result, submitting, onSubmit, 
                           background: isCorrect ? "#f0fff4" : "#fff5f5",
                           border: `2px solid ${isCorrect ? "#059669" : "#dc2626"}`,
                           borderRadius: "12px",
-                          padding: "1.5rem",
+                          padding: isMobile ? "1rem" : "1.5rem",
                           marginBottom: "1rem"
                         }}
                       >
@@ -851,26 +922,26 @@ function QuizDisplay({ quiz, answers, setAnswers, result, submitting, onSubmit, 
                               {isCorrect ? "✅ CORRECT" : "❌ FAUX"}
                             </span>
                           </div>
-                          <h4 style={{ margin: "0.5rem 0", fontSize: "1.1rem", color: "#1e293b" }}>
+                          <h4 style={{ margin: "0.5rem 0", fontSize: isMobile ? "0.9rem" : "1.1rem", color: "#1e293b" }}>
                             Q{idx + 1}. {q.texte}
                           </h4>
                         </div>
 
                         <div style={{ marginBottom: "1rem", padding: "1rem", background: "white", borderRadius: "8px", border: "1px solid #e2e8f0" }}>
-                          <div style={{ fontSize: "0.9rem", color: "#718096", fontWeight: "600", marginBottom: "0.3rem" }}>
+                          <div style={{ fontSize: "0.85rem", color: "#718096", fontWeight: "600", marginBottom: "0.3rem" }}>
                             Votre réponse:
                           </div>
-                          <div style={{ fontSize: "1rem", color: isCorrect ? "#059669" : "#dc2626", fontWeight: "600" }}>
+                          <div style={{ fontSize: "0.95rem", color: isCorrect ? "#059669" : "#dc2626", fontWeight: "600" }}>
                             {detail?.repEtudiant || "❌ Aucune réponse"}
                           </div>
                         </div>
 
                         {!isCorrect && (
                           <div style={{ padding: "1rem", background: "#f0fff4", borderRadius: "8px", border: "1px solid #c6f6d5" }}>
-                            <div style={{ fontSize: "0.9rem", color: "#059669", fontWeight: "600", marginBottom: "0.3rem" }}>
+                            <div style={{ fontSize: "0.85rem", color: "#059669", fontWeight: "600", marginBottom: "0.3rem" }}>
                               ✅ Bonne réponse:
                             </div>
-                            <div style={{ fontSize: "1rem", color: "#059669", fontWeight: "600" }}>
+                            <div style={{ fontSize: "0.95rem", color: "#059669", fontWeight: "600" }}>
                               {q.reponse}
                             </div>
                           </div>
@@ -893,143 +964,60 @@ function QuizDisplay({ quiz, answers, setAnswers, result, submitting, onSubmit, 
           )}
 
           {quiz.questions?.map((q, i) => (
-            <div key={q.id} style={{ background: "white", padding: "1.25rem", borderRadius: "10px", marginBottom: "1rem", border: "1px solid #e2e8f0" }}>
-              <p style={{ fontWeight: "bold", marginBottom: "1rem", color: "#2d3748" }}>
+            <div key={q.id} style={{ background: "white", padding: isMobile ? "1rem" : "1.25rem", borderRadius: "10px", marginBottom: "1rem", border: "1px solid #e2e8f0" }}>
+              <p style={{ fontWeight: "bold", marginBottom: "1rem", color: "#2d3748", fontSize: isMobile ? "0.9rem" : "1rem" }}>
                 Q{i + 1}. {q.texte}
               </p>
 
               {q.type === "QCM" && q.choix?.map((c, j) => (
-                <label key={j} style={{ display: "flex", alignItems: "center", gap: "0.75rem", padding: "0.6rem 0.75rem", marginBottom: "0.4rem", cursor: "pointer", background: answers[q.id] === c ? "#ebf8ff" : "#f7fafc", border: answers[q.id] === c ? "2px solid #3182ce" : "2px solid transparent", borderRadius: "6px" }}>
+                <label key={j} style={{ display: "flex", alignItems: "center", gap: "0.75rem", padding: "0.6rem 0.75rem", marginBottom: "0.4rem", cursor: "pointer", background: answers[q.id] === c ? "#ebf8ff" : "#f7fafc", border: answers[q.id] === c ? "2px solid #3182ce" : "2px solid transparent", borderRadius: "6px", fontSize: isMobile ? "0.85rem" : "0.95rem" }}>
                   <input type="radio" name={`q-${q.id}`} value={c} checked={answers[q.id] === c} onChange={() => setAnswers({ ...answers, [q.id]: c })} />
                   {c}
                 </label>
               ))}
 
               {q.type === "VRAI_FAUX" && ["Vrai", "Faux"].map((v) => (
-                <label key={v} style={{ display: "flex", alignItems: "center", gap: "0.75rem", padding: "0.6rem 0.75rem", marginBottom: "0.4rem", cursor: "pointer", background: answers[q.id] === v ? "#ebf8ff" : "#f7fafc", border: answers[q.id] === v ? "2px solid #3182ce" : "2px solid transparent", borderRadius: "6px" }}>
+                <label key={v} style={{ display: "flex", alignItems: "center", gap: "0.75rem", padding: "0.6rem 0.75rem", marginBottom: "0.4rem", cursor: "pointer", background: answers[q.id] === v ? "#ebf8ff" : "#f7fafc", border: answers[q.id] === v ? "2px solid #3182ce" : "2px solid transparent", borderRadius: "6px", fontSize: isMobile ? "0.85rem" : "0.95rem" }}>
                   <input type="radio" name={`q-${q.id}`} value={v} checked={answers[q.id] === v} onChange={() => setAnswers({ ...answers, [q.id]: v })} />
                   {v}
                 </label>
               ))}
 
               {q.type === "OUVERTE" && (
-                <textarea placeholder="Votre réponse..." value={answers[q.id] || ""} onChange={(e) => setAnswers({ ...answers, [q.id]: e.target.value })} style={{ width: "100%", padding: "0.75rem", border: "1px solid #e2e8f0", borderRadius: "8px", height: "100px", resize: "vertical", boxSizing: "border-box", fontFamily: "inherit" }} />
+                <textarea 
+                  placeholder="Votre réponse..." 
+                  value={answers[q.id] || ""} 
+                  onChange={(e) => setAnswers({ ...answers, [q.id]: e.target.value })} 
+                  style={{ 
+                    width: "100%", 
+                    padding: "0.75rem", 
+                    border: "1px solid #e2e8f0", 
+                    borderRadius: "8px", 
+                    height: isMobile ? "80px" : "100px", 
+                    resize: "vertical", 
+                    boxSizing: "border-box", 
+                    fontFamily: "inherit",
+                    fontSize: isMobile ? "0.85rem" : "0.95rem"
+                  }} 
+                />
               )}
             </div>
           ))}
 
-          <button onClick={() => onSubmit(quiz)} disabled={submitting} style={{ ...btnSuccess, width: "100%", padding: "1rem", fontSize: "1rem", opacity: submitting ? 0.6 : 1 }}>
+          <button 
+            onClick={() => onSubmit(quiz)} 
+            disabled={submitting} 
+            style={{ 
+              ...btnSuccess, 
+              width: "100%", 
+              padding: isMobile ? "0.75rem" : "1rem", 
+              fontSize: isMobile ? "0.9rem" : "1rem", 
+              opacity: submitting ? 0.6 : 1 
+            }}
+          >
             {submitting ? "Correction en cours..." : "✅ Soumettre le quiz"}
           </button>
         </div>
-      )}
-    </div>
-  );
-}
-
-function DevoirCard({ devoir, userId, course, id, router }) {
-  const deadline = new Date(devoir.dateLimit);
-  const depasse = new Date() > deadline;
-  const monRendu = devoir.rendus?.find((r) => r.studentId === userId);
-  const [uploading, setUploading] = useState(false);
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
-  const fileRef = useRef(null);
-
-  const handleUpload = async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    setUploading(true);
-    setError("");
-    setSuccess("");
-
-    const formData = new FormData();
-    formData.append("fichier", file);
-    formData.append("devoirId", devoir.id);
-
-    try {
-      const res = await fetch("/api/devoirs/upload", {
-        method: "POST",
-        credentials: "include",
-        body: formData,
-      });
-      const data = await res.json();
-      if (res.ok) {
-        setSuccess("✅ Fichier déposé avec succès !");
-        setTimeout(() => setSuccess(""), 2000);
-      } else {
-        setError(data.error || "Erreur dépôt");
-      }
-    } catch (e) {
-      console.error("Erreur:", e);
-      setError("Erreur serveur");
-    } finally {
-      setUploading(false);
-    }
-  };
-
-  return (
-    <div style={{ background: "white", border: `1.5px solid ${depasse ? "#e53e3e" : "#c62017"}`, padding: "1.6rem", borderRadius: "10px", marginBottom: "4rem" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-        <h5 style={{ margin: 0 }}>📋 {devoir.titre}</h5>
-        <span style={{ background: depasse ? "#105907" : "#ed9238", color: "white", padding: "0.8rem 0.8rem", borderRadius: "10px", fontSize: "0.8rem" }}>
-          {depasse ? "⛔ Clôturé" : `⏰ ${deadline.toLocaleDateString("fr-FR")}`}
-        </span>
-      </div>
-
-      <div style={{ marginTop: "0.75rem", padding: "0.75rem", background: "#f7fafc", borderRadius: "6px", fontSize: "0.9rem", lineHeight: "1.6" }} dangerouslySetInnerHTML={{ __html: devoir.consigne }} />
-
-      {monRendu && (
-        <div style={{ marginTop: "1rem", padding: "0.75rem", background: "#f0fff4", borderRadius: "6px", border: "1px solid #9ae6b4" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
-            <span style={{ background: "#38a169", color: "white", padding: "0.2rem 0.5rem", borderRadius: "6px", fontSize: "0.75rem" }}>
-              ✅ Rendu
-            </span>
-            <span style={{ flex: 1, fontSize: "0.9rem", color: "#276749" }}>{monRendu.fichierNom}</span>
-            <a href={monRendu.fichierUrl} target="_blank" rel="noreferrer" style={{ color: "#3182ce", fontSize: "0.85rem" }}>
-              👁 Voir
-            </a>
-          </div>
-          {monRendu.note !== null && (
-            <div style={{ marginTop: "0.5rem", fontWeight: "bold", color: monRendu.note >= 10 ? "#38a169" : "#e53e3e" }}>
-              Note : {monRendu.note}/20
-            </div>
-          )}
-        </div>
-      )}
-
-      {!depasse ? (
-        <div style={{ marginTop: "1rem" }}>
-          {error && <p style={{ color: "red", fontSize: "0.85rem" }}>{error}</p>}
-          {success && <p style={{ color: "green", fontSize: "0.85rem" }}>{success}</p>}
-          <input ref={fileRef} type="file" style={{ display: "none" }} onChange={handleUpload} />
-          <button onClick={() => fileRef.current?.click()} disabled={uploading} style={{ background: monRendu ? "#805ad5" : "#055b2d", color: "white", padding: "0.6rem 1.2rem", border: "none", borderRadius: "8px", cursor: "pointer", fontSize: "0.9rem" }}>
-            {uploading ? "Dépôt..." : monRendu ? "🔄 Remplacer" : "📤 Déposer"}
-          </button>
-        </div>
-      ) : !monRendu && (
-        <div style={{ marginTop: "1rem", background: "#fff5f5", padding: "0.75rem", borderRadius: "6px" }}>
-          <p style={{ color: "#e53e3e", margin: 0, fontSize: "0.9rem" }}>
-            ⛔ Délai dépassé
-          </p>
-        </div>
-      )}
-      {course?.quizFinal && (
-        <button
-          onClick={() => router.push(`/dashboard/student/courses/${id}/final-exam`)}
-          style={{
-            padding: "0.75rem 1.5rem",
-            background: "linear-gradient(135deg, #dc2626, #ef4444)",
-            color: "white",
-            border: "none",
-            borderRadius: "12px",
-            cursor: "pointer",
-            fontWeight: "700",
-          }}
-        >
-          🏁 Test Final (75% requis)
-        </button>
       )}
     </div>
   );
