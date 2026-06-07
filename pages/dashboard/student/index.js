@@ -82,7 +82,14 @@ export default function StudentDashboard() {
       });
       const data = await res.json();
       if (res.ok) {
-        setSuccess("✅ Demande envoyée ! L'admin validera votre inscription après paiement.");
+        // Notifier l'admin
+        await fetch("/api/notifications/admin", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ courseId, type: "DEMANDE_INSCRIPTION" }),
+        });
+        setSuccess("✅ Demande envoyée ! L'admin validera votre inscription.");
         fetchAll("", "", "");
       } else {
         setError(data.error || "Erreur inscription");
