@@ -170,7 +170,7 @@ export default function StudentCourse() {
     setQuizResult(null);
     setQuizAnswers({});
     setError("");
-    setMobileMenuOpen(false); // Fermer le menu mobile sur sélection
+    setMobileMenuOpen(false);
   };
 
   const handleMarkRead = async (chapterId) => {
@@ -261,36 +261,39 @@ export default function StudentCourse() {
 
   return (
     <ProtectedRoute allowedRoles={["STUDENT"]}>
-      <div style={{ minHeight: "100vh", background: "#f8fafc" }}>
+      <div style={{ minHeight: "100vh", background: "linear-gradient(135deg, #F5F5DC 0%, #FFF8E7 100%)" }}>
 
-        {/* Header cours */}
+        {/* Header cours - Orange vif */}
         <div style={{ 
-          background: "#f36528", 
+          background: "linear-gradient(135deg, #FF8C00, #FFB347)", 
           color: "white", 
           padding: isMobile ? "0.8rem 1rem" : "1rem 2rem", 
           display: "flex", 
           alignItems: "center", 
           justifyContent: "space-between",
           flexWrap: "wrap",
-          gap: "0.5rem"
+          gap: "0.5rem",
+          boxShadow: "0 4px 15px rgba(255, 140, 0, 0.3)"
         }}>
           <button 
             onClick={() => router.push("/dashboard/student")} 
             style={{ 
-              background: "none", 
+              background: "rgba(255,255,255,0.2)", 
               border: "none", 
-              color: "#eef2f7", 
+              color: "white", 
               cursor: "pointer", 
               fontSize: isMobile ? "1rem" : "1.3rem",
-              padding: "0.5rem"
+              padding: "0.5rem 1rem",
+              borderRadius: "30px",
+              fontWeight: "bold"
             }}
           >
             ← Retour
           </button>
           
           <div style={{ flex: 1, textAlign: "center" }}>
-            <h1 style={{ margin: 0, fontSize: isMobile ? "1.2rem" : "1.9rem" }}>{course?.title}</h1>
-            <p style={{ margin: "0.2rem 0 0", fontSize: isMobile ? "0.8rem" : "1rem", color: "#1ed83a" }}>
+            <h1 style={{ margin: 0, fontSize: isMobile ? "1.2rem" : "1.9rem", fontWeight: "800" }}>{course?.title}</h1>
+            <p style={{ margin: "0.2rem 0 0", fontSize: isMobile ? "0.8rem" : "1rem", color: "#FFF8E7" }}>
               {[course?.matiere, course?.niveau, course?.annee].filter(Boolean).join(" • ")}
             </p>
           </div>
@@ -305,7 +308,7 @@ export default function StudentCourse() {
                 color: "white",
                 fontSize: "1.5rem",
                 padding: "0.5rem",
-                borderRadius: "8px",
+                borderRadius: "30px",
                 cursor: "pointer"
               }}
             >
@@ -321,33 +324,35 @@ export default function StudentCourse() {
           minHeight: "calc(100vh - 60px)"
         }}>
 
-          {/* SIDEBAR - conditionnelle sur mobile */}
+          {/* SIDEBAR - couleurs lumineuses et fun */}
           {(!isMobile || mobileMenuOpen) && (
             <div style={{
-              background: "linear-gradient(135deg, #f0f3f2 0%, #faf9f7 100%)",
+              background: "linear-gradient(135deg, #FFF8E7 0%, #FFF0D4 100%)",
               padding: isMobile ? "1rem" : "2rem 1rem",
               overflowY: "auto",
               width: isMobile ? "100%" : "350px",
               minHeight: isMobile ? "auto" : "calc(100vh - 60px)",
-              borderRight: isMobile ? "none" : "1px solid rgba(0,0,0,0.05)",
-              boxSizing: "border-box"
+              borderRight: isMobile ? "none" : "2px solid #FFB347",
+              boxSizing: "border-box",
+              boxShadow: "inset 0 0 20px rgba(255, 180, 71, 0.1)"
             }}>
 
-              {/* Header Sidebar */}
+              {/* Header Sidebar - Orange vif */}
               <div style={{
-                background: "rgba(222, 231, 221, 0.1)",
+                background: "linear-gradient(135deg, #FFB347, #FF8C00)",
                 backdropFilter: "blur(10px)",
                 padding: isMobile ? "1rem" : "1.5rem",
-                borderRadius: "15px",
+                borderRadius: "20px",
                 marginBottom: "1.5rem",
-                border: "1px solid rgba(86, 155, 101, 0.2)",
+                boxShadow: "0 8px 20px rgba(255, 140, 0, 0.3)",
+                border: "none",
               }}>
                 <div style={{ fontSize: isMobile ? "2rem" : "3rem", marginBottom: "0.5rem" }}>
                   {pretestCompleted ? "🚀" : "🎯"}
                 </div>
                 <h3 style={{
                   margin: "0 0 0.3rem",
-                  color: "green",
+                  color: "white",
                   fontSize: isMobile ? "1rem" : "1.25rem",
                   fontWeight: "700",
                 }}>
@@ -355,7 +360,7 @@ export default function StudentCourse() {
                 </h3>
                 <p style={{
                   margin: 0,
-                  color: "rgba(2, 60, 56, 0.8)",
+                  color: "rgba(255,255,255,0.9)",
                   fontSize: isMobile ? "0.75rem" : "0.9rem",
                   lineHeight: "1.4",
                 }}>
@@ -376,28 +381,29 @@ export default function StudentCourse() {
                       <div style={{
                         display: "flex",
                         justifyContent: "space-between",
-                        color: "rgba(4, 53, 26, 0.9)",
+                        color: "#5D4037",
                         fontSize: isMobile ? "0.85rem" : "1rem",
                         marginBottom: "0.8rem",
                         fontWeight: "600",
                       }}>
-                        <span>Progression</span>
-                        <span style={{ background: "rgb(82, 237, 224)", padding: "0.2rem 0.6rem", borderRadius: "12px" }}>
+                        <span>🎯 Progression</span>
+                        <span style={{ background: "#FFB347", color: "white", padding: "0.2rem 0.6rem", borderRadius: "20px" }}>
                           {pct}%
                         </span>
                       </div>
                       <div style={{
-                        background: "rgb(214, 226, 224)",
-                        borderRadius: "12px",
-                        height: "8px",
+                        background: "#FFE0B5",
+                        borderRadius: "20px",
+                        height: "12px",
                         overflow: "hidden",
-                        border: "1px solid rgb(13, 69, 65)",
+                        border: "1px solid #FFB347",
                       }}>
                         <div style={{
-                          background: "linear-gradient(150deg, #2ded74, #22c55e)",
+                          background: "linear-gradient(90deg, #FF8C00, #FFB347)",
                           width: `${pct}%`,
                           height: "100%",
-                          transition: "width 0.3s ease"
+                          transition: "width 0.3s ease",
+                          borderRadius: "20px"
                         }} />
                       </div>
                     </>
@@ -407,12 +413,14 @@ export default function StudentCourse() {
 
               {/* Chapitres */}
               <h2 style={{
-                color: "rgba(13, 28, 18, 0.7)",
+                color: "#FF8C00",
                 fontSize: isMobile ? "1rem" : "1.2rem",
                 textTransform: "uppercase",
                 letterSpacing: "0.2em",
                 marginBottom: "1rem",
-                fontWeight: "700",
+                fontWeight: "800",
+                borderLeft: "4px solid #FFB347",
+                paddingLeft: "0.75rem",
               }}>
                 📖 Chapitres
               </h2>
@@ -432,32 +440,31 @@ export default function StudentCourse() {
                       onClick={() => handleOpenChapter(ch, i)}
                       style={{
                         padding: isMobile ? "0.75rem" : "1rem",
-                        borderRadius: "12px",
+                        borderRadius: "16px",
                         cursor: unlocked ? "pointer" : "not-allowed",
                         background: active
-                          ? "rgba(15, 31, 20, 0.33)"
+                          ? "linear-gradient(135deg, #FFB347, #FF8C00)"
                           : completed
-                          ? "rgba(152, 225, 178, 0.2)"
+                          ? "linear-gradient(135deg, #E8F5E9, #C8E6C9)"
                           : unlocked
-                          ? "rgba(158, 224, 181, 0.1)"
-                          : "rgba(7, 18, 13, 0.2)",
-                        color: unlocked ? "white" : "rgba(179, 239, 199, 0.5)",
+                          ? "white"
+                          : "#F5F5F5",
+                        color: active ? "white" : completed ? "#2E7D32" : unlocked ? "#5D4037" : "#BDBDBD",
                         opacity: unlocked ? 1 : 0.6,
                         display: "flex",
                         alignItems: "center",
                         gap: "0.75rem",
-                        border: active ? "3px solid rgba(16, 229, 58, 0.41)" : "2px solid transparent",
+                        border: active ? "none" : completed ? "1px solid #A5D6A7" : "1px solid #FFE0B5",
+                        boxShadow: active ? "0 4px 12px rgba(255, 140, 0, 0.3)" : "none",
                         transition: "all 0.2s ease",
-                        backdropFilter: "blur(10px)",
                       }}>
-                      <span style={{ fontSize: isMobile ? "1rem" : "1.3rem" }}>
+                      <span style={{ fontSize: isMobile ? "1.2rem" : "1.4rem" }}>
                         {!unlocked ? "🔒" : completed ? "✨" : bloque ? "⚠️" : "📚"}
                       </span>
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{
                           fontSize: isMobile ? "0.85rem" : "1rem",
                           fontWeight: active ? "700" : "600",
-                          color: "rgba(2, 60, 56, 0.8)",
                           whiteSpace: "normal",
                           wordBreak: "break-word"
                         }}>
@@ -466,10 +473,11 @@ export default function StudentCourse() {
                         {ch.quiz && unlocked && (
                           <div style={{
                             fontSize: "0.65rem",
-                            color: "rgba(23, 3, 3, 0.7)",
+                            color: active ? "rgba(255,255,255,0.8)" : "#FF8C00",
                             marginTop: "0.2rem",
+                            fontWeight: "500"
                           }}>
-                            Quiz {quizStats[ch.quiz.id]?.reussi ? "✅" : quizStats[ch.quiz.id]?.bloque ? "⛔" : quizStats[ch.quiz.id]?.tentatives ? `(${quizStats[ch.quiz.id].tentatives}/3)` : ""}
+                            Quiz {quizStats[ch.quiz.id]?.reussi ? "✅" : quizStats[ch.quiz.id]?.bloque ? "⛔" : quizStats[ch.quiz.id]?.tentatives ? `(${quizStats[ch.quiz.id].tentatives}/3)` : "📝"}
                           </div>
                         )}
                       </div>
@@ -482,12 +490,14 @@ export default function StudentCourse() {
               {course?.quizFinal && (
                 <div style={{ marginTop: "1.5rem" }}>
                   <h3 style={{
-                    color: "rgba(11, 7, 1, 0.7)",
+                    color: "#FF8C00",
                     fontSize: isMobile ? "0.85rem" : "1rem",
                     textTransform: "uppercase",
                     letterSpacing: "0.3em",
-                    fontWeight: "700",
+                    fontWeight: "800",
                     marginBottom: "1rem",
+                    borderLeft: "4px solid #FFB347",
+                    paddingLeft: "0.75rem",
                   }}>
                     🏆 Final
                   </h3>
@@ -495,31 +505,31 @@ export default function StudentCourse() {
                     onClick={handleOpenSommatif}
                     style={{
                       padding: isMobile ? "0.75rem" : "1rem",
-                      borderRadius: "20px",
+                      borderRadius: "16px",
                       cursor: sommatifUnlocked ? "pointer" : "not-allowed",
                       background: activeQuiz?.id === course.quizFinal.id
-                        ? "rgba(181, 171, 171, 0.25)"
+                        ? "linear-gradient(135deg, #FFB347, #FF8C00)"
                         : sommatifUnlocked
-                        ? "rgba(220, 132, 24, 0.2)"
-                        : "rgba(0,0,0,0.2)",
-                      color: sommatifUnlocked ? "white" : "rgba(11, 87, 85, 0.5)",
-                      opacity: sommatifUnlocked ? 1 : 1,
+                        ? "white"
+                        : "#F5F5F5",
+                      color: activeQuiz?.id === course.quizFinal.id ? "white" : sommatifUnlocked ? "#5D4037" : "#BDBDBD",
+                      opacity: sommatifUnlocked ? 1 : 0.6,
                       display: "flex",
                       alignItems: "center",
                       gap: "1rem",
-                      border: activeQuiz?.id === course.quizFinal.id ? "2px solid rgba(255,255,255,0.4)" : "2px solid transparent",
+                      border: "1px solid #FFE0B5",
+                      boxShadow: activeQuiz?.id === course.quizFinal.id ? "0 4px 12px rgba(255, 140, 0, 0.3)" : "none",
                       transition: "all 0.2s ease",
-                      backdropFilter: "blur(10px)",
                     }}>
                     <span style={{ fontSize: isMobile ? "1.5rem" : "2rem" }}>
                       {!sommatifUnlocked ? "🔒" : quizStats[course.quizFinal.id]?.reussi ? "🏆" : "📝"}
                     </span>
                     <div>
-                      <div style={{ fontWeight: "700", fontSize: isMobile ? "0.9rem" : "1.2rem", color: "green" }}>
+                      <div style={{ fontWeight: "800", fontSize: isMobile ? "0.9rem" : "1.1rem", color: activeQuiz?.id === course.quizFinal.id ? "white" : "#FF8C00" }}>
                         Test Final
                       </div>
                       {sommatifUnlocked && quizStats[course.quizFinal.id]?.tentatives && (
-                        <div style={{ fontSize: "0.65rem", color: "rgba(178, 23, 23, 0.7)" }}>
+                        <div style={{ fontSize: "0.65rem", color: activeQuiz?.id === course.quizFinal.id ? "rgba(255,255,255,0.8)" : "#FF8C00" }}>
                           {quizStats[course.quizFinal.id]?.reussi ? "Réussi ✅" : `${quizStats[course.quizFinal.id].tentatives}/3`}
                         </div>
                       )}
@@ -587,10 +597,10 @@ export default function StudentCourse() {
             {/* CHAPITRE ACTIF */}
             {activeChapter && !activeQuiz && (
               <div>
-                <h2 style={{ marginTop: 0, fontSize: isMobile ? "1.3rem" : "1.8rem" }}>{activeChapter.title}</h2>
+                <h2 style={{ marginTop: 0, fontSize: isMobile ? "1.3rem" : "1.8rem", color: "#FF8C00" }}>{activeChapter.title}</h2>
 
                 {activeChapter.objectifs && (
-                  <div style={{ background: "#42be63", border: "1px solid #9ae6b4", padding: "0.75rem 1rem", borderRadius: "8px", marginBottom: "1.5rem", fontSize: "0.9rem" }}>
+                  <div style={{ background: "#FFE0B5", border: "1px solid #FFB347", padding: "0.75rem 1rem", borderRadius: "8px", marginBottom: "1.5rem", fontSize: "0.9rem", color: "#5D4037" }}>
                     🎯 <strong>Objectifs :</strong> {activeChapter.objectifs}
                   </div>
                 )}
@@ -602,9 +612,9 @@ export default function StudentCourse() {
                       {activeChapter.supports.map((s) => {
                         if (s.type === "TEXTE") {
                           return (
-                            <div key={s.id} style={{ background: "white", border: "1px solid #13a74b", padding: isMobile ? "1rem" : "2rem", borderRadius: "10px", overflowX: "auto" }}>
+                            <div key={s.id} style={{ background: "white", border: "1px solid #FFB347", padding: isMobile ? "1rem" : "2rem", borderRadius: "10px", overflowX: "auto" }}>
                               {s.nom && (
-                                <h3 style={{ margin: "0 0 1rem", color: "#0b5f0a", borderBottom: "2px solid #bed2ed", paddingBottom: "0.5rem", fontSize: isMobile ? "1rem" : "1.2rem" }}>
+                                <h3 style={{ margin: "0 0 1rem", color: "#FF8C00", borderBottom: "2px solid #FFE0B5", paddingBottom: "0.5rem", fontSize: isMobile ? "1rem" : "1.2rem" }}>
                                   {s.nom}
                                 </h3>
                               )}
@@ -645,7 +655,7 @@ export default function StudentCourse() {
                             rel="noreferrer"
                             style={{
                               background: "white",
-                              border: "1px solid #e2e8f0",
+                              border: "1px solid #FFE0B5",
                               padding: "1rem",
                               borderRadius: "10px",
                               display: "flex",
@@ -669,18 +679,18 @@ export default function StudentCourse() {
                 )}
 
                 {/* Marquer comme lu */}
-                <div style={{ background: "white", border: "1px solid #e2e8f0", padding: isMobile ? "1rem" : "1.5rem", borderRadius: "10px", marginBottom: "1.5rem" }}>
+                <div style={{ background: "white", border: "1px solid #FFB347", padding: isMobile ? "1rem" : "1.5rem", borderRadius: "10px", marginBottom: "1.5rem" }}>
                   {!chapterProgress[activeChapter.id]?.lu ? (
                     <div>
-                      <p style={{ margin: "0 0 1rem", color: "#011503" }}>
+                      <p style={{ margin: "0 0 1rem", color: "#5D4037" }}>
                         <strong>Avez-vous consulté toutes les ressources de ce chapitre ?</strong>
                       </p>
-                      <button onClick={() => handleMarkRead(activeChapter.id)} style={{ ...btnSuccess, padding: isMobile ? "0.5rem 1rem" : "0.75rem 1.5rem", fontSize: isMobile ? "0.85rem" : "1rem" }}>
+                      <button onClick={() => handleMarkRead(activeChapter.id)} style={{ ...btnSuccess, background: "linear-gradient(135deg, #FF8C00, #FFB347)", padding: isMobile ? "0.5rem 1rem" : "0.75rem 1.5rem", fontSize: isMobile ? "0.85rem" : "1rem", border: "none" }}>
                         ✅ J'ai terminé ce chapitre
                       </button>
                     </div>
                   ) : (
-                    <p style={{ margin: 0, color: "#291b0a", fontWeight: "bold" }}>
+                    <p style={{ margin: 0, color: "#2E7D32", fontWeight: "bold" }}>
                       ✅ Chapitre consulté
                     </p>
                   )}
@@ -688,8 +698,8 @@ export default function StudentCourse() {
 
                 {/* Quiz formatif */}
                 {activeChapter.quiz && chapterProgress[activeChapter.id]?.lu && (
-                  <div style={{ background: "white", border: "1px solid #e2e8f0", padding: isMobile ? "1rem" : "1.5rem", borderRadius: "10px" }}>
-                    <h3 style={{ margin: "0 0 0.5rem", fontSize: isMobile ? "1rem" : "1.2rem" }}>📝 Quiz formatif</h3>
+                  <div style={{ background: "white", border: "1px solid #FFB347", padding: isMobile ? "1rem" : "1.5rem", borderRadius: "10px" }}>
+                    <h3 style={{ margin: "0 0 0.5rem", fontSize: isMobile ? "1rem" : "1.2rem", color: "#FF8C00" }}>📝 Quiz formatif</h3>
 
                     {quizStats[activeChapter.quiz.id]?.reussi ? (
                       <p style={{ color: "#38a169", margin: 0 }}>
@@ -708,7 +718,7 @@ export default function StudentCourse() {
                             setQuizResult(null);
                             setQuizAnswers({});
                           }}
-                          style={{ ...btnPrimary, padding: isMobile ? "0.5rem 1rem" : "0.75rem 1.5rem", fontSize: isMobile ? "0.85rem" : "1rem" }}
+                          style={{ ...btnPrimary, background: "linear-gradient(135deg, #FF8C00, #FFB347)", padding: isMobile ? "0.5rem 1rem" : "0.75rem 1.5rem", fontSize: isMobile ? "0.85rem" : "1rem", border: "none" }}
                         >
                           {quizStats[activeChapter.quiz.id]?.tentatives ? "🔄 Réessayer" : "📝 Passer le quiz"}
                         </button>
@@ -718,8 +728,8 @@ export default function StudentCourse() {
                 )}
 
                 {activeChapter.quiz && !chapterProgress[activeChapter.id]?.lu && (
-                  <div style={{ background: "#116e65", border: "1px solid #09523b", padding: "1rem", borderRadius: "8px" }}>
-                    <p style={{ margin: 0, color: "#f2f0ee", fontSize: "0.9rem" }}>
+                  <div style={{ background: "#FFE0B5", border: "1px solid #FFB347", padding: "1rem", borderRadius: "8px" }}>
+                    <p style={{ margin: 0, color: "#5D4037", fontSize: "0.9rem" }}>
                       🔒 Marquez le chapitre comme terminé pour accéder au quiz.
                     </p>
                   </div>
@@ -767,12 +777,12 @@ export default function StudentCourse() {
                 {pretestCompleted ? (
                   <>
                     <div style={{ fontSize: isMobile ? "3rem" : "4rem", marginBottom: "1rem" }}>📚</div>
-                    <h2 style={{ fontSize: isMobile ? "1.3rem" : "1.8rem" }}>Bienvenue dans ce cours !</h2>
+                    <h2 style={{ fontSize: isMobile ? "1.3rem" : "1.8rem", color: "#FF8C00" }}>Bienvenue dans ce cours !</h2>
                     <p>Sélectionnez un chapitre dans le menu pour commencer.</p>
                     {isMobile && mobileMenuOpen === false && (
                       <button
                         onClick={() => setMobileMenuOpen(true)}
-                        style={{ ...btnPrimary, marginTop: "1rem" }}
+                        style={{ ...btnPrimary, background: "linear-gradient(135deg, #FF8C00, #FFB347)", marginTop: "1rem", border: "none" }}
                       >
                         📖 Voir les chapitres
                       </button>
@@ -781,7 +791,7 @@ export default function StudentCourse() {
                 ) : (
                   <>
                     <div style={{ fontSize: isMobile ? "3rem" : "4rem", marginBottom: "1rem" }}>🎯</div>
-                    <h2 style={{ fontSize: isMobile ? "1.3rem" : "1.8rem" }}>Avant de commencer...</h2>
+                    <h2 style={{ fontSize: isMobile ? "1.3rem" : "1.8rem", color: "#FF8C00" }}>Avant de commencer...</h2>
                     <p>Complétez le pretest ci-dessus pour évaluer vos connaissances !</p>
                   </>
                 )}
@@ -801,14 +811,14 @@ function QuizDisplay({ quiz, answers, setAnswers, result, submitting, onSubmit, 
   
   return (
     <div>
-      <h2 style={{ marginTop: 0, fontSize: isMobile ? "1.3rem" : "1.8rem" }}>
+      <h2 style={{ marginTop: 0, fontSize: isMobile ? "1.3rem" : "1.8rem", color: "#FF8C00" }}>
         📝 {quiz.type === "SOMMATIF" ? "Test sommatif final" : "Quiz formatif"}
       </h2>
 
       {result ? (
         // RÉSULTAT
         <div>
-          <div style={{ textAlign: "center", padding: isMobile ? "1.5rem" : "3rem", background: "white", borderRadius: "12px", border: "1px solid #e2e8f0", marginBottom: "2rem" }}>
+          <div style={{ textAlign: "center", padding: isMobile ? "1.5rem" : "3rem", background: "white", borderRadius: "12px", border: "1px solid #FFE0B5", marginBottom: "2rem" }}>
             <div style={{ fontSize: isMobile ? "3rem" : "4rem", marginBottom: "1rem" }}>
               {result.reussi ? "🎉" : result.bloque ? "⛔" : "💪"}
             </div>
@@ -844,7 +854,7 @@ function QuizDisplay({ quiz, answers, setAnswers, result, submitting, onSubmit, 
                       {result.message}
                     </p>
                     {onNextChapter && (
-                      <button onClick={onNextChapter} style={{ background: "#059669", color: "white", padding: isMobile ? "0.5rem 1rem" : "0.75rem 1.5rem", border: "none", borderRadius: "8px", cursor: "pointer", fontSize: isMobile ? "0.85rem" : "1rem", fontWeight: "700" }}>
+                      <button onClick={onNextChapter} style={{ background: "linear-gradient(135deg, #FF8C00, #FFB347)", color: "white", padding: isMobile ? "0.5rem 1rem" : "0.75rem 1.5rem", border: "none", borderRadius: "8px", cursor: "pointer", fontSize: isMobile ? "0.85rem" : "1rem", fontWeight: "700" }}>
                         ➡️ Chapitre suivant
                       </button>
                     )}
@@ -860,7 +870,7 @@ function QuizDisplay({ quiz, answers, setAnswers, result, submitting, onSubmit, 
                 )}
 
                 {!result.reussi && result.tentativesRestantes > 0 && (
-                  <button onClick={onRetry} style={{ ...btnPrimary, padding: isMobile ? "0.5rem 1rem" : "0.75rem 1.5rem", fontSize: isMobile ? "0.85rem" : "1rem" }}>
+                  <button onClick={onRetry} style={{ ...btnPrimary, background: "linear-gradient(135deg, #FF8C00, #FFB347)", padding: isMobile ? "0.5rem 1rem" : "0.75rem 1.5rem", fontSize: isMobile ? "0.85rem" : "1rem", border: "none" }}>
                     🔄 Réessayer
                   </button>
                 )}
@@ -870,22 +880,22 @@ function QuizDisplay({ quiz, answers, setAnswers, result, submitting, onSubmit, 
 
           {/* CORRECTIONS */}
           {result.detail && result.detail.length > 0 && (
-            <div style={{ background: "white", borderRadius: "12px", border: "1px solid #e2e8f0", overflow: "hidden" }}>
+            <div style={{ background: "white", borderRadius: "12px", border: "1px solid #FFE0B5", overflow: "hidden" }}>
               <button
                 onClick={() => setShowCorrections(!showCorrections)}
                 style={{
                   width: "100%",
                   padding: isMobile ? "1rem" : "1.5rem",
-                  background: "#f8fafc",
+                  background: "#FFF8E7",
                   border: "none",
-                  borderBottom: "1px solid #edf2f7",
+                  borderBottom: "1px solid #FFE0B5",
                   fontSize: isMobile ? "0.9rem" : "1.1rem",
                   fontWeight: "700",
                   cursor: "pointer",
                   display: "flex",
                   justifyContent: "space-between",
                   alignItems: "center",
-                  color: "#1e293b"
+                  color: "#FF8C00"
                 }}
               >
                 <span>📝 {showCorrections ? "Masquer" : "Afficher"} les corrections</span>
@@ -964,20 +974,20 @@ function QuizDisplay({ quiz, answers, setAnswers, result, submitting, onSubmit, 
           )}
 
           {quiz.questions?.map((q, i) => (
-            <div key={q.id} style={{ background: "white", padding: isMobile ? "1rem" : "1.25rem", borderRadius: "10px", marginBottom: "1rem", border: "1px solid #e2e8f0" }}>
+            <div key={q.id} style={{ background: "white", padding: isMobile ? "1rem" : "1.25rem", borderRadius: "10px", marginBottom: "1rem", border: "1px solid #FFE0B5" }}>
               <p style={{ fontWeight: "bold", marginBottom: "1rem", color: "#2d3748", fontSize: isMobile ? "0.9rem" : "1rem" }}>
                 Q{i + 1}. {q.texte}
               </p>
 
               {q.type === "QCM" && q.choix?.map((c, j) => (
-                <label key={j} style={{ display: "flex", alignItems: "center", gap: "0.75rem", padding: "0.6rem 0.75rem", marginBottom: "0.4rem", cursor: "pointer", background: answers[q.id] === c ? "#ebf8ff" : "#f7fafc", border: answers[q.id] === c ? "2px solid #3182ce" : "2px solid transparent", borderRadius: "6px", fontSize: isMobile ? "0.85rem" : "0.95rem" }}>
+                <label key={j} style={{ display: "flex", alignItems: "center", gap: "0.75rem", padding: "0.6rem 0.75rem", marginBottom: "0.4rem", cursor: "pointer", background: answers[q.id] === c ? "#FFE0B5" : "#f7fafc", border: answers[q.id] === c ? "2px solid #FF8C00" : "2px solid transparent", borderRadius: "6px", fontSize: isMobile ? "0.85rem" : "0.95rem" }}>
                   <input type="radio" name={`q-${q.id}`} value={c} checked={answers[q.id] === c} onChange={() => setAnswers({ ...answers, [q.id]: c })} />
                   {c}
                 </label>
               ))}
 
               {q.type === "VRAI_FAUX" && ["Vrai", "Faux"].map((v) => (
-                <label key={v} style={{ display: "flex", alignItems: "center", gap: "0.75rem", padding: "0.6rem 0.75rem", marginBottom: "0.4rem", cursor: "pointer", background: answers[q.id] === v ? "#ebf8ff" : "#f7fafc", border: answers[q.id] === v ? "2px solid #3182ce" : "2px solid transparent", borderRadius: "6px", fontSize: isMobile ? "0.85rem" : "0.95rem" }}>
+                <label key={v} style={{ display: "flex", alignItems: "center", gap: "0.75rem", padding: "0.6rem 0.75rem", marginBottom: "0.4rem", cursor: "pointer", background: answers[q.id] === v ? "#FFE0B5" : "#f7fafc", border: answers[q.id] === v ? "2px solid #FF8C00" : "2px solid transparent", borderRadius: "6px", fontSize: isMobile ? "0.85rem" : "0.95rem" }}>
                   <input type="radio" name={`q-${q.id}`} value={v} checked={answers[q.id] === v} onChange={() => setAnswers({ ...answers, [q.id]: v })} />
                   {v}
                 </label>
@@ -991,7 +1001,7 @@ function QuizDisplay({ quiz, answers, setAnswers, result, submitting, onSubmit, 
                   style={{ 
                     width: "100%", 
                     padding: "0.75rem", 
-                    border: "1px solid #e2e8f0", 
+                    border: "1px solid #FFE0B5", 
                     borderRadius: "8px", 
                     height: isMobile ? "80px" : "100px", 
                     resize: "vertical", 
@@ -1009,10 +1019,13 @@ function QuizDisplay({ quiz, answers, setAnswers, result, submitting, onSubmit, 
             disabled={submitting} 
             style={{ 
               ...btnSuccess, 
+              background: "linear-gradient(135deg, #FF8C00, #FFB347)",
               width: "100%", 
               padding: isMobile ? "0.75rem" : "1rem", 
               fontSize: isMobile ? "0.9rem" : "1rem", 
-              opacity: submitting ? 0.6 : 1 
+              opacity: submitting ? 0.6 : 1,
+              border: "none",
+              boxShadow: "0 4px 12px rgba(255, 140, 0, 0.3)"
             }}
           >
             {submitting ? "Correction en cours..." : "✅ Soumettre le quiz"}
