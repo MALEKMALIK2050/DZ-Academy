@@ -50,7 +50,7 @@ const handleSubmit = () => {
     <div style={{
       background: "linear-gradient(135deg, #f0fdf4 0%, #fef2f2 100%)",
       minHeight: "100vh",
-      padding: "2rem",
+      padding: "1rem",
     }}>
       <div style={{ maxWidth: "900px", margin: "0 auto" }}>
 
@@ -58,15 +58,15 @@ const handleSubmit = () => {
         <div style={{
           background: "linear-gradient(135deg, #059669 0%, #10b981 100%)",
           color: "white",
-          padding: "2rem",
-          borderRadius: "20px",
+          padding: "1rem",
+          borderRadius: "16px",
           marginBottom: "2rem",
           boxShadow: "0 10px 30px rgba(5, 150, 105, 0.2)",
         }}>
           <div style={{ display: "flex", alignItems: "center", gap: "1rem", marginBottom: "1rem" }}>
             <div style={{ fontSize: "2.5rem" }}>🎯</div>
             <div>
-              <h1 style={{ margin: 0, fontSize: "1.8rem", fontWeight: "800" }}>Pretest</h1>
+              <h1 style={{ margin: 0, fontSize: "clamp(1.2rem, 4vw, 1.8rem)", fontWeight: "800" }}>Pretest</h1>
               <p style={{ margin: "0.5rem 0 0", opacity: 0.9, fontSize: "0.95rem" }}>
                 Évalue tes connaissances avant de commencer
               </p>
@@ -110,7 +110,7 @@ const handleSubmit = () => {
         }}>
 
           {/* Question */}
-          <div style={{ padding: "2.5rem" }}>
+          <div style={{ padding: "clamp(1rem, 4vw, 2.5rem)" }}>
             <div style={{
               display: "flex",
               alignItems: "center",
@@ -139,8 +139,8 @@ const handleSubmit = () => {
             </div>
 
             <h2 style={{
-              margin: "0 0 2rem",
-              fontSize: "1.4rem",
+              margin: "0 0 1.5rem",
+              fontSize: "clamp(1rem, 3.5vw, 1.4rem)",
               fontWeight: "700",
               color: "#1f2937",
               lineHeight: "1.5",
@@ -253,7 +253,7 @@ const handleSubmit = () => {
 
           {/* Navigation */}
           <div style={{
-            padding: "1.5rem 2.5rem",
+            padding: "1rem clamp(1rem, 4vw, 2.5rem)",
             background: "#f9fafb",
             borderTop: "1px solid #e5e7eb",
             display: "flex",
@@ -265,13 +265,14 @@ const handleSubmit = () => {
               onClick={handlePrev}
               disabled={currentQuestion === 0}
               style={{
-                padding: "0.75rem 1.5rem",
+                padding: "0.6rem 1rem",
                 borderRadius: "10px",
                 border: "2px solid #e5e7eb",
                 background: "white",
                 color: "#6b7280",
                 cursor: currentQuestion === 0 ? "not-allowed" : "pointer",
                 fontWeight: "600",
+                fontSize: "clamp(0.8rem, 2.5vw, 1rem)",
                 opacity: currentQuestion === 0 ? 0.5 : 1,
                 transition: "all 0.2s ease",
               }}
