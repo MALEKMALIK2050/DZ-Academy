@@ -1,168 +1,142 @@
 import prisma from "@/lib/prisma";
 import jwt from "jsonwebtoken";
 
-const SEUIL_REUSSITE = 50; // Seuil de passage (%)
-const MAX_TENTATIVES = Infinity; // Mettre un entier pour limiter (ex: 3)
+const SEUIL_REUSSITE = 75; // 75% pour passer au chapitre suivant
+const MAX_TENTATIVES = Infinity; // Tentatives illimitées
 
 function getUser(req) {
   try {
     const token = req.cookies?.token;
     if (!token) return null;
     return jwt.verify(token, process.env.JWT_SECRET);
-  } catch {
-    return null;
-  }
+  } catch { return null; }
 }
 
 export default async function handler(req, res) {
   const user = getUser(req);
-  if (!user) {
-    return res.status(401).json({ error: "Non autorisé" });
-  }
+  if (!user) return res.status(401).json({ error: "Non autorisé" });
 
-  // Droits autorisés
   if (user.role !== "STUDENT" && user.role !== "TEACHER" && user.role !== "DESIGNER") {
     return res.status(403).json({ error: "Accès refusé" });
   }
 
-  const { method } = req;
-
   try {
-    // GET : Charger les informations d'un quiz
-    if (method === "GET") {
+    // GET — infos quiz + tentatives
+    if (req.method === "GET") {
       const { quizId } = req.query;
-      if (!quizId) {
-        return res.status(400).json({ error: "quizId manquant" });
-      }
+      if (!quizId) return res.status(400).json({ error: "quizId manquant" });
 
       const quiz = await prisma.quiz.findUnique({
         where: { id: parseInt(quizId) },
-        include: {
-          questions: {
-            orderBy: { ordre: "asc" }
-          }
-        }
+        include: { questions: true },
       });
+      if (!quiz) return res.status(404).json({ error: "Quiz introuvable" });
 
-      if (!quiz) {
-        return res.status(404).json({ error: "Quiz introuvable" });
-      }
-
-      const attemptsCount = await prisma.quizAttempt.count({
-        where: {
-          quizId: parseInt(quizId),
-          studentId: user.id
-        }
-      });
-
-      const bestAttempt = await prisma.quizAttempt.findFirst({
-        where: {
-          quizId: parseInt(quizId),
-          studentId: user.id
-        },
-        orderBy: { score: "desc" }
+      const existing = await prisma.quizResult.findUnique({
+        where: { studentId_quizId: { studentId: user.id, quizId: parseInt(quizId) } },
       });
 
       return res.status(200).json({
         quiz,
-        attemptsCount,
-        maxAttempts: MAX_TENTATIVES,
-        seuilReussite: SEUIL_REUSSITE,
-        bestScore: bestAttempt ? bestAttempt.score : null,
-        dejaReussi: bestAttempt ? bestAttempt.score >= SEUIL_REUSSITE : false
+        attemptsCount:  existing?.tentatives || 0,
+        maxAttempts:    MAX_TENTATIVES,
+        seuilReussite:  SEUIL_REUSSITE,
+        bestScore:      existing?.score || null,
+        dejaReussi:     existing ? existing.score >= SEUIL_REUSSITE : false,
       });
     }
 
-    // POST : Soumission de réponses
-    if (method === "POST") {
-      const { quizId, answers } = req.body;
-      if (!quizId || !answers) {
-        return res.status(400).json({ error: "quizId et answers requis" });
+    // POST — soumettre réponses (accepte "answers" ou "reponses")
+    if (req.method === "POST") {
+      const { quizId, answers, reponses } = req.body;
+      const userAnswers = answers || reponses;
+
+      if (!quizId || !userAnswers) {
+        return res.status(400).json({ error: "quizId et réponses obligatoires" });
       }
 
       const quiz = await prisma.quiz.findUnique({
         where: { id: parseInt(quizId) },
-        include: { questions: true }
+        include: { questions: true },
       });
+      if (!quiz) return res.status(404).json({ error: "Quiz introuvable" });
 
-      if (!quiz) {
-        return res.status(404).json({ error: "Quiz introuvable" });
-      }
-
-      const attemptsCount = await prisma.quizAttempt.count({
-        where: {
-          quizId: parseInt(quizId),
-          studentId: user.id
-        }
-      });
-
-      if (attemptsCount >= MAX_TENTATIVES) {
-        return res.status(403).json({ error: "Nombre maximum de tentatives épuisé !" });
-      }
-
+      // Calculer le score
       let scoreObtenu = 0;
       let totalPoints = 0;
-      const detailsReponses = [];
+      const details = [];
 
       for (const question of quiz.questions) {
-        const qId = question.id;
-        const uAns = answers[qId];
-        const correctAnswers = question.reponseCorrecte;
-        const qPoints = question.points || 1;
-        totalPoints += qPoints;
+        const uAns    = userAnswers[question.id];
+        const correct = question.reponse; // champ dans ton schema
+        const points  = question.points || 1;
+        totalPoints  += points;
 
         let isCorrect = false;
 
-        if (question.type === "QCM" || question.type === "VRAI_FAUX") {
-          isCorrect = String(uAns).trim().toLowerCase() === String(correctAnswers).trim().toLowerCase();
-        } else if (question.type === "QCM_MULTIPLE") {
-          const uArr = Array.isArray(uAns) ? uAns.map(x => String(x).trim().toLowerCase()).sort() : [];
-          const cArr = Array.isArray(correctAnswers) ? correctAnswers.map(x => String(x).trim().toLowerCase()).sort() : [String(correctAnswers).trim().toLowerCase()];
-          isCorrect = JSON.stringify(uArr) === JSON.stringify(cArr);
-        } else if (question.type === "OUVERTE") {
-          const keywords = String(correctAnswers).split(";").map(kw => kw.trim().toLowerCase());
-          isCorrect = keywords.some(kw => String(uAns || "").toLowerCase().includes(kw));
-        } else {
-          isCorrect = String(uAns).trim() === String(correctAnswers).trim();
+        switch (question.type) {
+          case "QCM":
+          case "VRAI_FAUX":
+            isCorrect = String(uAns || "").trim().toLowerCase() === String(correct || "").trim().toLowerCase();
+            break;
+          case "QCM_MULTIPLE": {
+            const bonnes  = Array.isArray(correct) ? correct : JSON.parse(correct || "[]");
+            const donnees = Array.isArray(uAns) ? uAns : [];
+            isCorrect = bonnes.length === donnees.length && bonnes.every(b => donnees.includes(b));
+            break;
+          }
+          case "OUVERTE":
+            isCorrect = String(uAns || "").toLowerCase().trim() === String(correct || "").toLowerCase().trim();
+            break;
+          default:
+            isCorrect = String(uAns || "").trim() === String(correct || "").trim();
         }
 
-        if (isCorrect) scoreObtenu += qPoints;
-
-        detailsReponses.push({
-          questionId: qId,
-          userAnswer: uAns,
-          isCorrect,
-          pointsObtenus: isCorrect ? qPoints : 0
-        });
+        if (isCorrect) scoreObtenu += points;
+        details.push({ questionId: question.id, userAnswer: uAns, isCorrect, pointsObtenus: isCorrect ? points : 0 });
       }
 
-      const scorePercentage = totalPoints > 0 ? Math.round((scoreObtenu / totalPoints) * 100) : 0;
-      const reussi = scorePercentage >= SEUIL_REUSSITE;
+      const score    = totalPoints > 0 ? Math.round((scoreObtenu / totalPoints) * 100) : 0;
+      const reussi   = score >= SEUIL_REUSSITE;
 
-      const attempt = await prisma.quizAttempt.create({
-        data: {
-          quizId: parseInt(quizId),
-          studentId: user.id,
-          score: scorePercentage,
-          conforme: reussi,
-          reponses: JSON.stringify(detailsReponses),
-          dateTentative: new Date()
-        }
+      // Upsert QuizResult
+      const existing = await prisma.quizResult.findUnique({
+        where: { studentId_quizId: { studentId: user.id, quizId: parseInt(quizId) } },
       });
 
+      const tentatives = (existing?.tentatives || 0) + 1;
+
+      const result = await prisma.quizResult.upsert({
+        where:  { studentId_quizId: { studentId: user.id, quizId: parseInt(quizId) } },
+        update: { score, reponses: details, tentatives },
+        create: { studentId: user.id, quizId: parseInt(quizId), score, reponses: details, tentatives: 1 },
+      });
+
+      // Message adapté
+      let message;
+      if (reussi) {
+        message = score === 100
+          ? "🏆 Parfait ! Vous pouvez passer au chapitre suivant."
+          : "🎉 Bravo ! Score suffisant. Passez au chapitre suivant.";
+      } else {
+        message = `📚 Score : ${score}%. Il vous faut ${SEUIL_REUSSITE}% pour continuer. Réessayez !`;
+      }
+
       return res.status(201).json({
-        attemptId: attempt.id,
-        score: scorePercentage,
+        score,
         totalPoints,
         reussi,
-        seuil: SEUIL_REUSSITE,
-        attemptsCount: attemptsCount + 1,
-        maxAttempts: MAX_TENTATIVES,
-        details: detailsReponses
+        seuil:         SEUIL_REUSSITE,
+        tentatives,
+        maxAttempts:   MAX_TENTATIVES,
+        details,
+        result,
+        message,
       });
     }
 
     return res.status(405).json({ error: "Méthode non autorisée" });
+
   } catch (error) {
     console.error("API STUDENT QUIZ ERROR:", error);
     return res.status(500).json({ error: "Erreur interne du serveur" });
