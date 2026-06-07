@@ -85,6 +85,20 @@ export default function DashboardLayout({ user, roleIcon, customTitle, tabs, act
       </main>
 
       <style jsx>{`
+        .desktop-only {
+          display: flex;
+          flex-direction: column;
+        }
+
+        @media (max-width: 1024px) {
+          .desktop-only {
+            display: none !important;
+          }
+          .dashboard-mobile-nav {
+            display: block !important;
+          }
+        }
+
         .nav-badge {
           margin-left: auto;
           background: #ef4444;
