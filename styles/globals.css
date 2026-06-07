@@ -1408,3 +1408,43 @@ section {
 
 
 
+
+
+/* ===== DASHBOARD RESPONSIVE FIX ===== */
+.desktop-only {
+  display: flex;
+}
+
+.dashboard-content {
+  width: 100%;
+  max-width: 100%;
+}
+
+@media (max-width: 1024px) {
+  .desktop-only {
+    display: none !important;
+  }
+  .dashboard-layout {
+    flex-direction: column;
+  }
+  .dashboard-main {
+    padding: 0.75rem;
+    width: 100%;
+  }
+  .dashboard-content {
+    padding: 0;
+  }
+}
+
+@media (max-width: 640px) {
+  .dashboard-main {
+    padding: 0.5rem;
+  }
+  /* Cards en colonne sur mobile */
+  .stats-grid {
+    grid-template-columns: 1fr !important;
+  }
+  /* Texte plus petit sur mobile */
+  h1 { font-size: clamp(1.2rem, 5vw, 2rem) !important; }
+  h2 { font-size: clamp(1rem, 4vw, 1.5rem) !important; }
+}
