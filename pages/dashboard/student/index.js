@@ -257,77 +257,76 @@ export default function StudentDashboard() {
         {success && <p style={{ color: "green", background: "#f0fff4", padding: "0.75rem", borderRadius: "6px", marginBottom: "1rem" }}>{success}</p>}
 
         {/* ── Tab : Mes cours ── */}
-        {tab === "mes-cours" && (
-          <div>
-            {enrollments.filter((e) => e.statut === "EN_ATTENTE").length > 0 && (
-              <div style={{ background: "#fffbeb", border: "2px solid #f6e05e", padding: "2rem", borderRadius: "10px", marginBottom: "2rem" }}>
-                <h2 style={{ margin: "0 0 1.25rem", color: "#744210" }}>⏳ Demandes en attente de validation</h2>
-                {enrollments.filter((e) => e.statut === "EN_ATTENTE").map((e) => (
-                  <div key={e.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "0.5rem 0", borderBottom: "1px solid #fef08a" }}>
-                    <div>
-                      <strong>{e.course.title}</strong>
-                      <span style={{ marginLeft: "1rem", fontSize: "1.25rem", color: "#92400e" }}>
-                        ({e.typePaiement === "PARCOURS_COMPLET" ? "Parcours complet" : "Cours seul"})
-                      </span>
-                    </div>
-                    <button onClick={() => handleUnenroll(e.course.id)} style={{ background: "none", border: "1px solid #d97706", color: "#92400e", padding: "0.3rem 0.7rem", borderRadius: "6px", cursor: "pointer", fontSize: "0.85rem" }}>
-                      Annuler
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {enrollments.filter((e) => e.statut === "PAYE" || e.statut === "GRATUIT").length === 0 ? (
-              <div style={{ textAlign: "center", padding: "3rem", color: "#718096" }}>
-                <p style={{ fontSize: "1.2rem" }}>Vous n'avez aucun cours actif.</p>
-                <button onClick={() => setTab("catalogue")} style={btnPrimary}>
-                  🔍 Parcourir le catalogue
-                </button>
-              </div>
-            ) : (
-              <div style={{ display: "grid", gap: "1rem" }}>
-                {enrollments.filter((e) => e.statut === "PAYE" || e.statut === "GRATUIT").map((e) => (
-                  <div key={e.id} style={{ background: "#f7fafc", padding: "1.25rem", borderRadius: "10px" }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+          {tab === "mes-cours" && (
+            <div>
+              {enrollments.filter((e) => e.statut === "EN_ATTENTE").length > 0 && (
+                <div style={{ background: "#fffbeb", border: "2px solid #f6e05e", padding: "2rem", borderRadius: "10px", marginBottom: "2rem" }}>
+                  <h2 style={{ margin: "0 0 1.25rem", color: "#744210" }}>⏳ Demandes en attente de validation</h2>
+                  {enrollments.filter((e) => e.statut === "EN_ATTENTE").map((e) => (
+                    <div key={e.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "0.5rem 0", borderBottom: "1px solid #fef08a" }}>
                       <div>
-                        <strong style={{ fontSize: "1.1rem" }}>{e.course.title}</strong>
-                        <div style={{ fontSize: "1rem", color: "#718096", marginTop: "1rem" }}>
-                          {[e.course.matiere, e.course.niveau, e.course.annee].filter(Boolean).join(" • ")}
-                        </div>
-                        {e.course.teacher && (
-                          <div style={{ fontSize: "1rem", color: "#718096" }}>
-                            👨‍🏫 {e.course.teacher.prenom} {e.course.teacher.nom}
-                          </div>
-                        )}
-                        <span style={{ background: e.statut === "GRATUIT" ? "#0ea5e9" : "#059669", color: "white", padding: "0.1rem 0.5rem", borderRadius: "10px", fontSize: "0.75rem" }}>
-                          {e.statut === "GRATUIT" ? "Gratuit" : "Payé"}
+                        <strong>{e.course.title}</strong>
+                        <span style={{ marginLeft: "1rem", fontSize: "1.25rem", color: "#92400e" }}>
+                          ({e.typePaiement === "PARCOURS_COMPLET" ? "Parcours complet" : "Cours seul"})
                         </span>
                       </div>
-                      <button onClick={() => router.push(`/dashboard/student/courses/${e.course.id}`)} style={btnPrimary}>
-                        📖 Commencer 
+                      <button onClick={() => handleUnenroll(e.course.id)} style={{ background: "none", border: "1px solid #d97706", color: "#92400e", padding: "0.3rem 0.7rem", borderRadius: "6px", cursor: "pointer", fontSize: "0.85rem" }}>
+                        Annuler
                       </button>
                     </div>
-                    <div style={{ marginTop: "2rem" }}>
-                      <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.85rem", marginBottom: "0.25rem" }}>
-                        <span>Progression</span>
-                        <span style={{ fontWeight: "bold" }}>{e.progression}%</span>
-                      </div>
-                      <div style={{ background: "#e2e8f0", borderRadius: "10px", height: "8px", overflow: "hidden" }}>
-                        <div style={{
-                          background: e.progression === 100 ? "#059669" : e.progression > 50 ? "#1e40af" : "#d97706",
-                          width: `${e.progression}%`, height: "100%", transition: "width 0.3s"
-                        }} />
-                      </div>
-                      {e.completed && <p style={{ color: "#10B981", fontSize: "0.85rem", marginTop: "0.25rem" }}>✅ Cours complété !</p>}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
+                  ))}
+                </div>
+              )}
 
+              {enrollments.filter((e) => e.statut === "PAYE" || e.statut === "GRATUIT").length === 0 ? (
+                <div style={{ textAlign: "center", padding: "3rem", color: "#718096" }}>
+                  <p style={{ fontSize: "1.2rem" }}>Vous n'avez aucun cours actif.</p>
+                  <button onClick={() => setTab("catalogue")} style={btnPrimary}>
+                    🔍 Parcourir le catalogue
+                  </button>
+                </div>
+              ) : (
+                <div style={{ display: "grid", gap: "1rem" }}>
+                  {enrollments.filter((e) => e.statut === "PAYE" || e.statut === "GRATUIT").map((e) => (
+                    <div key={e.id} style={{ background: "#f7fafc", padding: "1.25rem", borderRadius: "10px" }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                        <div>
+                          <strong style={{ fontSize: "1.1rem" }}>{e.course.title}</strong>
+                          <div style={{ fontSize: "1rem", color: "#718096", marginTop: "1rem" }}>
+                            {[e.course.matiere, e.course.niveau, e.course.annee].filter(Boolean).join(" • ")}
+                          </div>
+                          {e.course.teacher && (
+                            <div style={{ fontSize: "1rem", color: "#718096" }}>
+                              👨‍🏫 {e.course.teacher.prenom} {e.course.teacher.nom}
+                            </div>
+                          )}
+                          <span style={{ background: e.statut === "GRATUIT" ? "#0ea5e9" : "#059669", color: "white", padding: "0.1rem 0.5rem", borderRadius: "10px", fontSize: "0.75rem" }}>
+                            {e.statut === "GRATUIT" ? "Gratuit" : "Payé"}
+                          </span>
+                        </div>
+                        <button onClick={() => router.push(`/dashboard/student/courses/${e.course.id}`)} style={btnPrimary}>
+                          {e.progression > 0 ? "📖 Continuer" : "📖 Commencer"}
+                        </button>
+                      </div>
+                      <div style={{ marginTop: "2rem" }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.85rem", marginBottom: "0.25rem" }}>
+                          <span>Progression</span>
+                          <span style={{ fontWeight: "bold" }}>{e.progression}%</span>
+                        </div>
+                        <div style={{ background: "#e2e8f0", borderRadius: "10px", height: "8px", overflow: "hidden" }}>
+                          <div style={{
+                            background: e.progression === 100 ? "#059669" : e.progression > 50 ? "#1e40af" : "#d97706",
+                            width: `${e.progression}%`, height: "100%", transition: "width 0.3s"
+                          }} />
+                        </div>
+                        {e.completed && <p style={{ color: "#10B981", fontSize: "0.85rem", marginTop: "0.25rem" }}>✅ Cours complété !</p>}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
         {/* ── Tab : Catalogue ── */}
         {tab === "catalogue" && (
           <div>
