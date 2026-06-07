@@ -2,11 +2,19 @@ import React, { useState } from "react";
 
 export default function DashboardLayout({ user, roleIcon, customTitle, tabs, activeTab, onTabChange, children }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  React.useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth <= 1024);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
 
   return (
     <div className="dashboard-layout">
       {/* Sidebar (Desktop uniquement) */}
-      <aside className="dashboard-sidebar desktop-only">
+      {!isMobile && <aside className="dashboard-sidebar">
         <div className="dashboard-sidebar-header" style={{ width: "100%", height: "260px", padding: "0", background: "white", borderBottom: "1px solid #e2e8f0", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center" }}>
           <img 
             src="/logo.png" 
@@ -46,7 +54,7 @@ export default function DashboardLayout({ user, roleIcon, customTitle, tabs, act
             ))}
           </div>
         </nav>
-      </aside>
+      </aside>}
 
       {/* Main Content Area */}
       <main className="dashboard-main">
@@ -85,20 +93,6 @@ export default function DashboardLayout({ user, roleIcon, customTitle, tabs, act
       </main>
 
       <style jsx>{`
-        .desktop-only {
-          display: flex;
-          flex-direction: column;
-        }
-
-        @media (max-width: 1024px) {
-          .desktop-only {
-            display: none !important;
-          }
-          .dashboard-mobile-nav {
-            display: block !important;
-          }
-        }
-
         .nav-badge {
           margin-left: auto;
           background: #ef4444;
