@@ -1,5 +1,6 @@
 import prisma from "@/lib/prisma";
 import jwt from "jsonwebtoken";
+import { sendEmail } from "@/lib/mail";
 
 function getUser(req) {
   try {
@@ -34,18 +35,51 @@ export default async function handler(req, res) {
     // PATCH — valider ou rejeter
     if (req.method === "PATCH") {
       const { enrollmentId, statut, prixPaye, note } = req.body;
-      if (!enrollmentId || !statut) return res.status(400).json({ error: "enrollmentId et statut obligatoires" });
+   
 
-      const updated = await prisma.enrollment.update({
-        where: { id: parseInt(enrollmentId) },
-        data: {
-          statut,
-          prixPaye:  prixPaye  || null,
-          note:      note      || null,
-          validePar: user.id,
-          valideAt:  new Date(),
-        },
-      });
+// EMAIL À L'ÉLÈVE APRÈS VALIDATION/REJET
+if (statut === "PAYE" || statut === "GRATUIT" || statut === "REJETE") {
+  try {
+    const student = await prisma.user.findUnique({ 
+      where: { id: updated.studentId },
+      select: { email: true, prenom: true, nom: true }
+    });
+    const course = await prisma.course.findUnique({ 
+      where: { id: updated.courseId },
+      select: { title: true, id: true }
+    });
+    
+    const isApproved = statut === "PAYE" || statut === "GRATUIT";
+    
+    await sendEmail({
+      to: student.email,
+      subject: `Inscription au cours "${course.title}" - ${isApproved ? "Validée ✅" : "Refusée ❌"}`,
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <div style="background: ${isApproved ? '#059669' : '#dc2626'}; padding: 20px; text-align: center; border-radius: 12px 12px 0 0;">
+            <h1 style="color: white; margin: 0;">${isApproved ? "🎉 Félicitations !" : "❌ Demande refusée"}</h1>
+          </div>
+          <div style="padding: 20px; background: #f8fafc; border-radius: 0 0 12px 12px;">
+            <p>Bonjour <strong>${student.prenom} ${student.nom}</strong>,</p>
+            <p>Votre demande d'inscription au cours <strong>"${course.title}"</strong> a été <strong>${isApproved ? "validée" : "refusée"}</strong>.</p>
+            ${note ? `<p><strong>📝 Note de l'administrateur :</strong> ${note}</p>` : ""}
+            ${isApproved ? `
+              <div style="margin: 20px 0; text-align: center;">
+                <a href="${process.env.NEXTAUTH_URL}/dashboard/student/courses/${course.id}" 
+                   style="background: #059669; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; display: inline-block;">
+                  📖 Accéder au cours
+                </a>
+              </div>
+            ` : ""}
+            <p style="color: #64748b; font-size: 12px; margin-top: 20px;">CBA Academy — Cheikh Bouamama Academy</p>
+          </div>
+        </div>
+      `,
+    });
+  } catch (emailError) {
+    console.error("Erreur envoi email validation inscription:", emailError);
+  }
+}
 
       return res.status(200).json(updated);
     }
