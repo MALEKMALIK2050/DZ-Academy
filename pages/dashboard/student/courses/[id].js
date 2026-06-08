@@ -274,53 +274,77 @@ const handleOpenSommatif = () => {
     <ProtectedRoute allowedRoles={["STUDENT"]}>
       <div style={{ minHeight: "100vh", background: "#F8F9FA", fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
 
-        {/* Header - Vert foncé avec police blanche lisible */}
-        <div style={{ 
-          background: "#1B4332",
-          color: "white", 
-          padding: isMobile ? "0.8rem 1rem" : "1rem 2rem", 
-          display: "flex", 
-          alignItems: "center", 
-          justifyContent: "space-between",
-          flexWrap: "wrap",
-          gap: "0.5rem",
-          boxShadow: "0 2px 8px rgba(0,0,0,0.1)"
-        }}>
-          <button 
-            onClick={() => router.push("/dashboard/student")} 
-            style={{ 
-              background: "rgba(255,255,255,0.15)", 
-              border: "none", 
-              color: "white", 
-              cursor: "pointer", 
-              fontSize: isMobile ? "0.9rem" : "1rem",
-              padding: "0.5rem 1rem",
-              borderRadius: "8px",
-              fontWeight: "500",
-              transition: "all 0.2s ease"
-            }}
-            onMouseEnter={(e) => e.target.style.background = "rgba(255,255,255,0.25)"}
-            onMouseLeave={(e) => e.target.style.background = "rgba(255,255,255,0.15)"}
-          >
-            ← Retour
-          </button>
-          
-           <div style={{ flex: 1, textAlign: "center" }}>
-  <h1 style={{ margin: 0, fontSize: isMobile ? "1.1rem" : "1.5rem", fontWeight: "600", color: "white", letterSpacing: "-0.3px" }}>
-    📘 COURS : {course?.title}
-  </h1>
-  <p style={{ margin: "0.2rem 0 0", fontSize: isMobile ? "0.7rem" : "0.85rem", color: "#A8D8EA", opacity: 0.9 }}>
-    {course?.matiere === "math" ? "Mathématiques" : 
-     course?.matiere === "physique" ? "Physique" :
-     course?.matiere === "svt" ? "SVT" :
-     course?.matiere === "informatique" ? "Informatique" :
-     course?.matiere === "francais" ? "Français" :
-     course?.matiere === "anglais" ? "Anglais" :
-     course?.matiere === "arabe" ? "Arabe" :
-     course?.matiere === "philosophie" ? "Philosophie" :
-     course?.matiere === "histoire" ? "Histoire-Géographie" :
-     course?.matiere || "Matière"} • {course?.niveau === "college" ? "Collège" : course?.niveau === "lycee" ? "Lycée" : course?.niveau || "Niveau"} • {course?.annee || "Année"}
-  </p>
+{/* Header - Version avec fond orange lumineux */}
+<div style={{ 
+  background: "#FF8C00",
+  backgroundImage: "linear-gradient(135deg, #FF8C00, #FFB347)",
+  color: "white", 
+  padding: isMobile ? "0.8rem 1rem" : "1rem 2rem", 
+  display: "flex", 
+  alignItems: "center", 
+  justifyContent: "space-between",
+  flexWrap: "wrap",
+  gap: "0.5rem",
+  boxShadow: "0 2px 8px rgba(0,0,0,0.1)"
+}}>
+  <button 
+    onClick={() => router.push("/dashboard/student")} 
+    style={{ 
+      background: "rgba(255,255,255,0.2)", 
+      border: "none", 
+      color: "white", 
+      cursor: "pointer", 
+      fontSize: isMobile ? "0.9rem" : "1rem",
+      padding: "0.5rem 1rem",
+      borderRadius: "8px",
+      fontWeight: "500",
+      transition: "all 0.2s ease"
+    }}
+    onMouseEnter={(e) => e.target.style.background = "rgba(255,255,255,0.3)"}
+    onMouseLeave={(e) => e.target.style.background = "rgba(255,255,255,0.2)"}
+  >
+    ← Retour
+  </button>
+  
+  <div style={{ flex: 1, textAlign: "center" }}>
+    <h1 style={{ margin: 0, fontSize: isMobile ? "1.1rem" : "1.5rem", fontWeight: "700", color: "#1B4332", letterSpacing: "-0.3px", textShadow: "0 1px 2px rgba(255,255,255,0.2)" }}>
+      📘 Intitulé de cours : {course?.title}
+    </h1>
+    <p style={{ margin: "0.2rem 0 0", fontSize: isMobile ? "0.7rem" : "0.85rem", color: "#1B4332", opacity: 0.9, fontWeight: "500" }}>
+      {course?.matiere === "math" ? "Mathématiques" : 
+       course?.matiere === "physique" ? "Physique" :
+       course?.matiere === "svt" ? "SVT" :
+       course?.matiere === "informatique" ? "Informatique" :
+       course?.matiere === "francais" ? "Français" :
+       course?.matiere === "anglais" ? "Anglais" :
+       course?.matiere === "arabe" ? "Arabe" :
+       course?.matiere === "philosophie" ? "Philosophie" :
+       course?.matiere === "histoire" ? "Histoire-Géographie" :
+       course?.matiere || "Matière"} • {course?.niveau === "college" ? "Collège" : course?.niveau === "lycee" ? "Lycée" : course?.niveau || "Niveau"} • {course?.annee || "Année"}
+    </p>
+  </div>
+
+  {isMobile && (
+    <button
+      onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+      style={{
+        background: "rgba(255,255,255,0.2)",
+        border: "none",
+        color: "white",
+        fontSize: "1.3rem",
+        padding: "0.5rem",
+        borderRadius: "8px",
+        cursor: "pointer",
+        width: "36px",
+        height: "36px",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center"
+      }}
+    >
+      {mobileMenuOpen ? "✕" : "☰"}
+    </button>
+  )}
 </div>
 
           {/* SIDEBAR - Beige/crème */}
