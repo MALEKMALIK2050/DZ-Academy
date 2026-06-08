@@ -212,7 +212,7 @@ export default function StudentCourse() {
     });
   };
 
-  const handleOpenSommatif = () => {
+const handleOpenSommatif = () => {
     if (!isSommatifUnlocked()) return;
     setActiveChapter(null);
     setActiveQuiz(course.quizFinal);
@@ -220,7 +220,7 @@ export default function StudentCourse() {
     setQuizAnswers({});
     setError("");
     setMobileMenuOpen(false);
-  };
+};
 
   const handleSubmitQuiz = async (quiz) => {
     try {
@@ -305,23 +305,23 @@ export default function StudentCourse() {
             ← Retour
           </button>
           
-            <div style={{ flex: 1, textAlign: "center" }}>
-    <h1 style={{ margin: 0, fontSize: isMobile ? "1.1rem" : "1.5rem", fontWeight: "600", color: "white", letterSpacing: "-0.3px" }}>
-      📘 COURS : {course?.title}
-    </h1>
-    <p style={{ margin: "0.2rem 0 0", fontSize: isMobile ? "0.7rem" : "0.85rem", color: "#A8D8EA", opacity: 0.9 }}>
-      {course?.matiere === "math" ? "Mathématiques" : 
-       course?.matiere === "physique" ? "Physique" :
-       course?.matiere === "svt" ? "SVT" :
-       course?.matiere === "informatique" ? "Informatique" :
-       course?.matiere === "francais" ? "Français" :
-       course?.matiere === "anglais" ? "Anglais" :
-       course?.matiere === "arabe" ? "Arabe" :
-       course?.matiere === "philosophie" ? "Philosophie" :
-       course?.matiere === "histoire" ? "Histoire-Géographie" :
-       course?.matiere || "Matière"} • {course?.niveau === "college" ? "Collège" : course?.niveau === "lycee" ? "Lycée" : course?.niveau || "Niveau"} • {course?.annee || "Année"}
-    </p>
-  </div>
+           <div style={{ flex: 1, textAlign: "center" }}>
+  <h1 style={{ margin: 0, fontSize: isMobile ? "1.1rem" : "1.5rem", fontWeight: "600", color: "white", letterSpacing: "-0.3px" }}>
+    📘 COURS : {course?.title}
+  </h1>
+  <p style={{ margin: "0.2rem 0 0", fontSize: isMobile ? "0.7rem" : "0.85rem", color: "#A8D8EA", opacity: 0.9 }}>
+    {course?.matiere === "math" ? "Mathématiques" : 
+     course?.matiere === "physique" ? "Physique" :
+     course?.matiere === "svt" ? "SVT" :
+     course?.matiere === "informatique" ? "Informatique" :
+     course?.matiere === "francais" ? "Français" :
+     course?.matiere === "anglais" ? "Anglais" :
+     course?.matiere === "arabe" ? "Arabe" :
+     course?.matiere === "philosophie" ? "Philosophie" :
+     course?.matiere === "histoire" ? "Histoire-Géographie" :
+     course?.matiere || "Matière"} • {course?.niveau === "college" ? "Collège" : course?.niveau === "lycee" ? "Lycée" : course?.niveau || "Niveau"} • {course?.annee || "Année"}
+  </p>
+</div>
 
           {/* SIDEBAR - Beige/crème */}
           {(!isMobile || mobileMenuOpen) && (
