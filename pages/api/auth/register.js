@@ -141,7 +141,8 @@ export default async function handler(req, res) {
           data: {
             userId:  adminUser.id,
             type:    "NOUVEL_INSCRIT",
-            contenu: `Nouvel étudiant inscrit : ${prenom} ${nom} (${email}) — en attente de validation`,
+            titre:   `Nouvel étudiant inscrit`,
+            contenu: `${prenom} ${nom} (${email}) — en attente de validation`,
             lu:      false,
           },
         });
