@@ -143,6 +143,7 @@ export default async function handler(req, res) {
             type:    "NOUVEL_INSCRIT",
             titre:   `Nouvel étudiant inscrit`,
             contenu: `${prenom} ${nom} (${email}) — en attente de validation`,
+            message: `${prenom} ${nom} (${email}) — en attente de validation`,
             lu:      false,
           },
         });
