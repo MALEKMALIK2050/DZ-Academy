@@ -1,13 +1,47 @@
-import { PrismaClient } from "@prisma/client";
-import formidable from "formidable";
-import { promises as fs } from "fs";
+import prisma from "@/lib/prisma";
+import multer from "multer";
 import path from "path";
+import fs from "fs";
 
-const prisma = new PrismaClient();
+const uploadDir = path.join(process.cwd(), "public", "uploads", "profiles");
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+}
+
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, uploadDir),
+  filename: (req, file, cb) => {
+    const userId = req.query.userId || "user";
+    const unique = `${userId}-${Date.now()}`;
+    cb(null, `${unique}${path.extname(file.originalname).toLowerCase()}`);
+  },
+});
+
+const upload = multer({
+  storage,
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5 MB max
+  fileFilter: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    if ([".jpg", ".jpeg", ".png", ".gif", ".webp"].includes(ext)) {
+      cb(null, true);
+    } else {
+      cb(new Error("Seules les images sont acceptées"));
+    }
+  },
+});
 
 export const config = {
   api: { bodyParser: false },
 };
+
+function runMiddleware(req, res, fn) {
+  return new Promise((resolve, reject) => {
+    fn(req, res, (result) => {
+      if (result instanceof Error) reject(result);
+      else resolve(result);
+    });
+  });
+}
 
 export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
@@ -16,35 +50,22 @@ export default async function handler(req, res) {
   if (!userId) return res.status(400).json({ error: "userId requis" });
 
   try {
-    console.log("📸 Upload FormData:", userId);
-    
-    const uploadDir = path.join(process.cwd(), "public/uploads/profiles");
-    await fs.mkdir(uploadDir, { recursive: true });
+    await runMiddleware(req, res, upload.single("photo"));
 
-    const form = formidable({ uploadDir, keepExtensions: true });
-    const [fields, files] = await new Promise((resolve, reject) => {
-      form.parse(req, (err, fields, files) => {
-        if (err) reject(err);
-        else resolve([fields, files]);
-      });
-    });
+    if (!req.file) {
+      return res.status(400).json({ error: "Aucune photo reçue" });
+    }
 
-    const uploadedFile = Array.isArray(files.photo) ? files.photo[0] : files.photo;
-    if (!uploadedFile) return res.status(400).json({ error: "Pas de fichier" });
-
-    const fileName = `${userId}-${Date.now()}.jpg`;
-    const newPath = path.join(uploadDir, fileName);
-    await fs.rename(uploadedFile.filepath, newPath);
+    const photoUrl = `/uploads/profiles/${req.file.filename}`;
 
     await prisma.user.update({
       where: { id: parseInt(userId) },
-      data: { photo: `/uploads/profiles/${fileName}` },
+      data: { photo: photoUrl },
     });
 
-    console.log("✅ Photo uploadée");
-    return res.status(200).json({ success: true, photo: `/uploads/profiles/${fileName}` });
+    return res.status(200).json({ success: true, photo: photoUrl });
   } catch (error) {
-    console.error("❌ Erreur:", error);
-    return res.status(500).json({ error: error.message });
+    console.error("❌ Erreur upload photo:", error);
+    return res.status(500).json({ error: error.message || "Erreur serveur" });
   }
 }
