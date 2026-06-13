@@ -37,7 +37,7 @@ export default async function handler(req, res) {
         tuteurNom:       tuteur?.nom       || "",
         tuteurPrenom:    tuteur?.prenom    || "",
         tuteurTelephone: tuteur?.telephone || "",
-        active: false, // ← compte inactif jusqu'à validation admin
+        active: true, // ← compte inactif jusqu'à validation admin
       },
     });
 
