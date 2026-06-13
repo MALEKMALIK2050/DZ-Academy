@@ -21,6 +21,9 @@ export default function ManageChapter() {
   const [addingSupport, setAddingSupport] = useState(false);
   const [editingSupport, setEditingSupport] = useState(null);
   const [editSupport, setEditSupport] = useState({ nom: "", url: "", contenu: "" });
+  const [scormFile, setScormFile] = useState(null);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploading, setUploading] = useState(false);
 
   // Devoirs
   const [devoirs,      setDevoirs]      = useState([]);
@@ -92,13 +95,69 @@ export default function ManageChapter() {
 };
 
   // ── Supports ─────────────────────────────────────────────
+const isScormType = (type) => type === "SCORM" || type === "ARTICULATE";
+
 const handleAddSupport = async () => {
-  if (newSupport.type !== "TEXTE" && newSupport.type !== "FORUM" && !newSupport.url) return setError("URL obligatoire");
+  // Validation spécifique selon le type
+  if (isScormType(newSupport.type)) {
+    if (!scormFile) return setError("Fichier ZIP obligatoire");
+    if (!newSupport.nom) return setError("Nom affiché obligatoire");
+  } else if (newSupport.type !== "TEXTE" && newSupport.type !== "FORUM" && !newSupport.url) {
+    return setError("URL obligatoire");
+  }
   if ((newSupport.type === "TEXTE" || newSupport.type === "FORUM") && !newSupport.contenu) return setError("Contenu obligatoire");
   setError(""); setSuccess("");
 
-  console.log("📤 Envoi support:", { ...newSupport, chapterId }); // ✅ DEBUG
+  // ── Upload SCORM/ARTICULATE via multipart ──
+  if (isScormType(newSupport.type)) {
+    setUploading(true);
+    setUploadProgress(0);
 
+    const formData = new FormData();
+    formData.append("scormFile", scormFile);
+    formData.append("chapterId", chapterId);
+    formData.append("type", newSupport.type);
+    formData.append("nom", newSupport.nom);
+
+    try {
+      const result = await new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.open("POST", "/api/supports/upload-scorm");
+        xhr.withCredentials = true;
+
+        xhr.upload.onprogress = (e) => {
+          if (e.lengthComputable) {
+            setUploadProgress(Math.round((e.loaded / e.total) * 100));
+          }
+        };
+
+        xhr.onload = () => {
+          try {
+            const data = JSON.parse(xhr.responseText);
+            if (xhr.status >= 200 && xhr.status < 300) resolve(data);
+            else reject(new Error(data.error || "Erreur upload"));
+          } catch { reject(new Error("Réponse invalide")); }
+        };
+
+        xhr.onerror = () => reject(new Error("Erreur réseau"));
+        xhr.send(formData);
+      });
+
+      setSuccess("✅ Package " + newSupport.type + " importé avec succès !");
+      setNewSupport({ type: "PDF", url: "", nom: "", contenu: "" });
+      setScormFile(null);
+      setAddingSupport(false);
+      fetchChapter();
+    } catch (err) {
+      setError(err.message || "Erreur upload");
+    } finally {
+      setUploading(false);
+      setUploadProgress(0);
+    }
+    return;
+  }
+
+  // ── Upload standard (URL-based) ──
   try {
     const res = await fetch("/api/supports", {
       method: "POST",
@@ -108,7 +167,6 @@ const handleAddSupport = async () => {
     });
     
     const data = await res.json();
-    console.log("📥 Réponse API:", data); // ✅ DEBUG
     
     if (res.ok) {
       setSuccess("✅ Support ajouté !");
@@ -480,23 +538,112 @@ const handleAddSupport = async () => {
                 <label style={labelStyle}>Type de support</label>
                 <select
                   value={newSupport.type}
-                  onChange={(e) => setNewSupport({ type: e.target.value, url: "", nom: "", contenu: "" })}
+                  onChange={(e) => { setNewSupport({ type: e.target.value, url: "", nom: "", contenu: "" }); setScormFile(null); setUploadProgress(0); }}
                   style={inputStyle}
+                  disabled={uploading}
                 >
                   {["PDF", "VIDEO", "IMAGE", "PPT", "SCORM", "ARTICULATE", "TEXTE", "FORUM"].map((t) => (
                     <option key={t} value={t}>{t}</option>
                   ))}
                 </select>
 
-                <label style={{ ...labelStyle, marginTop: "0.75rem" }}>Nom affiché</label>
+                <label style={{ ...labelStyle, marginTop: "0.75rem" }}>Nom affiché *</label>
                 <input
                   placeholder="Ex: Cours chapitre 1"
                   value={newSupport.nom}
                   onChange={(e) => setNewSupport({ ...newSupport, nom: e.target.value })}
                   style={inputStyle}
+                  disabled={uploading}
                 />
 
-                {newSupport.type !== "TEXTE" && newSupport.type !== "FORUM" && (
+                {/* ── SCORM / ARTICULATE : Upload ZIP ── */}
+                {isScormType(newSupport.type) && (
+                  <div style={{ marginTop: "0.75rem" }}>
+                    <label style={labelStyle}>Package ZIP *</label>
+                    <div
+                      onDragOver={(e) => { e.preventDefault(); e.currentTarget.style.borderColor = "#3b82f6"; e.currentTarget.style.background = "#dbeafe"; }}
+                      onDragLeave={(e) => { e.preventDefault(); e.currentTarget.style.borderColor = newSupport.type === "SCORM" ? "#7c3aed" : "#0d9488"; e.currentTarget.style.background = "#f8fafc"; }}
+                      onDrop={(e) => {
+                        e.preventDefault();
+                        e.currentTarget.style.borderColor = newSupport.type === "SCORM" ? "#7c3aed" : "#0d9488";
+                        e.currentTarget.style.background = "#f8fafc";
+                        const file = e.dataTransfer.files?.[0];
+                        if (file && file.name.toLowerCase().endsWith(".zip")) {
+                          setScormFile(file);
+                        } else {
+                          setError("Seuls les fichiers .zip sont acceptés");
+                        }
+                      }}
+                      style={{
+                        border: `2px dashed ${newSupport.type === "SCORM" ? "#7c3aed" : "#0d9488"}`,
+                        borderRadius: "12px",
+                        padding: "1.5rem",
+                        textAlign: "center",
+                        background: "#f8fafc",
+                        cursor: uploading ? "not-allowed" : "pointer",
+                        transition: "all 0.2s",
+                        position: "relative",
+                      }}
+                      onClick={() => !uploading && document.getElementById("scormFileInput")?.click()}
+                    >
+                      <input
+                        id="scormFileInput"
+                        type="file"
+                        accept=".zip"
+                        style={{ display: "none" }}
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) setScormFile(file);
+                        }}
+                        disabled={uploading}
+                      />
+                      {scormFile ? (
+                        <div>
+                          <div style={{ fontSize: "2rem", marginBottom: "0.5rem" }}>📦</div>
+                          <div style={{ fontWeight: "700", color: "#1e293b", fontSize: "1rem" }}>{scormFile.name}</div>
+                          <div style={{ fontSize: "0.85rem", color: "#64748b", marginTop: "0.25rem" }}>
+                            {(scormFile.size / (1024 * 1024)).toFixed(2)} Mo
+                          </div>
+                          {!uploading && (
+                            <button
+                              onClick={(e) => { e.stopPropagation(); setScormFile(null); }}
+                              style={{ marginTop: "0.5rem", background: "#ef4444", color: "white", border: "none", borderRadius: "6px", padding: "0.3rem 0.8rem", cursor: "pointer", fontSize: "0.8rem" }}
+                            >✕ Retirer</button>
+                          )}
+                        </div>
+                      ) : (
+                        <div>
+                          <div style={{ fontSize: "2.5rem", marginBottom: "0.5rem" }}>{newSupport.type === "SCORM" ? "🎓" : "🎯"}</div>
+                          <div style={{ fontWeight: "600", color: "#475569" }}>Glissez un package .zip ici</div>
+                          <div style={{ fontSize: "0.85rem", color: "#94a3b8", marginTop: "0.25rem" }}>ou cliquez pour sélectionner un fichier</div>
+                          <div style={{ fontSize: "0.75rem", color: "#cbd5e1", marginTop: "0.5rem" }}>Max 50 Mo • Doit contenir un index.html</div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Barre de progression */}
+                    {uploading && (
+                      <div style={{ marginTop: "0.75rem" }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.85rem", color: "#475569", marginBottom: "0.3rem" }}>
+                          <span>⏳ Upload en cours...</span>
+                          <span style={{ fontWeight: "700" }}>{uploadProgress}%</span>
+                        </div>
+                        <div style={{ background: "#e2e8f0", borderRadius: "8px", height: "8px", overflow: "hidden" }}>
+                          <div style={{
+                            height: "100%",
+                            borderRadius: "8px",
+                            width: `${uploadProgress}%`,
+                            background: `linear-gradient(90deg, ${newSupport.type === "SCORM" ? "#7c3aed, #a855f7" : "#0d9488, #14b8a6"})`,
+                            transition: "width 0.3s ease",
+                          }} />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* ── Autres types : URL classique ── */}
+                {!isScormType(newSupport.type) && newSupport.type !== "TEXTE" && newSupport.type !== "FORUM" && (
                   <>
                     <label style={{ ...labelStyle, marginTop: "0.75rem" }}>URL / Lien *</label>
                     <input
@@ -521,8 +668,10 @@ const handleAddSupport = async () => {
                 )}
 
                 <div style={{ display: "flex", gap: "0.5rem", marginTop: "1rem" }}>
-                  <button onClick={handleAddSupport} style={btnSuccess}>✅ Ajouter</button>
-                  <button onClick={() => { setAddingSupport(false); setNewSupport({ type: "PDF", url: "", nom: "", contenu: "" }); }} style={btnWarning}>Annuler</button>
+                  <button onClick={handleAddSupport} disabled={uploading} style={{ ...btnSuccess, opacity: uploading ? 0.6 : 1, cursor: uploading ? "not-allowed" : "pointer" }}>
+                    {uploading ? "⏳ Import en cours..." : isScormType(newSupport.type) ? "📦 Importer le package" : "✅ Ajouter"}
+                  </button>
+                  <button onClick={() => { setAddingSupport(false); setNewSupport({ type: "PDF", url: "", nom: "", contenu: "" }); setScormFile(null); setUploadProgress(0); }} disabled={uploading} style={{ ...btnWarning, opacity: uploading ? 0.6 : 1 }}>Annuler</button>
                 </div>
               </div>
             ) : (

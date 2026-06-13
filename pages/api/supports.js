@@ -1,5 +1,7 @@
 import prisma from "@/lib/prisma";
 import jwt from "jsonwebtoken";
+import path from "path";
+import fs from "fs";
 
 function getUser(req) {
   try {
@@ -116,6 +118,23 @@ export default async function handler(req, res) {
 
       if (!supportId) {
         return res.status(400).json({ error: "supportId manquant" });
+      }
+
+      // Récupérer le support pour vérifier le type
+      const support = await prisma.support.findUnique({
+        where: { id: parseInt(supportId) },
+      });
+
+      if (!support) {
+        return res.status(404).json({ error: "Support introuvable" });
+      }
+
+      // Nettoyer le dossier SCORM/ARTICULATE extrait s'il existe
+      if (support.type === "SCORM" || support.type === "ARTICULATE") {
+        const scormDir = path.join(process.cwd(), "public", "uploads", "scorm", String(support.id));
+        if (fs.existsSync(scormDir)) {
+          fs.rmSync(scormDir, { recursive: true, force: true });
+        }
       }
 
       await prisma.support.delete({

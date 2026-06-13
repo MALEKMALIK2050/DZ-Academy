@@ -57,6 +57,8 @@ export default function SupportsList({ chapterId, isTeacher = false }) {
           const isPDF = support.type === "PDF";
           const isTexte = support.type === "TEXTE";
           const isScorm = support.type === "SCORM";
+          const isArticulate = support.type === "ARTICULATE";
+          const isScormLike = isScorm || isArticulate;
           const isImage = support.type === "IMAGE";
           const isPPT = support.type === "PPT";
           const isForum = support.type === "FORUM";
@@ -74,12 +76,12 @@ export default function SupportsList({ chapterId, isTeacher = false }) {
             >
               {/* Header — titre + icone */}
               <div
-                onClick={() => isVideo && toggleSupport(support.id)}
+                onClick={() => (isVideo || isScormLike) && toggleSupport(support.id)}
                 style={{
                   padding: "1rem",
                   background: getTypeBg(support.type),
                   color: "white",
-                  cursor: isVideo ? "pointer" : "default",
+                  cursor: (isVideo || isScormLike) ? "pointer" : "default",
                   display: "flex",
                   justifyContent: "space-between",
                   alignItems: "center",
@@ -98,15 +100,15 @@ export default function SupportsList({ chapterId, isTeacher = false }) {
                   </div>
                 </div>
 
-                {/* Arrow pour vidéos */}
-                {isVideo && (
+                {/* Arrow pour vidéos et SCORM */}
+                {(isVideo || isScormLike) && (
                   <span style={{ fontSize: "1.5rem", transform: isExpanded ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.3s" }}>
                     ▼
                   </span>
                 )}
 
                 {/* Icon actions rapides */}
-                {!isVideo && (
+                {!isVideo && !isScormLike && (
                   <a
                     href={support.url}
                     target="_blank"
@@ -122,6 +124,33 @@ export default function SupportsList({ chapterId, isTeacher = false }) {
                     }}
                   >
                     Ouvrir →
+                  </a>
+                )}
+
+                {/* Bouton lancer pour SCORM/Articulate */}
+                {isScormLike && (
+                  <a
+                    href={support.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    onClick={(e) => e.stopPropagation()}
+                    style={{
+                      background: "rgba(255,255,255,0.25)",
+                      padding: "0.5rem 1.2rem",
+                      borderRadius: "8px",
+                      textDecoration: "none",
+                      color: "white",
+                      fontSize: "0.9rem",
+                      fontWeight: "700",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "0.4rem",
+                      backdropFilter: "blur(4px)",
+                      border: "1px solid rgba(255,255,255,0.3)",
+                      transition: "all 0.2s",
+                    }}
+                  >
+                    ▶ Plein écran
                   </a>
                 )}
               </div>
@@ -155,11 +184,27 @@ export default function SupportsList({ chapterId, isTeacher = false }) {
                 />
               )}
 
+              {/* Contenu SCORM/Articulate en iframe */}
+              {isExpanded && isScormLike && (
+                <div style={{ borderTop: "1px solid #e2e8f0" }}>
+                  <iframe
+                    src={support.url}
+                    title={support.nom || "Contenu SCORM"}
+                    style={{
+                      width: "100%",
+                      height: "600px",
+                      border: "none",
+                      display: "block",
+                    }}
+                    allowFullScreen
+                  />
+                </div>
+              )}
+
               {/* Placeholder pour autres types */}
-              {!isVideo && !isTexte && (
+              {!isVideo && !isTexte && !isScormLike && (
                 <div style={{ padding: "1.5rem", borderTop: "1px solid #e2e8f0", color: "#718096" }}>
                   {isPDF && "📄 Fichier PDF"}
-                  {isScorm && "🎓 Contenu SCORM"}
                   {isImage && "🖼️ Image"}
                   {isPPT && "🎨 Présentation PowerPoint"}
                   {isForum && "💬 Forum de discussion"}

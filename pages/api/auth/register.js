@@ -80,8 +80,8 @@ export default async function handler(req, res) {
 
           <div style="text-align: center; margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid #e2e8f0;">
             <p style="color: #94a3b8; font-size: 0.85rem;">
-              CBA Academy — Cheikh Bouamama Academy<br/>
-              Pour toute question, contactez-nous à <a href="mailto:contact@cb-academy.dz" style="color: #059669;">contact@cb-academy.dz</a>
+              CB Academy — Cheikh Bouamama Academy<br/>
+              Pour toute question, contactez-nous à <a href="mailto:malekmalik2030@outlook.fr" style="color: #059669;">malekmalik2030@outlook.fr</a>
             </p>
           </div>
         </div>
