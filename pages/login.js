@@ -11,6 +11,20 @@ export default function Login() {
 
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState("");
+
+  // Gérer les messages de l'URL
+  useState(() => {
+    if (router.query.verified === "true") {
+      setSuccess("✅ Compte activé avec succès ! Vous pouvez vous connecter.");
+    }
+    if (router.query.error === "token_invalide") {
+      setError("❌ Lien d'activation invalide ou expiré.");
+    }
+    if (router.query.error === "Compte désactivé") {
+      setError("⏳ Veuillez activer votre compte via l'email reçu.");
+    }
+  });
 
   const handleChange = (e) => {
     setForm({
@@ -64,6 +78,7 @@ export default function Login() {
       <div className="auth-container">
         <h2>Connexion</h2>
 
+        {success && <p style={{ color: "#059669", fontWeight: "600", marginBottom: "1rem" }}>{success}</p>}
         {error && <p className="error">{error}</p>}
 
         <form onSubmit={handleSubmit}>
