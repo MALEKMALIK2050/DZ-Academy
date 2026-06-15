@@ -35,9 +35,9 @@ export default async function handler(req, res) {
        error: "Compte désactivé"
        }); 
 
-    if (!user.emailVerified && user.role === "STUDENT") {
+    if (user.verificationToken && user.role === "STUDENT") {
   return res.status(403).json({ error: "Veuillez activer votre compte via l'email reçu" });
-}   
+}
 
     const isValid = await bcrypt.compare(password, user.password);
 
