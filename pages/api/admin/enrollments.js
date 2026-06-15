@@ -33,9 +33,26 @@ export default async function handler(req, res) {
     }
 
     // PATCH — valider ou rejeter
-    if (req.method === "PATCH") {
-      const { enrollmentId, statut, prixPaye, note } = req.body;
-   
+if (req.method === "PATCH") {
+  const { enrollmentId, statut, prixPaye, note } = req.body;
+
+  // Validation des statuts autorisés
+  const statutsValides = ["PAYE", "GRATUIT", "REJETE"];
+  if (!statutsValides.includes(statut)) {
+    return res.status(400).json({ error: "Statut invalide" });
+  }
+
+  // Mise à jour avec les bons noms de champs
+  const updated = await prisma.enrollment.update({
+    where: { id: parseInt(enrollmentId) },
+    data: { 
+      statut: statut,
+      prixPaye: statut === "PAYE" ? prixPaye : null,
+      valideAt: new Date(),      // ✅ bon nom (pas dateValidation)
+      note: note || null,
+      // validePar: user.id      // si tu veux loguer qui a validé
+    }
+  });
 
 // EMAIL À L'ÉLÈVE APRÈS VALIDATION/REJET
 if (statut === "PAYE" || statut === "GRATUIT" || statut === "REJETE") {

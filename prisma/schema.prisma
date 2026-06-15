@@ -370,7 +370,7 @@ model Enrollment {
   courseId     Int
   note         String?
   prixPaye     Float?
-  statut       String    @default("EN_ATTENTE")
+  statut       String    @default("EN_ATTENTE")  // valeurs possibles : EN_ATTENTE, PAYE, GRATUIT, REJETE
   typePaiement String?
   valideAt     DateTime?
   validePar    Int?
