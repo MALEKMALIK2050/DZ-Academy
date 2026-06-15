@@ -160,6 +160,7 @@ model User {
   pretestResults PretestResult[] @relation("PretestResults")
   quizResults    QuizResult[]
   videoProgress  VideoProgress[]
+  verificationToken String?
 
   remediationsEnvoyes  Remediation[] @relation("RemediationStudent")
   remediationsRecues   Remediation[] @relation("RemediationTeacher")
