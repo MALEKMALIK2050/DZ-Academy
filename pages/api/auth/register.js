@@ -64,11 +64,16 @@ export default async function handler(req, res) {
             Votre compte a été créé avec succès. Cliquez sur le bouton ci-dessous pour activer votre compte.
           </p>
 
-          <div style="text-align: center; margin: 2rem 0;">
+          <div style="text-align: center; margin: 2rem 0; background: #f0fdf4; padding: 1.5rem; border-radius: 8px;">
+            <p style="color: #1e293b; margin: 0 0 1rem; font-size: 0.9rem;">Cliquez sur le lien ci-dessous pour activer votre compte :</p>
             <a href="${verificationLink}" 
-               style="background: linear-gradient(135deg, #059669, #10b981); color: #ffffff; padding: 1rem 2.5rem; border-radius: 8px; text-decoration: none; font-weight: 700; font-size: 1.1rem; display: inline-block; border: 2px solid #047857;">
-              ✅ Activer mon compte
+               style="background-color: #16a34a; color: #ffffff !important; padding: 1rem 2.5rem; border-radius: 8px; text-decoration: none; font-weight: 700; font-size: 1.1rem; display: inline-block; font-family: Arial, sans-serif;">
+              Activer mon compte
             </a>
+            <p style="color: #64748b; margin: 1rem 0 0; font-size: 0.8rem;">
+              Ou copiez ce lien dans votre navigateur :<br/>
+              <span style="color: #16a34a; word-break: break-all;">${verificationLink}</span>
+            </p>
           </div>
 
           <div style="background: #fffbeb; border: 1px solid #f59e0b; border-radius: 8px; padding: 1rem; margin: 1.5rem 0;">
