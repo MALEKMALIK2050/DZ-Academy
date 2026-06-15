@@ -66,7 +66,7 @@ export default async function handler(req, res) {
 
           <div style="text-align: center; margin: 2rem 0;">
             <a href="${verificationLink}" 
-               style="background: linear-gradient(135deg, #059669, #10b981); color: white; padding: 1rem 2.5rem; border-radius: 8px; text-decoration: none; font-weight: 700; font-size: 1.1rem; display: inline-block;">
+               style="background: linear-gradient(135deg, #059669, #10b981); color: #ffffff; padding: 1rem 2.5rem; border-radius: 8px; text-decoration: none; font-weight: 700; font-size: 1.1rem; display: inline-block; border: 2px solid #047857;">
               ✅ Activer mon compte
             </a>
           </div>
