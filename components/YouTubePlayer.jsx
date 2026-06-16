@@ -27,20 +27,32 @@ const YouTubePlayer = ({ videoId: propVideoId, supportId: propSupportId, onProgr
       return;
     }
 
-    // Charger YouTube API
-    const tag = document.createElement("script");
-    tag.src = "https://www.youtube.com/iframe_api";
-    tag.async = true;
+    // Si API déjà chargée, initialiser directement
+    if (window.YT && window.YT.Player) {
+      initializePlayer();
+      return;
+    }
+
+    // Charger YouTube API seulement si pas encore chargée
+    if (!document.querySelector('script[src="https://www.youtube.com/iframe_api"]')) {
+      const tag = document.createElement("script");
+      tag.src = "https://www.youtube.com/iframe_api";
+      tag.async = true;
+      document.head.appendChild(tag);
+    }
 
     window.onYouTubeIframeAPIReady = () => {
       console.log("✅ YouTube API chargée");
       initializePlayer();
     };
 
-    document.head.appendChild(tag);
-
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
+      // Détruire le player proprement
+      if (playerRef.current) {
+        playerRef.current.destroy();
+        playerRef.current = null;
+      }
     };
   }, [videoId]);
 
