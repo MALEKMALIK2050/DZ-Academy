@@ -302,6 +302,7 @@ model VideoProgress {
   supportId    Int
   student      User     @relation(fields: [studentId], references: [id])
   support      Support  @relation(fields: [supportId], references: [id], onDelete: Cascade)
+  duration     Float?
 
   @@unique([studentId, supportId])
 }
