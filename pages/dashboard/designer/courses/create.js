@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { MATIERES, ANNEES_COLLEGE, ANNEES_LYCEE } from "@/lib/constants";
 import { useRouter } from "next/router";
 import { useAuth } from "@/context/AuthContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
@@ -50,8 +51,7 @@ export default function CreateCourse() {
     }
   };
 
-  const anneesCollege = ["6eme", "5eme", "4eme", "3eme"];
-  const anneesLycee   = ["1AS", "2AS", "Terminale"];  const DASHBOARD_TABS = [
+  const DASHBOARD_TABS = [
     { key: "overview", label: "Espace Designer", icon: "🎨" },
     { key: "courses",  label: "Mes cours",       icon: "🎨" },
     { key: "messages", label: "Messages",        icon: "✉️" },
@@ -123,16 +123,7 @@ export default function CreateCourse() {
                   <label style={labelStyle}>Matière *</label>
                   <select name="matiere" value={form.matiere} onChange={handleChange} style={inputStyle} required>
                     <option value="">Choisir...</option>
-                    <option value="math">Mathématiques</option>
-                    <option value="physique">Physique & Chimie</option>
-                    <option value="svt">SVT</option>
-                    <option value="informatique">Informatique</option>
-                    <option value="education_islamique">Éducation Islamique</option>
-                    <option value="histoire">Histoire & Géo</option>
-                    <option value="francais">Français</option>
-                    <option value="anglais">Anglais</option>
-                    <option value="arabe">Langue Arabe</option>
-                    <option value="philosophie">Philosophie</option>
+                    {MATIERES.map(m => <option key={m.value} value={m.value}>{m.label}</option>)}
                   </select>
                 </div>
               </div>
@@ -151,8 +142,8 @@ export default function CreateCourse() {
                   <label style={labelStyle}>Année / Classe *</label>
                   <select name="annee" value={form.annee} onChange={handleChange} style={inputStyle} required disabled={!form.niveau}>
                     <option value="">Choisir une année</option>
-                    {form.niveau === "college" && anneesCollege.map((a) => <option key={a} value={a}>{a}</option>)}
-                    {form.niveau === "lycee"   && anneesLycee.map((a)   => <option key={a} value={a}>{a}</option>)}
+                    {form.niveau === "college" && ANNEES_COLLEGE.map((a) => <option key={a} value={a}>{a}</option>)}
+                    {form.niveau === "lycee"   && ANNEES_LYCEE.map((a)   => <option key={a} value={a}>{a}</option>)}
                   </select>
                 </div>
               </div>

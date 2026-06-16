@@ -2,9 +2,22 @@ import Link from "next/link";
 import { useState, useEffect } from "react";
 import AnimatedLogo from "../components/AnimatedLogo";
 
-const MATIERES = ["math", "physique", "svt", "informatique", "histoire", "francais", "anglais", "arabe", "philosophie", "education_islamique"];
-const ANNEES_COLLEGE = ["6eme", "5eme", "4eme", "3eme"];
-const ANNEES_LYCEE   = ["1AS", "2AS", "Terminale"];
+const MATIERES = [
+  { value: "math",                label: "Mathématiques" },
+  { value: "physique",            label: "Physique & Chimie" },
+  { value: "svt",                 label: "SVT" },
+  { value: "informatique",        label: "Informatique" },
+  { value: "histoire",            label: "Histoire & Géographie" },
+  { value: "francais",            label: "Français" },
+  { value: "anglais",             label: "Anglais" },
+  { value: "arabe",               label: "Langue Arabe" },
+  { value: "philosophie",         label: "Philosophie" },
+  { value: "education_islamique", label: "Éducation Islamique" },
+  { value: "allemand",            label: "Allemand" },
+  { value: "italien",             label: "Italien" },
+];
+const ANNEES_COLLEGE = ["6ème", "5ème", "4ème", "3ème"];
+const ANNEES_LYCEE   = ["1ère AS", "2ème AS", "Terminale"];
 
 export default function Home() {
   const [index, setIndex] = useState(0);
@@ -155,7 +168,7 @@ export default function Home() {
                 style={{ width: "100%", padding: "0.65rem", border: "1.5px solid #e2e8f0", borderRadius: "8px", fontSize: "0.95rem" }}
               >
                 <option value="">Toutes les matières</option>
-                {MATIERES.map(m => <option key={m} value={m}>{m.charAt(0).toUpperCase() + m.slice(1)}</option>)}
+                {MATIERES.map(m => <option key={m.value} value={m.value}>{m.label}</option>)}
               </select>
             </div>
 
@@ -225,7 +238,7 @@ export default function Home() {
                     <div style={{ display: "flex", gap: "0.4rem", flexWrap: "wrap", marginBottom: "0.75rem" }}>
                       {course.niveau && (
                         <span style={{ background: "#f0fdf4", color: "#166534", padding: "0.2rem 0.6rem", borderRadius: "20px", fontSize: "0.75rem", fontWeight: "600" }}>
-                          {course.niveau}
+                          {course.niveau === "college" ? "Collège" : course.niveau === "lycee" ? "Lycée" : course.niveau}
                         </span>
                       )}
                       {course.annee && (
@@ -235,7 +248,7 @@ export default function Home() {
                       )}
                       {course.matiere && (
                         <span style={{ background: "#fff7ed", color: "#c2410c", padding: "0.2rem 0.6rem", borderRadius: "20px", fontSize: "0.75rem", fontWeight: "600" }}>
-                          {course.matiere}
+                          {MATIERES.find(m => m.value === course.matiere)?.label || course.matiere}
                         </span>
                       )}
                     </div>
