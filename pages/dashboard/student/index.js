@@ -6,6 +6,7 @@ import ProtectedRoute from "@/components/ProtectedRoute";
 import Chat from "@/components/Chat";
 import DashboardLayout from "../../../components/layout/DashboardLayout";
 import ProfileDropdown from "@/components/ProfileDropdown";
+import { MATIERES, NIVEAUX, ANNEES_COLLEGE, ANNEES_LYCEE, getMatiereLabel, getNiveauLabel } from "@/lib/constants";
 
 export default function StudentDashboard() {
   const router = useRouter();
@@ -198,8 +199,7 @@ export default function StudentDashboard() {
       .map((e) => [e.course.teacher.id, e.course.teacher])
   ).values()];
 
-  const anneesCollege = ["6eme", "5eme", "4eme", "3eme"];
-  const anneesLycee   = ["1AS", "2AS", "Terminale"];
+  // Années depuis lib/constants
 
   const totalUnreadChat = messages.filter((m) => m.receiverId === user?.id && !m.lu).length;
   const DASHBOARD_TABS = [
@@ -345,8 +345,8 @@ export default function StudentDashboard() {
                   <label style={labelStyle}>Année</label>
                   <select value={filtreAnnee} onChange={(e) => setFiltreAnnee(e.target.value)} style={inputStyle}>
                     <option value="">Toutes les années</option>
-                    {filtreNiveau === "college" && anneesCollege.map((a) => <option key={a} value={a}>{a}</option>)}
-                    {filtreNiveau === "lycee"   && anneesLycee.map((a)   => <option key={a} value={a}>{a}</option>)}
+                    {filtreNiveau === "college" && ANNEES_COLLEGE.map((a) => <option key={a} value={a}>{a}</option>)}
+                    {filtreNiveau === "lycee"   && ANNEES_LYCEE.map((a)   => <option key={a} value={a}>{a}</option>)}
                     {!filtreNiveau && [...anneesCollege, ...anneesLycee].map((a) => <option key={a} value={a}>{a}</option>)}
                   </select>
                 </div>
