@@ -14,25 +14,21 @@ export default async function handler(req, res) {
   const user = getUser(req);
   if (!user) return res.status(401).json({ error: "Non autorisé" });
 
-  // ====================================================
-  // ✅ VALIDATION DE L'ID (CORRECTION DU BUG)
-  // ====================================================
+  // ✅ VALIDATION DE L'ID (CORRECTION CRITIQUE)
   const { id } = req.query;
-
+  
   if (!id) {
     return res.status(400).json({ error: "ID du cours manquant" });
   }
-
+  
   const courseId = parseInt(id);
-
+  
   if (isNaN(courseId)) {
     return res.status(400).json({ error: "ID du cours invalide" });
   }
 
   try {
-    // ====================================================
     // GET — détail cours
-    // ====================================================
     if (req.method === "GET") {
       const course = await prisma.course.findUnique({
         where: { id: courseId },
@@ -58,7 +54,6 @@ export default async function handler(req, res) {
           },
           quizFinal:   { include: { questions: true } },
           enrollments: { select: { id: true } },
-          scormPackages: { orderBy: { createdAt: 'desc' } }, // ✅ Support SCORM
         },
       });
 
@@ -66,9 +61,7 @@ export default async function handler(req, res) {
       return res.status(200).json(course);
     }
 
-    // ====================================================
     // PUT — modifier infos cours ou statut
-    // ====================================================
     if (req.method === "PUT") {
       if (user.role !== "DESIGNER" && user.role !== "ADMIN") {
         return res.status(403).json({ error: "Accès refusé" });
@@ -113,9 +106,7 @@ export default async function handler(req, res) {
       return res.status(200).json(updated);
     }
 
-    // ====================================================
     // DELETE — supprimer cours
-    // ====================================================
     if (req.method === "DELETE") {
       if (user.role !== "DESIGNER" && user.role !== "ADMIN") {
         return res.status(403).json({ error: "Accès refusé" });
@@ -155,11 +146,6 @@ export default async function handler(req, res) {
         });
 
         await prisma.enrollment.deleteMany({
-          where: { courseId: courseId }
-        });
-
-        // ✅ Suppression des SCORM
-        await prisma.scormPackage.deleteMany({
           where: { courseId: courseId }
         });
 

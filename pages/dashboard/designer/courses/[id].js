@@ -27,12 +27,12 @@ export default function ManageCourse() {
   const [showImportModal, setShowImportModal] = useState(false);
 
   // ✅ CORRECTION : ajout de 'id' dans les dépendances
-  useEffect(() => {
-    if (!id) return;
-    if (router.query.import === 'true') {
-      setShowImportModal(true);
-    }
-  }, [router.query.import, id]);
+useEffect(() => {
+  if (!id) return; // ✅ CORRECTION
+  if (router.query.import === 'true') {
+    setShowImportModal(true);
+  }
+}, [router.query.import, id]); 
 
   const [course, setCourse] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -61,10 +61,10 @@ export default function ManageCourse() {
   const [activeScorm, setActiveScorm] = useState(null);
 
   // ✅ CORRECTION : ajout de 'id' dans les dépendances
-  useEffect(() => {
-    if (!id) return;
-    fetchCourse();
-  }, [id]);
+useEffect(() => {
+  if (!id) return; // ✅ CORRECTION
+  fetchCourse();
+}, [router.query.refresh, id]); // ✅ CORRECTION
 
   const fetchCourse = async () => {
     try {
