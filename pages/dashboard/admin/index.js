@@ -157,7 +157,7 @@ export default function DashboardAdmin() {
     { key: "chat", label: "Chat", icon: "💬", badge: totalUnreadChat },
   ];
 
-  const MATIERES = ["math", "physique", "svt", "histoire", "francais", "anglais", "arabe", "philosophie"];
+  // MATIERES importé depuis @/lib/constants
 
   const handleEditUser = (u) => {
     setEditingUser(u.id);
@@ -368,24 +368,24 @@ export default function DashboardAdmin() {
                     <label style={{ ...labelStyle, marginTop: "1rem" }}>Matières</label>
                     <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem" }}>
                       {MATIERES.map((m) => (
-                        <label key={m} style={{
+                        <label key={m.value} style={{
                           cursor: "pointer",
-                          background: form.matieres?.includes(m) ? "#3182ce" : "#e2e8f0",
-                          color: form.matieres?.includes(m) ? "white" : "#4a5568",
+                          background: form.matieres?.includes(m.value) ? "#3182ce" : "#e2e8f0",
+                          color: form.matieres?.includes(m.value) ? "white" : "#4a5568",
                           padding: "0.3rem 0.8rem",
                           borderRadius: "20px",
                           fontSize: "0.85rem"
                         }}>
                           <input type="checkbox" style={{ display: "none" }}
-                            checked={form.matieres?.includes(m) || false}
+                            checked={form.matieres?.includes(m.value) || false}
                             onChange={() => {
-                              const list = form.matieres?.includes(m)
-                                ? form.matieres.filter((x) => x !== m)
-                                : [...(form.matieres || []), m];
+                              const list = form.matieres?.includes(m.value)
+                                ? form.matieres.filter((x) => x !== m.value)
+                                : [...(form.matieres || []), m.value];
                               setForm({ ...form, matieres: list });
                             }}
                           />
-                          {m}
+                          {m.label}
                         </label>
                       ))}
                     </div>
@@ -427,17 +427,8 @@ export default function DashboardAdmin() {
 
                     <select name="classe" value={form.classe || ""} onChange={handleChange} style={{ ...inputStyle, marginTop: "1rem" }}>
                       <option value="">Année *</option>
-                      {form.niveau === "college" && <>
-                        <option value="6eme">6ème</option>
-                        <option value="5eme">5ème</option>
-                        <option value="4eme">4ème</option>
-                        <option value="3eme">3ème</option>
-                      </>}
-                      {form.niveau === "lycee" && <>
-                        <option value="1AS">1AS</option>
-                        <option value="2AS">2AS</option>
-                        <option value="Terminale">Terminale</option>
-                      </>}
+                        {form.niveau === "college" && ANNEES_COLLEGE.map(a => <option key={a} value={a}>{a}</option>)}
+                      {form.niveau === "lycee" && ANNEES_LYCEE.map(a => <option key={a} value={a}>{a}</option>)}
                     </select>
                   </>
                 )}
@@ -491,7 +482,7 @@ export default function DashboardAdmin() {
                               fontSize: "0.8rem",
                               marginRight: "0.3rem"
                             }}>
-                              {m}
+                              {MATIERES.find(x => x.value === m)?.label || m}
                             </span>
                           ))
                           : "—"
@@ -508,7 +499,7 @@ export default function DashboardAdmin() {
                               fontSize: "0.8rem",
                               marginRight: "0.3rem"
                             }}>
-                              {n}
+                              {n === "college" ? "Collège" : n === "lycee" ? "Lycée" : n}
                             </span>
                           ))
                           : "—"
@@ -557,19 +548,19 @@ export default function DashboardAdmin() {
                                 <label style={labelStyle}>Matières</label>
                                 <div style={{ display: "flex", flexWrap: "wrap", gap: "0.4rem" }}>
                                   {MATIERES.map((m) => (
-                                    <label key={m} style={{
+                                    <label key={m.value} style={{
                                       cursor: "pointer",
-                                      background: editForm.matieres.includes(m) ? "#1e40af" : "#e2e8f0",
-                                      color: editForm.matieres.includes(m) ? "white" : "#4a5568",
+                                      background: editForm.matieres.includes(m.value) ? "#1e40af" : "#e2e8f0",
+                                      color: editForm.matieres.includes(m.value) ? "white" : "#4a5568",
                                       padding: "0.3rem 0.7rem",
                                       borderRadius: "20px",
                                       fontSize: "0.8rem"
                                     }}>
                                       <input type="checkbox" style={{ display: "none" }}
-                                        checked={editForm.matieres.includes(m)}
-                                        onChange={() => toggleMatiere(m)}
+                                        checked={editForm.matieres.includes(m.value)}
+                                        onChange={() => toggleMatiere(m.value)}
                                       />
-                                      {m}
+                                      {m.label}
                                     </label>
                                   ))}
                                 </div>
@@ -624,17 +615,8 @@ export default function DashboardAdmin() {
                                     disabled={!editForm.niveau}
                                   >
                                     <option value="">Année</option>
-                                    {editForm.niveau === "college" && <>
-                                      <option value="6eme">6ème</option>
-                                      <option value="5eme">5ème</option>
-                                      <option value="4eme">4ème</option>
-                                      <option value="3eme">3ème</option>
-                                    </>}
-                                    {editForm.niveau === "lycee" && <>
-                                      <option value="1AS">1AS</option>
-                                      <option value="2AS">2AS</option>
-                                      <option value="Terminale">Terminale</option>
-                                    </>}
+                                                    {editForm.niveau === "college" && ANNEES_COLLEGE.map(a => <option key={a} value={a}>{a}</option>)}
+                                    {editForm.niveau === "lycee" && ANNEES_LYCEE.map(a => <option key={a} value={a}>{a}</option>)}
                                   </select>
                                 </div>
                               </div>
