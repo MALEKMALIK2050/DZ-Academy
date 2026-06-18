@@ -703,7 +703,6 @@ model Notification {
 model ScormPackage {
   id              Int      @id @default(autoincrement())
   courseId          Int
-  chapterId       Int?     // Optionnel si lié à un chapitre
   title           String
   version         String   // "1.2" ou "2004"
   launchFile      String   // "index.html"
