@@ -26,19 +26,13 @@ export default function ManageCourse() {
   const { id } = router.query;
   const [showImportModal, setShowImportModal] = useState(false);
 
-
-useEffect(() => {
-  if (!id) return; // ⬅️ AJOUTÉ : attendre que 'id' soit disponible
-  
-  if (router.query.import === 'true') {
-    setShowImportModal(true);
-  }
-}, [router.query.import, id]);
-
-useEffect(() => {
-  if (!id) return; // ⬅️ AJOUTÉ : attendre que 'id' soit disponible
-  fetchCourse();
-}, [router.query.refresh, id]);
+  // ✅ CORRECTION : ajout de 'id' dans les dépendances
+  useEffect(() => {
+    if (!id) return;
+    if (router.query.import === 'true') {
+      setShowImportModal(true);
+    }
+  }, [router.query.import, id]);
 
   const [course, setCourse] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -59,13 +53,14 @@ useEffect(() => {
   const [addingChapter, setAddingChapter] = useState(false);
 
   // ====================================================
-  // 🎓 NOUVEAU : STATE SCORM
+  // 🎓 NOUVEAU : ÉTATS SCORM
   // ====================================================
   const [scormPackages, setScormPackages] = useState([]);
   const [scormLoading, setScormLoading] = useState(false);
   const [scormError, setScormError] = useState("");
-  const [activeScorm, setActiveScorm] = useState(null); // SCORM en cours de lecture
+  const [activeScorm, setActiveScorm] = useState(null);
 
+  // ✅ CORRECTION : ajout de 'id' dans les dépendances
   useEffect(() => {
     if (!id) return;
     fetchCourse();
@@ -86,7 +81,7 @@ useEffect(() => {
   };
 
   // ====================================================
-  // 🎓 NOUVEAU : FETCH DES SCORM DU COURS
+  // 🎓 NOUVEAU : FETCH DES SCORM
   // ====================================================
   const fetchScormPackages = async () => {
     if (!id) return;
@@ -118,7 +113,7 @@ useEffect(() => {
   // 🎓 NOUVEAU : SUPPRESSION D'UN SCORM
   // ====================================================
   const handleDeleteScorm = async (scormId) => {
-    if (!confirm("Supprimer ce SCORM ? Les fichiers seront conservés mais l'entrée sera retirée.")) return;
+    if (!confirm("Supprimer ce SCORM ?")) return;
     try {
       const res = await fetch(`/api/scorm/delete`, {
         method: "DELETE",
@@ -541,16 +536,120 @@ useEffect(() => {
             {/* 🎓 NOUVEAU : ONGLET SCORM */}
             {/* ==================================================== */}
             {tab === "scorm" && (
-              <ScormTab
-                scormPackages={scormPackages}
-                loading={scormLoading}
-                error={scormError}
-                courseId={id}
-                onRefresh={fetchScormPackages}
-                onDelete={handleDeleteScorm}
-                onLaunch={setActiveScorm}
-                router={router}
-              />
+              <div>
+                <div style={{ display: "flex", gap: "1rem", marginBottom: "1.5rem", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between" }}>
+                  <h2 style={{ margin: 0, color: "#2d3748" }}>🎓 Modules SCORM ({scormPackages.length})</h2>
+                  <div style={{ display: "flex", gap: "0.5rem" }}>
+                    <button
+                      onClick={fetchScormPackages}
+                      style={{ ...btnSmall, background: "linear-gradient(135deg, #06b6d4, #0891b2)" }}
+                    >
+                      🔄 Actualiser
+                    </button>
+                    <button
+                      onClick={() => router.push(`/dashboard/designer/courses/${id}/import-zip`)}
+                      style={{ ...btnSmall, background: "linear-gradient(135deg, #7c3aed, #6d28d9)" }}
+                    >
+                      📦 Importer un SCORM
+                    </button>
+                  </div>
+                </div>
+
+                {scormError && (
+                  <div style={{ background: "#fff5f5", color: "#e53e3e", padding: "1rem", borderRadius: "10px", marginBottom: "1rem", border: "1px solid #fed7d7" }}>
+                    ❌ {scormError}
+                  </div>
+                )}
+
+                {scormLoading ? (
+                  <div style={{ textAlign: "center", padding: "3rem", color: "#718096" }}>
+                    <div style={{ fontSize: "2rem", marginBottom: "1rem" }}>⏳</div>
+                    Chargement des SCORM...
+                  </div>
+                ) : scormPackages.length === 0 ? (
+                  <div style={{
+                    textAlign: "center",
+                    padding: "3rem 2rem",
+                    background: "#f8fafc",
+                    borderRadius: "15px",
+                    border: "2px dashed #cbd5e0"
+                  }}>
+                    <div style={{ fontSize: "3rem", marginBottom: "1rem" }}>📦</div>
+                    <h3 style={{ margin: "0 0 0.5rem", color: "#2d3748" }}>Aucun module SCORM</h3>
+                    <p style={{ color: "#718096", marginBottom: "1.5rem" }}>
+                      Importez un paquet SCORM (.zip avec imsmanifest.xml) via le bouton "Import ZIP"
+                    </p>
+                    <button
+                      onClick={() => router.push(`/dashboard/designer/courses/${id}/import-zip`)}
+                      style={{ ...btnPrimary, background: "linear-gradient(135deg, #7c3aed, #6d28d9)" }}
+                    >
+                      📦 Importer mon premier SCORM
+                    </button>
+                  </div>
+                ) : (
+                  <div style={{ display: "grid", gap: "1rem" }}>
+                    {scormPackages.map((scorm) => (
+                      <div
+                        key={scorm.id}
+                        style={{
+                          background: "linear-gradient(135deg, #f8fafc, #eff6ff)",
+                          padding: "1.5rem",
+                          borderRadius: "15px",
+                          border: "1px solid #e2e8f0",
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                          flexWrap: "wrap",
+                          gap: "1rem"
+                        }}
+                      >
+                        <div style={{ flex: 1, minWidth: "250px" }}>
+                          <div style={{ display: "flex", gap: "0.5rem", alignItems: "center", marginBottom: "0.5rem" }}>
+                            <span style={{
+                              background: scorm.version === "2004" ? "#8b5cf6" : "#06b6d4",
+                              color: "white",
+                              padding: "0.2rem 0.6rem",
+                              borderRadius: "10px",
+                              fontSize: "0.75rem",
+                              fontWeight: "700"
+                            }}>
+                              SCORM {scorm.version}
+                            </span>
+                            <strong style={{ fontSize: "1.15rem", color: "#2d3748" }}>
+                              {scorm.title}
+                            </strong>
+                          </div>
+                          <div style={{ fontSize: "0.85rem", color: "#64748b" }}>
+                            📄 {scorm.launchFile} • 📁 {scorm.storagePath}
+                          </div>
+                          <div style={{ fontSize: "0.8rem", color: "#94a3b8", marginTop: "0.25rem" }}>
+                            Importé le {new Date(scorm.createdAt).toLocaleDateString("fr-FR")}
+                          </div>
+                        </div>
+
+                        <div style={{ display: "flex", gap: "0.5rem" }}>
+                          <button
+                            onClick={() => setActiveScorm(scorm)}
+                            style={{
+                              ...btnSmall,
+                              background: "linear-gradient(135deg, #059669, #10b981)",
+                              padding: "0.5rem 1.25rem"
+                            }}
+                          >
+                            ▶️ Lancer
+                          </button>
+                          <button
+                            onClick={() => handleDeleteScorm(scorm.id)}
+                            style={{ ...btnDanger, padding: "0.5rem 0.8rem" }}
+                          >
+                            🗑
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             )}
 
             {tab === "quiz" && (
@@ -595,234 +694,79 @@ useEffect(() => {
         </div>
 
         {/* ==================================================== */}
-        {/* 🎓 NOUVEAU : MODAL DE LECTURE SCORM */}
+        {/* 🎓 NOUVEAU : MODAL PLAYER SCORM */}
         {/* ==================================================== */}
         {activeScorm && (
-          <ScormPlayerModal
-            scorm={activeScorm}
-            onClose={() => setActiveScorm(null)}
-          />
+          <div style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: "rgba(0,0,0,0.85)",
+            zIndex: 9999,
+            display: "flex",
+            flexDirection: "column",
+            padding: "1rem"
+          }}>
+            <div style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              background: "white",
+              padding: "1rem 1.5rem",
+              borderRadius: "12px 12px 0 0",
+              borderBottom: "1px solid #e2e8f0"
+            }}>
+              <div>
+                <strong style={{ fontSize: "1.1rem", color: "#2d3748" }}>
+                  🎓 {activeScorm.title}
+                </strong>
+                <span style={{
+                  marginLeft: "0.75rem",
+                  background: activeScorm.version === "2004" ? "#8b5cf6" : "#06b6d4",
+                  color: "white",
+                  padding: "0.2rem 0.6rem",
+                  borderRadius: "10px",
+                  fontSize: "0.75rem",
+                  fontWeight: "700"
+                }}>
+                  SCORM {activeScorm.version}
+                </span>
+              </div>
+              <button
+                onClick={() => setActiveScorm(null)}
+                style={{
+                  background: "#ef4444",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "8px",
+                  padding: "0.5rem 1rem",
+                  cursor: "pointer",
+                  fontWeight: "700",
+                  fontSize: "0.95rem"
+                }}
+              >
+                ✕ Fermer
+              </button>
+            </div>
+
+            <iframe
+              src={`/scorm/${activeScorm.storagePath}/${activeScorm.launchFile}`}
+              style={{
+                flex: 1,
+                width: "100%",
+                border: "none",
+                background: "white",
+                borderRadius: "0 0 12px 12px"
+              }}
+              allow="fullscreen"
+              title={`SCORM: ${activeScorm.title}`}
+            />
+          </div>
         )}
       </DashboardLayout>
     </ProtectedRoute>
-  );
-}
-
-// ====================================================
-// 🎓 NOUVEAU : COMPOSANT ONGLET SCORM
-// ====================================================
-function ScormTab({ scormPackages, loading, error, courseId, onRefresh, onDelete, onLaunch, router }) {
-  if (loading) {
-    return (
-      <div style={{ textAlign: "center", padding: "3rem", color: "#718096" }}>
-        <div style={{ fontSize: "2rem", marginBottom: "1rem" }}>⏳</div>
-        Chargement des SCORM...
-      </div>
-    );
-  }
-
-  return (
-    <div>
-      <div style={{ display: "flex", gap: "1rem", marginBottom: "1.5rem", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between" }}>
-        <h2 style={{ margin: 0, color: "#2d3748" }}>🎓 Modules SCORM ({scormPackages.length})</h2>
-        <div style={{ display: "flex", gap: "0.5rem" }}>
-          <button
-            onClick={onRefresh}
-            style={{ ...btnSmall, background: "linear-gradient(135deg, #06b6d4, #0891b2)" }}
-          >
-            🔄 Actualiser
-          </button>
-          <button
-            onClick={() => router.push(`/dashboard/designer/courses/${courseId}/import-zip`)}
-            style={{ ...btnSmall, background: "linear-gradient(135deg, #7c3aed, #6d28d9)" }}
-          >
-            📦 Importer un SCORM
-          </button>
-        </div>
-      </div>
-
-      {error && (
-        <div style={{ background: "#fff5f5", color: "#e53e3e", padding: "1rem", borderRadius: "10px", marginBottom: "1rem", border: "1px solid #fed7d7" }}>
-          ❌ {error}
-        </div>
-      )}
-
-      {scormPackages.length === 0 ? (
-        <div style={{
-          textAlign: "center",
-          padding: "3rem 2rem",
-          background: "#f8fafc",
-          borderRadius: "15px",
-          border: "2px dashed #cbd5e0"
-        }}>
-          <div style={{ fontSize: "3rem", marginBottom: "1rem" }}>📦</div>
-          <h3 style={{ margin: "0 0 0.5rem", color: "#2d3748" }}>Aucun module SCORM</h3>
-          <p style={{ color: "#718096", marginBottom: "1.5rem" }}>
-            Importez un paquet SCORM (.zip avec imsmanifest.xml) via le bouton "Import ZIP"
-          </p>
-          <button
-            onClick={() => router.push(`/dashboard/designer/courses/${courseId}/import-zip`)}
-            style={{ ...btnPrimary, background: "linear-gradient(135deg, #7c3aed, #6d28d9)" }}
-          >
-            📦 Importer mon premier SCORM
-          </button>
-        </div>
-      ) : (
-        <div style={{ display: "grid", gap: "1rem" }}>
-          {scormPackages.map((scorm) => (
-            <div
-              key={scorm.id}
-              style={{
-                background: "linear-gradient(135deg, #f8fafc, #eff6ff)",
-                padding: "1.5rem",
-                borderRadius: "15px",
-                border: "1px solid #e2e8f0",
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                flexWrap: "wrap",
-                gap: "1rem"
-              }}
-            >
-              <div style={{ flex: 1, minWidth: "250px" }}>
-                <div style={{ display: "flex", gap: "0.5rem", alignItems: "center", marginBottom: "0.5rem" }}>
-                  <span style={{
-                    background: scorm.version === "2004" ? "#8b5cf6" : "#06b6d4",
-                    color: "white",
-                    padding: "0.2rem 0.6rem",
-                    borderRadius: "10px",
-                    fontSize: "0.75rem",
-                    fontWeight: "700"
-                  }}>
-                    SCORM {scorm.version}
-                  </span>
-                  <strong style={{ fontSize: "1.15rem", color: "#2d3748" }}>
-                    {scorm.title}
-                  </strong>
-                </div>
-                <div style={{ fontSize: "0.85rem", color: "#64748b" }}>
-                  📄 {scorm.launchFile} • 📁 {scorm.storagePath}
-                </div>
-                <div style={{ fontSize: "0.8rem", color: "#94a3b8", marginTop: "0.25rem" }}>
-                  Importé le {new Date(scorm.createdAt).toLocaleDateString("fr-FR")}
-                </div>
-              </div>
-
-              <div style={{ display: "flex", gap: "0.5rem" }}>
-                <button
-                  onClick={() => onLaunch(scorm)}
-                  style={{
-                    ...btnSmall,
-                    background: "linear-gradient(135deg, #059669, #10b981)",
-                    padding: "0.5rem 1.25rem"
-                  }}
-                >
-                  ▶️ Lancer
-                </button>
-                <button
-                  onClick={() => onDelete(scorm.id)}
-                  style={{ ...btnDanger, padding: "0.5rem 0.8rem" }}
-                >
-                  🗑
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ====================================================
-// 🎓 NOUVEAU : MODAL PLAYER SCORM
-// ====================================================
-function ScormPlayerModal({ scorm, onClose }) {
-  // Construction de l'URL du SCORM
-  // Priorité : variable d'env SCORM_BASE_URL, sinon Supabase Storage, sinon local
-  const getScormUrl = () => {
-    // 1. URL custom définie dans .env (flexible pour changer de fournisseur)
-    if (process.env.NEXT_PUBLIC_SCORM_BASE_URL) {
-      return `${process.env.NEXT_PUBLIC_SCORM_BASE_URL}/${scorm.storagePath}/${scorm.launchFile}`;
-    }
-    // 2. Supabase Storage (si configuré)
-    if (process.env.NEXT_PUBLIC_SUPABASE_URL) {
-      return `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/scorm/${scorm.storagePath}/${scorm.launchFile}`;
-    }
-    // 3. Fallback local (dev seulement)
-    return `/scorm/${scorm.storagePath}/${scorm.launchFile}`;
-  };
-
-  const scormUrl = getScormUrl();
-
-  return (
-    <div style={{
-      position: "fixed",
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      background: "rgba(0,0,0,0.85)",
-      zIndex: 9999,
-      display: "flex",
-      flexDirection: "column",
-      padding: "1rem"
-    }}>
-      <div style={{
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center",
-        background: "white",
-        padding: "1rem 1.5rem",
-        borderRadius: "12px 12px 0 0",
-        borderBottom: "1px solid #e2e8f0"
-      }}>
-        <div>
-          <strong style={{ fontSize: "1.1rem", color: "#2d3748" }}>
-            🎓 {scorm.title}
-          </strong>
-          <span style={{
-            marginLeft: "0.75rem",
-            background: scorm.version === "2004" ? "#8b5cf6" : "#06b6d4",
-            color: "white",
-            padding: "0.2rem 0.6rem",
-            borderRadius: "10px",
-            fontSize: "0.75rem",
-            fontWeight: "700"
-          }}>
-            SCORM {scorm.version}
-          </span>
-        </div>
-        <button
-          onClick={onClose}
-          style={{
-            background: "#ef4444",
-            color: "white",
-            border: "none",
-            borderRadius: "8px",
-            padding: "0.5rem 1rem",
-            cursor: "pointer",
-            fontWeight: "700",
-            fontSize: "0.95rem"
-          }}
-        >
-          ✕ Fermer
-        </button>
-      </div>
-
-      <iframe
-        src={scormUrl}
-        style={{
-          flex: 1,
-          width: "100%",
-          border: "none",
-          background: "white",
-          borderRadius: "0 0 12px 12px"
-        }}
-        allow="fullscreen; camera; microphone"
-        title={`SCORM: ${scorm.title}`}
-      />
-    </div>
   );
 }
 

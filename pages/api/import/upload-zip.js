@@ -4,9 +4,6 @@ import AdmZip from 'adm-zip';
 import fs from 'fs/promises';
 import path from 'path';
 
-// ----------------------------------------------------
-// 🔐 AUTHENTIFICATION
-// ----------------------------------------------------
 function getUser(req) {
   try {
     const token = req.cookies?.token;
@@ -15,9 +12,9 @@ function getUser(req) {
   } catch { return null; }
 }
 
-// ----------------------------------------------------
-// 🎓 GESTION SCORM (NOUVEAU - ajouté au début)
-// ----------------------------------------------------
+// ====================================================
+// 🎓 GESTION SCORM (NOUVEAU)
+// ====================================================
 async function handleScormImport(zip, manifestEntry, courseId, res) {
   console.log('🎓 Paquet SCORM détecté !');
 
@@ -34,7 +31,7 @@ async function handleScormImport(zip, manifestEntry, courseId, res) {
 
     const scormVersion = manifestContent.includes('2004') ? '2004' : '1.2';
 
-    // 2. Déterminer le dossier racine du SCORM dans le ZIP
+    // 2. Déterminer le dossier racine du SCORM
     const manifestPath = manifestEntry.entryName;
     const scormRootFolder = manifestPath.includes('/')
       ? manifestPath.substring(0, manifestPath.lastIndexOf('/') + 1)
@@ -49,7 +46,7 @@ async function handleScormImport(zip, manifestEntry, courseId, res) {
     const uploadDir = path.join(process.cwd(), 'public', 'scorm', storageFolder);
     await fs.mkdir(uploadDir, { recursive: true });
 
-    // 4. Extraire tous les fichiers du SCORM
+    // 4. Extraire tous les fichiers
     let extractCount = 0;
     for (const entry of zip.getEntries()) {
       if (entry.isDirectory) continue;
@@ -105,9 +102,9 @@ async function handleScormImport(zip, manifestEntry, courseId, res) {
   }
 }
 
-// ----------------------------------------------------
+// ====================================================
 // 🚀 HANDLER PRINCIPAL
-// ----------------------------------------------------
+// ====================================================
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
@@ -133,7 +130,7 @@ export default async function handler(req, res) {
     const zip = new AdmZip(buffer);
 
     // ====================================================
-    // 🎯 DÉTECTION SCORM (EN PREMIER - avant tout le reste)
+    // 🎯 DÉTECTION SCORM (EN PREMIER)
     // ====================================================
     const manifestEntry = zip.getEntries().find(e =>
       !e.isDirectory &&
@@ -147,7 +144,7 @@ export default async function handler(req, res) {
     }
 
     // ====================================================
-    // 📊 SINON → IMPORT EXCEL (ton code existant conservé)
+    // 📊 SINON → IMPORT EXCEL (ton code existant)
     // ====================================================
     const XLSX = await import('xlsx');
 
@@ -190,9 +187,7 @@ export default async function handler(req, res) {
       }
     }
 
-    // ----------------------------------------------------
-    // ÉTAPE A : IMPORT DES CHAPITRES
-    // ----------------------------------------------------
+    // ÉTAPE A : CHAPITRES
     if (chaptersEntry) {
       console.log('📖 Importation des chapitres...');
       const fileData = chaptersEntry.getData();
@@ -224,9 +219,7 @@ export default async function handler(req, res) {
       }
     }
 
-    // ----------------------------------------------------
-    // ÉTAPE B : IMPORT DU PRETEST
-    // ----------------------------------------------------
+    // ÉTAPE B : PRETEST
     if (pretestEntry) {
       console.log('📋 Importation du Pretest...');
       const fileData = pretestEntry.getData();
@@ -268,9 +261,7 @@ export default async function handler(req, res) {
       }
     }
 
-    // ----------------------------------------------------
-    // ÉTAPE C : IMPORT DES QUIZZES FORMATIFS
-    // ----------------------------------------------------
+    // ÉTAPE C : QUIZZES FORMATIFS
     if (formativeQuizEntry) {
       console.log('📊 Importation des Quizzes Formatifs...');
       const fileData = formativeQuizEntry.getData();
@@ -318,9 +309,7 @@ export default async function handler(req, res) {
       }
     }
 
-    // ----------------------------------------------------
-    // ÉTAPE D : IMPORT DU QUIZ SOMMATIF
-    // ----------------------------------------------------
+    // ÉTAPE D : QUIZ SOMMATIF
     if (summativeQuizEntry) {
       console.log('🏆 Importation du Quiz Sommatif...');
       const fileData = summativeQuizEntry.getData();
@@ -366,9 +355,7 @@ export default async function handler(req, res) {
       }
     }
 
-    // ----------------------------------------------------
-    // ÉTAPE E : IMPORT DES SUPPORTS
-    // ----------------------------------------------------
+    // ÉTAPE E : SUPPORTS
     if (supportsEntry) {
       console.log('📎 Importation des supports...');
       const fileData = supportsEntry.getData();
@@ -403,9 +390,7 @@ export default async function handler(req, res) {
       }
     }
 
-    // ----------------------------------------------------
-    // ÉTAPE F : IMPORT DES DEVOIRS
-    // ----------------------------------------------------
+    // ÉTAPE F : DEVOIRS
     if (devoirsEntry) {
       console.log('📝 Importation des devoirs...');
       const fileData = devoirsEntry.getData();
