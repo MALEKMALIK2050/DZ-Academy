@@ -6,6 +6,7 @@ import ProtectedRoute from "@/components/ProtectedRoute";
 import Chat from "@/components/Chat";
 import ProfileDropdown from "@/components/ProfileDropdown";
 import DashboardLayout from "../../../components/layout/DashboardLayout";
+import { MATIERES, NIVEAUX, ANNEES_COLLEGE, ANNEES_LYCEE } from "@/lib/constants";
 
 export default function DesignerDashboard() {
   const router = useRouter();

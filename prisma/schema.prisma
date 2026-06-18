@@ -204,6 +204,7 @@ model Course {
   quizFinal      Quiz?
   importBatches  ImportBatch[]
   remediations Remediation[]
+  scormPackages     ScormPackage[]
 }
 
 // ========================================
@@ -227,6 +228,7 @@ model Chapter {
   paragraphes Paragraphe[]
   quiz        Quiz?
   supports    Support[]
+  scormPackages     ScormPackage[]
 }
 
 // ========================================
@@ -697,4 +699,18 @@ model Notification {
   
   @@index([userId, lu])
   @@index([createdAt])
+}
+model ScormPackage {
+  id              Int      @id @default(autoincrement())
+  courseId          Int
+  chapterId       Int?     // Optionnel si lié à un chapitre
+  title           String
+  version         String   // "1.2" ou "2004"
+  launchFile      String   // "index.html"
+  extractedPath   String   // Chemin vers les fichiers extraits
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  course          Course   @relation(fields: [courseId], references: [id])
+  chapter         Chapter? @relation(fields: [chapterId], references: [id])
 }

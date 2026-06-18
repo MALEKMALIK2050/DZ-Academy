@@ -5,6 +5,7 @@ import ProtectedRoute from "@/components/ProtectedRoute";
 import Chat from "@/components/Chat";
 import DashboardLayout from "../../../components/layout/DashboardLayout";
 import ProfileDropdown from "@/components/ProfileDropdown";
+import { MATIERES, NIVEAUX, ANNEES_COLLEGE, ANNEES_LYCEE } from "@/lib/constants";
 
 export default function DashboardAdmin() {
   const [editingUser, setEditingUser] = useState(null);
