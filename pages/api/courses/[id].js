@@ -14,11 +14,25 @@ export default async function handler(req, res) {
   const user = getUser(req);
   if (!user) return res.status(401).json({ error: "Non autorisé" });
 
+  // ====================================================
+  // ✅ VALIDATION DE L'ID (CORRECTION DU BUG)
+  // ====================================================
   const { id } = req.query;
+
+  if (!id) {
+    return res.status(400).json({ error: "ID du cours manquant" });
+  }
+
   const courseId = parseInt(id);
 
+  if (isNaN(courseId)) {
+    return res.status(400).json({ error: "ID du cours invalide" });
+  }
+
   try {
+    // ====================================================
     // GET — détail cours
+    // ====================================================
     if (req.method === "GET") {
       const course = await prisma.course.findUnique({
         where: { id: courseId },
@@ -44,6 +58,7 @@ export default async function handler(req, res) {
           },
           quizFinal:   { include: { questions: true } },
           enrollments: { select: { id: true } },
+          scormPackages: { orderBy: { createdAt: 'desc' } }, // ✅ Ajout pour remonter les SCORM
         },
       });
 
@@ -51,7 +66,9 @@ export default async function handler(req, res) {
       return res.status(200).json(course);
     }
 
+    // ====================================================
     // PUT — modifier infos cours ou statut
+    // ====================================================
     if (req.method === "PUT") {
       if (user.role !== "DESIGNER" && user.role !== "ADMIN") {
         return res.status(403).json({ error: "Accès refusé" });
@@ -72,7 +89,7 @@ export default async function handler(req, res) {
         },
       });
 
-      // ✅ Étape 2 : Notification Nouveau Contenu (si publié)
+      // ✅ Notification Nouveau Contenu (si publié)
       if (status === "PUBLISHED") {
         const students = await prisma.user.findMany({
           where: { role: "STUDENT", niveau: updated.niveau },
@@ -97,69 +114,75 @@ export default async function handler(req, res) {
       return res.status(200).json(updated);
     }
 
+    // ====================================================
     // DELETE — supprimer cours
-
-    // DELETE — supprimer cours
-if (req.method === "DELETE") {
-  if (user.role !== "DESIGNER" && user.role !== "ADMIN") {
-    return res.status(403).json({ error: "Accès refusé" });
-  }
-
-  try {
-    // 1. Supprimer les QuizResult
-    await prisma.quizResult.deleteMany({
-      where: {
-        quiz: {
-          OR: [
-            { chapter: { courseId: courseId } },
-            { courseId: courseId }
-          ]
-        }
+    // ====================================================
+    if (req.method === "DELETE") {
+      if (user.role !== "DESIGNER" && user.role !== "ADMIN") {
+        return res.status(403).json({ error: "Accès refusé" });
       }
-    });
 
-    // 2. Supprimer les Quiz
-    await prisma.quiz.deleteMany({
-      where: {
-        OR: [
-          { chapter: { courseId: courseId } },
-          { courseId: courseId }
-        ]
+      try {
+        // 1. Supprimer les QuizResult
+        await prisma.quizResult.deleteMany({
+          where: {
+            quiz: {
+              OR: [
+                { chapter: { courseId: courseId } },
+                { courseId: courseId }
+              ]
+            }
+          }
+        });
+
+        // 2. Supprimer les Quiz
+        await prisma.quiz.deleteMany({
+          where: {
+            OR: [
+              { chapter: { courseId: courseId } },
+              { courseId: courseId }
+            ]
+          }
+        });
+
+        // 3. Supprimer les PretestResult
+        await prisma.pretestResult.deleteMany({
+          where: { courseId: courseId }
+        });
+
+        // 4. Supprimer les Chapters
+        await prisma.chapter.deleteMany({
+          where: { courseId: courseId }
+        });
+
+        // 5. Supprimer Pretest
+        await prisma.pretest.deleteMany({
+          where: { courseId: courseId }
+        });
+
+        // 6. Supprimer Enrollments
+        await prisma.enrollment.deleteMany({
+          where: { courseId: courseId }
+        });
+
+        // ✅ 7. Supprimer les SCORM (nouveau)
+        await prisma.scormPackage.deleteMany({
+          where: { courseId: courseId }
+        });
+
+        // 8. Supprimer le Course
+        await prisma.course.delete({
+          where: { id: courseId }
+        });
+
+        return res.status(200).json({ message: "Cours supprimé" });
+      } catch (err) {
+        console.error('Erreur DELETE:', err);
+        return res.status(500).json({ error: err.message });
       }
-    });
+    }
 
-    // 3. Supprimer les PretestResult (par courseId)
-    await prisma.pretestResult.deleteMany({
-      where: { courseId: courseId }
-    });
-
-    // 4. Supprimer les Chapters
-    await prisma.chapter.deleteMany({
-      where: { courseId: courseId }
-    });
-
-    // 5. Supprimer Pretest
-    await prisma.pretest.deleteMany({
-      where: { courseId: courseId }
-    });
-
-    // 6. Supprimer Enrollments
-    await prisma.enrollment.deleteMany({
-      where: { courseId: courseId }
-    });
-
-    // 7. Supprimer le Course
-    await prisma.course.delete({
-      where: { id: courseId }
-    });
-
-    return res.status(200).json({ message: "Cours supprimé" });
-  } catch (err) {
-    console.error('Erreur DELETE:', err);
-    return res.status(500).json({ error: err.message });
-  }
-}
-return res.status(405).json({ error: "Méthode non autorisée" });
+    return res.status(405).json({ error: "Méthode non autorisée" });
 
   } catch (error) {
     console.error("API COURSE [id] ERROR:", error);

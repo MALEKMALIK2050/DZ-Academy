@@ -26,16 +26,19 @@ export default function ManageCourse() {
   const { id } = router.query;
   const [showImportModal, setShowImportModal] = useState(false);
 
-  // Vérifier si on vient de créer le cours
-  useEffect(() => {
-    if (router.query.import === 'true') {
-      setShowImportModal(true);
-    }
-  }, [router.query.import]);
 
-  useEffect(() => {
-    fetchCourse();
-  }, [router.query.refresh]);
+useEffect(() => {
+  if (!id) return; // ⬅️ AJOUTÉ : attendre que 'id' soit disponible
+  
+  if (router.query.import === 'true') {
+    setShowImportModal(true);
+  }
+}, [router.query.import, id]);
+
+useEffect(() => {
+  if (!id) return; // ⬅️ AJOUTÉ : attendre que 'id' soit disponible
+  fetchCourse();
+}, [router.query.refresh, id]);
 
   const [course, setCourse] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -54,6 +57,14 @@ export default function ManageCourse() {
   // Formulaire nouveau chapitre
   const [newChapter, setNewChapter] = useState({ title: "", objectifs: "", position: null });
   const [addingChapter, setAddingChapter] = useState(false);
+
+  // ====================================================
+  // 🎓 NOUVEAU : STATE SCORM
+  // ====================================================
+  const [scormPackages, setScormPackages] = useState([]);
+  const [scormLoading, setScormLoading] = useState(false);
+  const [scormError, setScormError] = useState("");
+  const [activeScorm, setActiveScorm] = useState(null); // SCORM en cours de lecture
 
   useEffect(() => {
     if (!id) return;
@@ -74,9 +85,57 @@ export default function ManageCourse() {
     }
   };
 
+  // ====================================================
+  // 🎓 NOUVEAU : FETCH DES SCORM DU COURS
+  // ====================================================
+  const fetchScormPackages = async () => {
+    if (!id) return;
+    setScormLoading(true);
+    setScormError("");
+    try {
+      const res = await fetch(`/api/scorm/list?courseId=${id}`, { credentials: "include" });
+      const data = await res.json();
+      if (res.ok) {
+        setScormPackages(Array.isArray(data) ? data : []);
+      } else {
+        setScormError(data.error || "Erreur chargement SCORM");
+      }
+    } catch (err) {
+      setScormError("Erreur serveur : " + err.message);
+    } finally {
+      setScormLoading(false);
+    }
+  };
+
+  // Charger les SCORM quand on clique sur l'onglet
+  useEffect(() => {
+    if (tab === "scorm") {
+      fetchScormPackages();
+    }
+  }, [tab, id]);
+
+  // ====================================================
+  // 🎓 NOUVEAU : SUPPRESSION D'UN SCORM
+  // ====================================================
+  const handleDeleteScorm = async (scormId) => {
+    if (!confirm("Supprimer ce SCORM ? Les fichiers seront conservés mais l'entrée sera retirée.")) return;
+    try {
+      const res = await fetch(`/api/scorm/delete`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ scormId }),
+      });
+      if (res.ok) {
+        fetchScormPackages();
+      }
+    } catch (err) {
+      setScormError("Erreur suppression : " + err.message);
+    }
+  };
+
   const handlePublish = async (status) => {
     setSuccess(""); setError("");
-    
     if (status === "PUBLISHED" && pretestQuestions.length === 0) {
       return setError("Le pretest est obligatoire ! Ajoutez au moins une question avant de publier.");
     }
@@ -98,7 +157,6 @@ export default function ManageCourse() {
   const handleAddChapter = async () => {
     if (!newChapter.title) return setError("Titre du chapitre obligatoire");
     setError(""); setSuccess("");
-
     try {
       const payload = {
         courseId: id,
@@ -133,7 +191,6 @@ export default function ManageCourse() {
     const sorted = [...course.chapters].sort((a, b) => a.ordre - b.ordre);
     const index = sorted.findIndex((c) => c.id === chapterId);
     const newIndex = direction === "up" ? index - 1 : index + 1;
-
     if (newIndex < 0 || newIndex >= sorted.length) return;
 
     const current = sorted[index];
@@ -172,8 +229,8 @@ export default function ManageCourse() {
 
   const DASHBOARD_TABS = [
     { key: "overview", label: "Espace Designer", icon: "🎨" },
-    { key: "courses",  label: "Mes cours",       icon: "📚" },
-    { key: "messages", label: "Messages",        icon: "✉️" },
+    { key: "courses", label: "Mes cours", icon: "📚" },
+    { key: "messages", label: "Messages", icon: "✉️" },
   ];
 
   if (loading) return <div style={{ padding: "2rem", textAlign: "center" }}>Chargement du cours...</div>;
@@ -191,11 +248,10 @@ export default function ManageCourse() {
         onTabChange={(t) => router.push("/dashboard/designer")}
       >
         <div style={{ maxWidth: "1100px", margin: "0 auto" }}>
-          
-          <div style={{ 
-            display: "flex", 
-            justifyContent: "space-between", 
-            alignItems: "center", 
+          <div style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
             marginBottom: "2rem",
             background: "white",
             padding: "1.5rem 2rem",
@@ -207,9 +263,9 @@ export default function ManageCourse() {
               <button onClick={() => router.push("/dashboard/designer")} style={{ ...btnBack, marginBottom: "0.5rem" }}>
                 ← Mes cours
               </button>
-              <h1 style={{ 
-                margin: 0, 
-                fontSize: "2rem", 
+              <h1 style={{
+                margin: 0,
+                fontSize: "2rem",
                 fontWeight: "800",
                 background: "linear-gradient(135deg, #059669, #10b981)",
                 WebkitBackgroundClip: "text",
@@ -226,7 +282,7 @@ export default function ManageCourse() {
 
             <div style={{ display: "flex", gap: "1.5rem", alignItems: "center" }}>
               <div style={{ display: "flex", background: "#f1f5f9", padding: "0.4rem", borderRadius: "14px", border: "1px solid #e2e8f0" }}>
-                <button 
+                <button
                   onClick={() => handlePublish("DRAFT")}
                   style={{
                     padding: "0.6rem 1.25rem",
@@ -245,7 +301,7 @@ export default function ManageCourse() {
                 >
                   <span>📦</span> Brouillon
                 </button>
-                <button 
+                <button
                   onClick={() => handlePublish("PUBLISHED")}
                   style={{
                     padding: "0.6rem 1.25rem",
@@ -266,7 +322,7 @@ export default function ManageCourse() {
                 </button>
               </div>
 
-              <button 
+              <button
                 onClick={() => router.push(`/dashboard/designer/courses/${id}/import-cours`)}
                 style={{
                   background: "linear-gradient(135deg, #7c3aed 0%, #6d28d9)",
@@ -282,9 +338,9 @@ export default function ManageCourse() {
                 📚 Import Cours
               </button>
 
-              <button 
+              <button
                 onClick={() => router.push(`/dashboard/designer/courses/${id}/import-zip`)}
-                style={{ 
+                style={{
                   background: 'linear-gradient(135deg, #7c3aed, #6d28d9)',
                   color: 'white',
                   padding: '0.75rem 1.5rem',
@@ -299,10 +355,10 @@ export default function ManageCourse() {
                 📦 Import ZIP
               </button>
 
-              <button 
-                onClick={() => router.push(`/dashboard/designer/courses/edit/${id}`)} 
-                style={{ 
-                  ...btnPrimary, 
+              <button
+                onClick={() => router.push(`/dashboard/designer/courses/edit/${id}`)}
+                style={{
+                  ...btnPrimary,
                   background: "#f97316",
                   padding: "0.75rem 1.5rem",
                   borderRadius: "12px",
@@ -323,12 +379,13 @@ export default function ManageCourse() {
           {/* Onglets */}
           <div style={{ display: "flex", gap: "0.5rem", marginBottom: "1.5rem", borderBottom: "2px solid #edf2f7" }}>
             {[
-              { key: "info",      label: "📑 Infos" },
-              { key: "pretest",   label: `🧪 Pretest (${pretestQuestions.length})` },
+              { key: "info", label: "📑 Infos" },
+              { key: "pretest", label: `🧪 Pretest (${pretestQuestions.length})` },
               { key: "chapitres", label: `📖 Chapitres (${course?.chapters?.length || 0})` },
-              { key: "quiz",      label: `🏁 Test Sommatif (${course?.quizFinal?.questions?.length || 0})` }
+              { key: "scorm", label: `🎓 SCORM (${scormPackages.length})` },
+              { key: "quiz", label: `🏁 Test Sommatif (${course?.quizFinal?.questions?.length || 0})` }
             ].map(t => (
-              <button 
+              <button
                 key={t.key}
                 onClick={() => setTab(t.key)}
                 style={{
@@ -387,106 +444,121 @@ export default function ManageCourse() {
               />
             )}
 
-{tab === "chapitres" && (
-  <div>
-    {sortedChapters.length === 0 && (
-      <p style={{ color: "#718096" }}>Aucun chapitre — utilisez "Import Cours" ou ajoutez manuellement!</p>
-    )}
+            {tab === "chapitres" && (
+              <div>
+                {sortedChapters.length === 0 && (
+                  <p style={{ color: "#718096" }}>Aucun chapitre — utilisez "Import Cours" ou ajoutez manuellement!</p>
+                )}
+                {sortedChapters.map((ch, index) => (
+                  <div key={ch.id} style={{ background: "#f8fafc", padding: "1.25rem", borderRadius: "15px", marginBottom: "1rem", border: "1px solid #edf2f7" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                      <div>
+                        <span style={{ background: "#059669", color: "white", padding: "0.2rem 0.75rem", borderRadius: "12px", fontSize: "0.85rem", fontWeight: "700", marginRight: "1rem" }}>
+                          Chapitre {index + 1}
+                        </span>
+                        <strong style={{ fontSize: "1.1rem" }}>{ch.title}</strong>
+                        {ch.objectifs && <p style={{ margin: "0.5rem 0 0", color: "#718096", fontSize: "0.9rem" }}>{ch.objectifs}</p>}
+                      </div>
+                      <div style={{ display: "flex", gap: "0.4rem", alignItems: "center" }}>
+                        <div style={{ display: "flex", flexDirection: "column", gap: "0.2rem" }}>
+                          <button
+                            onClick={() => handleMoveChapter(ch.id, "up")}
+                            disabled={index === 0}
+                            style={{ background: index === 0 ? "#e2e8f0" : "#718096", color: "white", border: "none", borderRadius: "4px", width: "24px", height: "24px", cursor: index === 0 ? "default" : "pointer", fontSize: "0.7rem" }}>
+                            ▲
+                          </button>
+                          <button
+                            onClick={() => handleMoveChapter(ch.id, "down")}
+                            disabled={index === sortedChapters.length - 1}
+                            style={{ background: index === sortedChapters.length - 1 ? "#e2e8f0" : "#718096", color: "white", border: "none", borderRadius: "4px", width: "24px", height: "24px", cursor: index === sortedChapters.length - 1 ? "default" : "pointer", fontSize: "0.7rem" }}>
+                            ▼
+                          </button>
+                        </div>
+                        <span style={{ fontSize: "0.85rem", color: "#718096" }}>
+                          {ch.supports?.length || 0} support(s)
+                        </span>
+                        <button onClick={() => router.push(`/dashboard/designer/courses/${id}/chapters/${ch.id}`)} style={btnSmall}>
+                          ✏️ Gérer
+                        </button>
+                        <button onClick={() => handleDeleteChapter(ch.id)} style={btnDanger}>🗑</button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
 
-    {sortedChapters.map((ch, index) => (
-      <div key={ch.id} style={{ background: "#f8fafc", padding: "1.25rem", borderRadius: "15px", marginBottom: "1rem", border: "1px solid #edf2f7" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <div>
-            <span style={{ background: "#059669", color: "white", padding: "0.2rem 0.75rem", borderRadius: "12px", fontSize: "0.85rem", fontWeight: "700", marginRight: "1rem" }}>
-              Chapitre {index + 1}
-            </span>
-            <strong style={{ fontSize: "1.1rem" }}>{ch.title}</strong>
-            {ch.objectifs && <p style={{ margin: "0.5rem 0 0", color: "#718096", fontSize: "0.9rem" }}>{ch.objectifs}</p>}
-          </div>
-          <div style={{ display: "flex", gap: "0.4rem", alignItems: "center" }}>
-            <div style={{ display: "flex", flexDirection: "column", gap: "0.2rem" }}>
-              <button
-                onClick={() => handleMoveChapter(ch.id, "up")}
-                disabled={index === 0}
-                style={{ background: index === 0 ? "#e2e8f0" : "#718096", color: "white", border: "none", borderRadius: "4px", width: "24px", height: "24px", cursor: index === 0 ? "default" : "pointer", fontSize: "0.7rem" }}>
-                ▲
-              </button>
-              <button
-                onClick={() => handleMoveChapter(ch.id, "down")}
-                disabled={index === sortedChapters.length - 1}
-                style={{ background: index === sortedChapters.length - 1 ? "#e2e8f0" : "#718096", color: "white", border: "none", borderRadius: "4px", width: "24px", height: "24px", cursor: index === sortedChapters.length - 1 ? "default" : "pointer", fontSize: "0.7rem" }}>
-                ▼
-              </button>
-            </div>
-            <span style={{ fontSize: "0.85rem", color: "#718096" }}>
-              {ch.supports?.length || 0} support(s)
-            </span>
-            <button onClick={() => router.push(`/dashboard/designer/courses/${id}/chapters/${ch.id}`)} style={btnSmall}>
-              ✏️ Gérer
-            </button>
-            <button onClick={() => handleDeleteChapter(ch.id)} style={btnDanger}>🗑</button>
-          </div>
-        </div>
-      </div>
-    ))}
+                {addingChapter ? (
+                  <div style={{ background: "#ebf8ff", padding: "1.25rem", borderRadius: "10px", marginTop: "1rem" }}>
+                    <h3 style={{ margin: "0 0 1rem" }}>Nouveau chapitre</h3>
 
-    {addingChapter ? (
-      <div style={{ background: "#ebf8ff", padding: "1.25rem", borderRadius: "10px", marginTop: "1rem" }}>
-        <h3 style={{ margin: "0 0 1rem" }}>Nouveau chapitre</h3>
+                    <input
+                      placeholder="Titre du chapitre *"
+                      value={newChapter.title}
+                      onChange={(e) => setNewChapter({ ...newChapter, title: e.target.value })}
+                      style={inputStyle}
+                    />
 
-        <input
-          placeholder="Titre du chapitre *"
-          value={newChapter.title}
-          onChange={(e) => setNewChapter({ ...newChapter, title: e.target.value })}
-          style={inputStyle}
-        />
+                    <textarea
+                      placeholder="Objectifs spécifiques du chapitre..."
+                      value={newChapter.objectifs}
+                      onChange={(e) => setNewChapter({ ...newChapter, objectifs: e.target.value })}
+                      style={{ ...inputStyle, height: "80px", marginTop: "0.75rem", resize: "vertical" }}
+                    />
 
-        <textarea
-          placeholder="Objectifs spécifiques du chapitre..."
-          value={newChapter.objectifs}
-          onChange={(e) => setNewChapter({ ...newChapter, objectifs: e.target.value })}
-          style={{ ...inputStyle, height: "80px", marginTop: "0.75rem", resize: "vertical" }}
-        />
+                    <label style={{ ...labelStyle, marginTop: "0.75rem" }}>Position</label>
+                    <select
+                      value={newChapter.position ?? ""}
+                      onChange={(e) => setNewChapter({ ...newChapter, position: e.target.value === "" ? null : e.target.value })}
+                      style={inputStyle}
+                    >
+                      <option value="">À la fin (par défaut)</option>
+                      {sortedChapters.map((_, i) => (
+                        <option key={i} value={i + 1}>
+                          Position {i + 1}
+                        </option>
+                      ))}
+                      <option value={sortedChapters.length + 1}>Position {sortedChapters.length + 1} (à la fin)</option>
+                    </select>
 
-        <label style={{ ...labelStyle, marginTop: "0.75rem" }}>Position</label>
-        <select
-          value={newChapter.position ?? ""}
-          onChange={(e) => setNewChapter({ ...newChapter, position: e.target.value === "" ? null : e.target.value })}
-          style={inputStyle}
-        >
-          <option value="">À la fin (par défaut)</option>
-          {sortedChapters.map((_, i) => (
-            <option key={i} value={i + 1}>
-              Position {i + 1}
-            </option>
-          ))}
-          <option value={sortedChapters.length + 1}>Position {sortedChapters.length + 1} (à la fin)</option>
-        </select>
+                    <div style={{ display: "flex", gap: "0.5rem", marginTop: "0.75rem" }}>
+                      <button onClick={handleAddChapter} style={btnSuccess}>✅ Ajouter</button>
+                      <button onClick={() => { setAddingChapter(false); setNewChapter({ title: "", objectifs: "", position: null }); }} style={btnWarning}>Annuler</button>
+                    </div>
+                  </div>
+                ) : (
+                  <div style={{ display: "flex", gap: "1rem", marginTop: "1rem", flexWrap: "wrap" }}>
+                    <button onClick={() => setAddingChapter(true)} style={{ ...btnPrimary, background: "linear-gradient(135deg, #059669, #10b981)" }}>
+                      ➕ Ajouter un chapitre
+                    </button>
+                    <button onClick={() => router.push(`/dashboard/designer/courses/${id}/import-cours`)} style={{ ...btnPrimary, background: "#3182ce" }}>
+                      📚 Import Cours
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
 
-        <div style={{ display: "flex", gap: "0.5rem", marginTop: "0.75rem" }}>
-          <button onClick={handleAddChapter} style={btnSuccess}>✅ Ajouter</button>
-          <button onClick={() => { setAddingChapter(false); setNewChapter({ title: "", objectifs: "", position: null }); }} style={btnWarning}>Annuler</button>
-        </div>
-      </div>
-    ) : (
-      <div style={{ display: "flex", gap: "1rem", marginTop: "1rem", flexWrap: "wrap" }}>
-        <button onClick={() => setAddingChapter(true)} style={{ ...btnPrimary, background: "linear-gradient(135deg, #059669, #10b981)" }}>
-          ➕ Ajouter un chapitre
-        </button>
-        <button onClick={() => router.push(`/dashboard/designer/courses/${id}/import-cours`)} style={{ ...btnPrimary, background: "#3182ce" }}>
-          📚 Import Cours
-        </button>
-      </div>
-    )}
-  </div>
-)}
+            {/* ==================================================== */}
+            {/* 🎓 NOUVEAU : ONGLET SCORM */}
+            {/* ==================================================== */}
+            {tab === "scorm" && (
+              <ScormTab
+                scormPackages={scormPackages}
+                loading={scormLoading}
+                error={scormError}
+                courseId={id}
+                onRefresh={fetchScormPackages}
+                onDelete={handleDeleteScorm}
+                onLaunch={setActiveScorm}
+                router={router}
+              />
+            )}
 
             {tab === "quiz" && (
               <div>
                 <div style={{ background: "#f8fafc", padding: "2rem", borderRadius: "20px", border: "1px solid #edf2f7", textAlign: "center" }}>
                   <div style={{ fontSize: "3rem", marginBottom: "1rem" }}>🏁</div>
                   <h2 style={{ margin: "0 0 1rem", color: "#2d3748" }}>Test Sommatif</h2>
-                  
+
                   {course?.quizFinal ? (
                     <div>
                       <p style={{ color: "#059669", fontWeight: "600", marginBottom: "1.5rem" }}>
@@ -521,11 +593,242 @@ export default function ManageCourse() {
             )}
           </div>
         </div>
+
+        {/* ==================================================== */}
+        {/* 🎓 NOUVEAU : MODAL DE LECTURE SCORM */}
+        {/* ==================================================== */}
+        {activeScorm && (
+          <ScormPlayerModal
+            scorm={activeScorm}
+            onClose={() => setActiveScorm(null)}
+          />
+        )}
       </DashboardLayout>
     </ProtectedRoute>
   );
 }
 
+// ====================================================
+// 🎓 NOUVEAU : COMPOSANT ONGLET SCORM
+// ====================================================
+function ScormTab({ scormPackages, loading, error, courseId, onRefresh, onDelete, onLaunch, router }) {
+  if (loading) {
+    return (
+      <div style={{ textAlign: "center", padding: "3rem", color: "#718096" }}>
+        <div style={{ fontSize: "2rem", marginBottom: "1rem" }}>⏳</div>
+        Chargement des SCORM...
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <div style={{ display: "flex", gap: "1rem", marginBottom: "1.5rem", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between" }}>
+        <h2 style={{ margin: 0, color: "#2d3748" }}>🎓 Modules SCORM ({scormPackages.length})</h2>
+        <div style={{ display: "flex", gap: "0.5rem" }}>
+          <button
+            onClick={onRefresh}
+            style={{ ...btnSmall, background: "linear-gradient(135deg, #06b6d4, #0891b2)" }}
+          >
+            🔄 Actualiser
+          </button>
+          <button
+            onClick={() => router.push(`/dashboard/designer/courses/${courseId}/import-zip`)}
+            style={{ ...btnSmall, background: "linear-gradient(135deg, #7c3aed, #6d28d9)" }}
+          >
+            📦 Importer un SCORM
+          </button>
+        </div>
+      </div>
+
+      {error && (
+        <div style={{ background: "#fff5f5", color: "#e53e3e", padding: "1rem", borderRadius: "10px", marginBottom: "1rem", border: "1px solid #fed7d7" }}>
+          ❌ {error}
+        </div>
+      )}
+
+      {scormPackages.length === 0 ? (
+        <div style={{
+          textAlign: "center",
+          padding: "3rem 2rem",
+          background: "#f8fafc",
+          borderRadius: "15px",
+          border: "2px dashed #cbd5e0"
+        }}>
+          <div style={{ fontSize: "3rem", marginBottom: "1rem" }}>📦</div>
+          <h3 style={{ margin: "0 0 0.5rem", color: "#2d3748" }}>Aucun module SCORM</h3>
+          <p style={{ color: "#718096", marginBottom: "1.5rem" }}>
+            Importez un paquet SCORM (.zip avec imsmanifest.xml) via le bouton "Import ZIP"
+          </p>
+          <button
+            onClick={() => router.push(`/dashboard/designer/courses/${courseId}/import-zip`)}
+            style={{ ...btnPrimary, background: "linear-gradient(135deg, #7c3aed, #6d28d9)" }}
+          >
+            📦 Importer mon premier SCORM
+          </button>
+        </div>
+      ) : (
+        <div style={{ display: "grid", gap: "1rem" }}>
+          {scormPackages.map((scorm) => (
+            <div
+              key={scorm.id}
+              style={{
+                background: "linear-gradient(135deg, #f8fafc, #eff6ff)",
+                padding: "1.5rem",
+                borderRadius: "15px",
+                border: "1px solid #e2e8f0",
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                flexWrap: "wrap",
+                gap: "1rem"
+              }}
+            >
+              <div style={{ flex: 1, minWidth: "250px" }}>
+                <div style={{ display: "flex", gap: "0.5rem", alignItems: "center", marginBottom: "0.5rem" }}>
+                  <span style={{
+                    background: scorm.version === "2004" ? "#8b5cf6" : "#06b6d4",
+                    color: "white",
+                    padding: "0.2rem 0.6rem",
+                    borderRadius: "10px",
+                    fontSize: "0.75rem",
+                    fontWeight: "700"
+                  }}>
+                    SCORM {scorm.version}
+                  </span>
+                  <strong style={{ fontSize: "1.15rem", color: "#2d3748" }}>
+                    {scorm.title}
+                  </strong>
+                </div>
+                <div style={{ fontSize: "0.85rem", color: "#64748b" }}>
+                  📄 {scorm.launchFile} • 📁 {scorm.storagePath}
+                </div>
+                <div style={{ fontSize: "0.8rem", color: "#94a3b8", marginTop: "0.25rem" }}>
+                  Importé le {new Date(scorm.createdAt).toLocaleDateString("fr-FR")}
+                </div>
+              </div>
+
+              <div style={{ display: "flex", gap: "0.5rem" }}>
+                <button
+                  onClick={() => onLaunch(scorm)}
+                  style={{
+                    ...btnSmall,
+                    background: "linear-gradient(135deg, #059669, #10b981)",
+                    padding: "0.5rem 1.25rem"
+                  }}
+                >
+                  ▶️ Lancer
+                </button>
+                <button
+                  onClick={() => onDelete(scorm.id)}
+                  style={{ ...btnDanger, padding: "0.5rem 0.8rem" }}
+                >
+                  🗑
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ====================================================
+// 🎓 NOUVEAU : MODAL PLAYER SCORM
+// ====================================================
+function ScormPlayerModal({ scorm, onClose }) {
+  // Construction de l'URL du SCORM
+  // Priorité : variable d'env SCORM_BASE_URL, sinon Supabase Storage, sinon local
+  const getScormUrl = () => {
+    // 1. URL custom définie dans .env (flexible pour changer de fournisseur)
+    if (process.env.NEXT_PUBLIC_SCORM_BASE_URL) {
+      return `${process.env.NEXT_PUBLIC_SCORM_BASE_URL}/${scorm.storagePath}/${scorm.launchFile}`;
+    }
+    // 2. Supabase Storage (si configuré)
+    if (process.env.NEXT_PUBLIC_SUPABASE_URL) {
+      return `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/scorm/${scorm.storagePath}/${scorm.launchFile}`;
+    }
+    // 3. Fallback local (dev seulement)
+    return `/scorm/${scorm.storagePath}/${scorm.launchFile}`;
+  };
+
+  const scormUrl = getScormUrl();
+
+  return (
+    <div style={{
+      position: "fixed",
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      background: "rgba(0,0,0,0.85)",
+      zIndex: 9999,
+      display: "flex",
+      flexDirection: "column",
+      padding: "1rem"
+    }}>
+      <div style={{
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+        background: "white",
+        padding: "1rem 1.5rem",
+        borderRadius: "12px 12px 0 0",
+        borderBottom: "1px solid #e2e8f0"
+      }}>
+        <div>
+          <strong style={{ fontSize: "1.1rem", color: "#2d3748" }}>
+            🎓 {scorm.title}
+          </strong>
+          <span style={{
+            marginLeft: "0.75rem",
+            background: scorm.version === "2004" ? "#8b5cf6" : "#06b6d4",
+            color: "white",
+            padding: "0.2rem 0.6rem",
+            borderRadius: "10px",
+            fontSize: "0.75rem",
+            fontWeight: "700"
+          }}>
+            SCORM {scorm.version}
+          </span>
+        </div>
+        <button
+          onClick={onClose}
+          style={{
+            background: "#ef4444",
+            color: "white",
+            border: "none",
+            borderRadius: "8px",
+            padding: "0.5rem 1rem",
+            cursor: "pointer",
+            fontWeight: "700",
+            fontSize: "0.95rem"
+          }}
+        >
+          ✕ Fermer
+        </button>
+      </div>
+
+      <iframe
+        src={scormUrl}
+        style={{
+          flex: 1,
+          width: "100%",
+          border: "none",
+          background: "white",
+          borderRadius: "0 0 12px 12px"
+        }}
+        allow="fullscreen; camera; microphone"
+        title={`SCORM: ${scorm.title}`}
+      />
+    </div>
+  );
+}
+
+// ====================================================
+// COMPOSANTS EXISTANTS (inchangés)
+// ====================================================
 function InfoBlock({ label, value }) {
   return (
     <div style={{ background: "#f8fafc", padding: "1.25rem", borderRadius: "12px", border: "1px solid #edf2f7" }}>
@@ -536,7 +839,6 @@ function InfoBlock({ label, value }) {
 }
 
 function PretestTab({ courseId, questions, addingQ, setAddingQ, questionType, setQuestionType, newQuestion, setNewQuestion, error, setError, success, setSuccess, onRefresh, router }) {
-
   const handleDeleteQuestion = async (questionId) => {
     if (!confirm("Supprimer cette question ?")) return;
     try {
@@ -555,7 +857,6 @@ function PretestTab({ courseId, questions, addingQ, setAddingQ, questionType, se
     if (!courseId || isNaN(parsedCourseId)) {
       return setError("Erreur : ID du cours invalide. Rechargez la page.");
     }
-
     let finalTexte = newQuestion.texte;
     let finalReponse = newQuestion.reponse;
     let finalChoix = newQuestion.choix;
@@ -584,12 +885,12 @@ function PretestTab({ courseId, questions, addingQ, setAddingQ, questionType, se
 
     setError(""); setSuccess("");
     try {
-      const payload = { 
-        courseId: parsedCourseId, 
-        texte: finalTexte, 
-        type: questionType, 
-        reponse: finalReponse, 
-        points: newQuestion.points, 
+      const payload = {
+        courseId: parsedCourseId,
+        texte: finalTexte,
+        type: questionType,
+        reponse: finalReponse,
+        points: newQuestion.points,
         choix: finalChoix,
       };
       const res = await fetch("/api/pretest/questions", {
@@ -722,14 +1023,14 @@ const inputStyle = { width: "100%", padding: "0.75rem", border: "1px solid #e2e8
 const labelStyle = { display: "block", marginBottom: "0.4rem", fontWeight: "700", color: "#4a5568", fontSize: "0.9rem" };
 
 function typeQColor(type) {
-  const colors = { 
-    QCM: "#1e40af", 
-    QCM_MULTIPLE: "#7c3aed", 
-    VRAI_FAUX: "#059669", 
-    OUVERTE: "#f97316", 
-    GAP: "#0d9488", 
-    MATCHING: "#dc2626", 
-    ORDERING: "#0ea5e9" 
+  const colors = {
+    QCM: "#1e40af",
+    QCM_MULTIPLE: "#7c3aed",
+    VRAI_FAUX: "#059669",
+    OUVERTE: "#f97316",
+    GAP: "#0d9488",
+    MATCHING: "#dc2626",
+    ORDERING: "#0ea5e9"
   };
   return colors[type] || "#475569";
 }
