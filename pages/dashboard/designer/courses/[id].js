@@ -60,6 +60,12 @@ useEffect(() => {
   const [scormError, setScormError] = useState("");
   const [activeScorm, setActiveScorm] = useState(null);
 
+  // Upload States
+  const [uploadingScorm, setUploadingScorm] = useState(false);
+  const [scormTitle, setScormTitle] = useState("");
+  const [scormFile, setScormFile] = useState(null);
+  const [scormUploadError, setScormUploadError] = useState("");
+
   // ✅ CORRECTION : ajout de 'id' dans les dépendances
 useEffect(() => {
   if (!id) return; // ✅ CORRECTION
@@ -126,6 +132,41 @@ useEffect(() => {
       }
     } catch (err) {
       setScormError("Erreur suppression : " + err.message);
+    }
+  };
+
+  const handleUploadScorm = async () => {
+    if (!scormTitle || !scormFile) {
+      return setScormUploadError("Le titre et le fichier ZIP sont obligatoires.");
+    }
+    setUploadingScorm(true);
+    setScormUploadError("");
+
+    const formData = new FormData();
+    formData.append("courseId", id);
+    formData.append("title", scormTitle);
+    formData.append("scormFile", scormFile);
+
+    try {
+      const res = await fetch("/api/scorm/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || "Erreur d'upload");
+      }
+
+      setSuccess("✅ SCORM uploadé avec succès !");
+      setShowImportModal(false);
+      setScormFile(null);
+      setScormTitle("");
+      fetchScormPackages();
+    } catch (err) {
+      setScormUploadError(err.message);
+    } finally {
+      setUploadingScorm(false);
     }
   };
 
@@ -547,7 +588,7 @@ useEffect(() => {
                       🔄 Actualiser
                     </button>
                     <button
-                      onClick={() => router.push(`/dashboard/designer/courses/${id}/import-zip`)}
+                      onClick={() => setShowImportModal(true)}
                       style={{ ...btnSmall, background: "linear-gradient(135deg, #7c3aed, #6d28d9)" }}
                     >
                       📦 Importer un SCORM
@@ -580,7 +621,7 @@ useEffect(() => {
                       Importez un paquet SCORM (.zip avec imsmanifest.xml) via le bouton "Import ZIP"
                     </p>
                     <button
-                      onClick={() => router.push(`/dashboard/designer/courses/${id}/import-zip`)}
+                      onClick={() => setShowImportModal(true)}
                       style={{ ...btnPrimary, background: "linear-gradient(135deg, #7c3aed, #6d28d9)" }}
                     >
                       📦 Importer mon premier SCORM
@@ -694,7 +735,7 @@ useEffect(() => {
         </div>
 
         {/* ==================================================== */}
-        {/* 🎓 NOUVEAU : MODAL PLAYER SCORM */}
+        {/* 🎓 MODAL PLAYER SCORM */}
         {/* ==================================================== */}
         {activeScorm && (
           <div style={{
@@ -763,6 +804,64 @@ useEffect(() => {
               allow="fullscreen"
               title={`SCORM: ${activeScorm.title}`}
             />
+          </div>
+        )}
+
+        {/* ==================================================== */}
+        {/* 🎓 MODAL UPLOAD SCORM */}
+        {/* ==================================================== */}
+        {showImportModal && (
+          <div style={{
+            position: "fixed", top: 0, left: 0, right: 0, bottom: 0,
+            background: "rgba(0,0,0,0.5)", zIndex: 9999,
+            display: "flex", alignItems: "center", justifyContent: "center"
+          }}>
+            <div style={{
+              background: "white", padding: "2rem", borderRadius: "15px",
+              width: "100%", maxWidth: "500px", boxShadow: "0 20px 40px rgba(0,0,0,0.2)"
+            }}>
+              <h2 style={{ margin: "0 0 1rem", color: "#2d3748" }}>📦 Uploader un SCORM</h2>
+              
+              {scormUploadError && (
+                <div style={{ color: "#e53e3e", background: "#fff5f5", padding: "1rem", borderRadius: "8px", marginBottom: "1rem" }}>
+                  {scormUploadError}
+                </div>
+              )}
+
+              <label style={labelStyle}>Titre du module</label>
+              <input
+                type="text"
+                value={scormTitle}
+                onChange={(e) => setScormTitle(e.target.value)}
+                placeholder="Ex: Formation Sécurité"
+                style={{ ...inputStyle, marginBottom: "1rem" }}
+              />
+
+              <label style={labelStyle}>Fichier ZIP</label>
+              <input
+                type="file"
+                accept=".zip"
+                onChange={(e) => setScormFile(e.target.files[0])}
+                style={{ ...inputStyle, marginBottom: "1.5rem" }}
+              />
+
+              <div style={{ display: "flex", gap: "1rem", justifyContent: "flex-end" }}>
+                <button
+                  onClick={() => { setShowImportModal(false); setScormUploadError(""); setScormFile(null); setScormTitle(""); }}
+                  style={{ ...btnWarning, background: "#cbd5e1", color: "#475569" }}
+                  disabled={uploadingScorm}
+                >
+                  Annuler
+                </button>
+                <button
+                  onClick={handleUploadScorm}
+                  style={{ ...btnPrimary, background: "linear-gradient(135deg, #7c3aed, #6d28d9)" }}
+                  disabled={uploadingScorm}
+                >
+                  {uploadingScorm ? "⏳ Upload en cours..." : "✅ Uploader"}
+                </button>
+              </div>
+            </div>
           </div>
         )}
       </DashboardLayout>

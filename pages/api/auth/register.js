@@ -1,8 +1,17 @@
+// ======================================================
+// FICHIER : pages/api/auth/register.js
+// ======================================================
+// MODIFICATIONS : Ajout des champs politiques dans la création utilisateur
+//                 et ajout de la constante POLICY_VERSION
+
 import prisma from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
 import { sendEmail } from "@/lib/mail";
+
+// ✅ NOUVEAU : Version des politiques
+const POLICY_VERSION = '2026-06-20_v1';
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {
@@ -42,6 +51,13 @@ export default async function handler(req, res) {
         tuteurTelephone: tuteur?.telephone || "",
         active: false, // inactif jusqu'à vérification email
         verificationToken,
+        // ✅ AJOUT - Consentements aux politiques
+        cguAccepted: true,  // L'utilisateur accepte en s'inscrivant
+        cguAcceptedAt: new Date(),
+        cguVersion: POLICY_VERSION,
+        prereqAccepted: true,
+        prereqAcceptedAt: new Date(),
+        prereqVersion: POLICY_VERSION,
       },
     });
 

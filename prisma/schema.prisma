@@ -164,6 +164,18 @@ model User {
 
   remediationsEnvoyes  Remediation[] @relation("RemediationStudent")
   remediationsRecues   Remediation[] @relation("RemediationTeacher")
+
+  // Password Reset
+  resetPasswordToken   String?
+  resetPasswordExpires DateTime?
+
+
+  cguAccepted     Boolean  @default(false)
+  cguAcceptedAt   DateTime?
+  prereqAccepted  Boolean  @default(false)
+  prereqAcceptedAt DateTime?
+  cguVersion      String?  @default("2026-06-20_v1")
+  prereqVersion   String?  @default("2026-06-20_v1")
   
   @@index([email])
   @@index([role])

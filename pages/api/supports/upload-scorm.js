@@ -4,20 +4,25 @@ import multer from "multer";
 import path from "path";
 import fs from "fs";
 import extractZip from "extract-zip";
+import { createClient } from "@supabase/supabase-js";
+
+// Initialize Supabase Client
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY; // Use service role key for bypassing RLS during upload
+const supabase = supabaseUrl && supabaseKey ? createClient(supabaseUrl, supabaseKey) : null;
 
 // ── Config ──────────────────────────────────────────────────
-const UPLOAD_DIR = path.join(process.cwd(), "public", "uploads", "scorm");
-const TEMP_DIR   = path.join(process.cwd(), "tmp", "scorm-uploads");
+// Vercel only allows writing to /tmp
+const TEMP_DIR = path.join("/tmp", "scorm-uploads");
 
-// Ensure directories exist
-[UPLOAD_DIR, TEMP_DIR].forEach((dir) => {
-  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-});
+if (!fs.existsSync(TEMP_DIR)) {
+  fs.mkdirSync(TEMP_DIR, { recursive: true });
+}
 
-// Multer storage — save ZIP to temp directory first
+// Multer storage — save ZIP to temp directory
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, TEMP_DIR),
-  filename:    (req, file, cb) => {
+  filename: (req, file, cb) => {
     const unique = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
     cb(null, `${unique}${path.extname(file.originalname)}`);
   },
@@ -56,21 +61,51 @@ function getUser(req) {
 }
 
 /**
- * Recursively find a file matching a name inside a directory
+ * Recursively list all files in a directory
  */
-function findFileRecursive(dir, targetName) {
+function getAllFilesRecursive(dir, fileList = []) {
   const entries = fs.readdirSync(dir, { withFileTypes: true });
   for (const entry of entries) {
     const fullPath = path.join(dir, entry.name);
-    if (entry.isFile() && entry.name.toLowerCase() === targetName.toLowerCase()) {
-      return fullPath;
-    }
     if (entry.isDirectory()) {
-      const found = findFileRecursive(fullPath, targetName);
-      if (found) return found;
+      getAllFilesRecursive(fullPath, fileList);
+    } else {
+      fileList.push(fullPath);
     }
   }
-  return null;
+  return fileList;
+}
+
+/**
+ * Determine MIME type basic
+ */
+function getMimeType(filePath) {
+  const ext = path.extname(filePath).toLowerCase();
+  const mimeTypes = {
+    '.html': 'text/html',
+    '.js': 'application/javascript',
+    '.css': 'text/css',
+    '.png': 'image/png',
+    '.jpg': 'image/jpeg',
+    '.jpeg': 'image/jpeg',
+    '.gif': 'image/gif',
+    '.svg': 'image/svg+xml',
+    '.json': 'application/json',
+    '.xml': 'application/xml',
+    '.mp4': 'video/mp4',
+    '.mp3': 'audio/mpeg',
+  };
+  return mimeTypes[ext] || 'application/octet-stream';
+}
+
+/**
+ * Helper function to process promises in batches
+ */
+async function processInBatches(items, batchSize, processItem) {
+  for (let i = 0; i < items.length; i += batchSize) {
+    const batch = items.slice(i, i + batchSize);
+    await Promise.all(batch.map(processItem));
+  }
 }
 
 export default async function handler(req, res) {
@@ -82,7 +117,12 @@ export default async function handler(req, res) {
   if (!user) return res.status(401).json({ error: "Non autorisé" });
   if (user.role !== "DESIGNER") return res.status(403).json({ error: "Accès refusé" });
 
+  if (!supabase) {
+    return res.status(500).json({ error: "Supabase n'est pas configuré (NEXT_PUBLIC_SUPABASE_URL ou SUPABASE_SERVICE_ROLE_KEY manquants)." });
+  }
+
   let tempFilePath = null;
+  let extractDir = null;
 
   try {
     // 1. Parse multipart form data
@@ -115,8 +155,8 @@ export default async function handler(req, res) {
       },
     });
 
-    // 3. Create extraction directory: public/uploads/scorm/{supportId}
-    const extractDir = path.join(UPLOAD_DIR, String(support.id));
+    // 3. Create extraction directory in /tmp
+    extractDir = path.join(TEMP_DIR, `extract-${support.id}`);
     if (fs.existsSync(extractDir)) {
       fs.rmSync(extractDir, { recursive: true, force: true });
     }
@@ -125,35 +165,56 @@ export default async function handler(req, res) {
     // 4. Extract the ZIP
     await extractZip(tempFilePath, { dir: extractDir });
 
-    // 5. Find the index.html entry point (may be nested in a subfolder)
-    const indexPath = findFileRecursive(extractDir, "index.html") 
-                   || findFileRecursive(extractDir, "index_lms.html")
-                   || findFileRecursive(extractDir, "story.html");
+    // 5. Get all extracted files
+    const allFiles = getAllFilesRecursive(extractDir);
 
-    if (!indexPath) {
-      // Cleanup on failure
-      fs.rmSync(extractDir, { recursive: true, force: true });
-      await prisma.support.delete({ where: { id: support.id } });
-      return res.status(400).json({
-        error: "Aucun fichier index.html, index_lms.html ou story.html trouvé dans le package. Vérifiez le contenu du ZIP.",
+    let indexPathFound = null;
+    const BUCKET_NAME = "scorm";
+
+    // 6. Upload files to Supabase Storage concurrently in batches
+    await processInBatches(allFiles, 20, async (filePath) => {
+      // Create a relative path for Supabase Storage (e.g. 12/index.html)
+      let relativePath = path.relative(extractDir, filePath).replace(/\\/g, "/");
+      const storagePath = `${support.id}/${relativePath}`;
+
+      // Check if this is our entry point
+      const lowerName = path.basename(filePath).toLowerCase();
+      if (!indexPathFound && (lowerName === "index.html" || lowerName === "index_lms.html" || lowerName === "story.html")) {
+        indexPathFound = storagePath;
+      }
+
+      const fileBuffer = fs.readFileSync(filePath);
+      const mimeType = getMimeType(filePath);
+
+      const { error } = await supabase.storage.from(BUCKET_NAME).upload(storagePath, fileBuffer, {
+        contentType: mimeType,
+        upsert: true,
       });
+
+      if (error) {
+        console.error(`Erreur upload de ${storagePath}:`, error);
+        throw new Error(`Erreur lors de l'upload du fichier ${relativePath} vers Supabase`);
+      }
+    });
+
+    if (!indexPathFound) {
+      // Cleanup on failure
+      await prisma.support.delete({ where: { id: support.id } });
+      throw new Error("Aucun fichier index.html, index_lms.html ou story.html trouvé dans le package. Vérifiez le contenu du ZIP.");
     }
 
-    // 6. Build the relative URL from the public directory
-    const relativePath = path.relative(
-      path.join(process.cwd(), "public"),
-      indexPath
-    ).replace(/\\/g, "/");
+    // 7. Get public URL of the index file
+    const { data: publicUrlData } = supabase.storage.from(BUCKET_NAME).getPublicUrl(indexPathFound);
+    const publicUrl = publicUrlData.publicUrl;
 
-    const publicUrl = `/${relativePath}`;
-
-    // 7. Update the support with the real URL
+    // 8. Update the support with the Supabase public URL
     const updated = await prisma.support.update({
       where: { id: support.id },
       data:  { url: publicUrl },
     });
 
-    // 8. Cleanup temp file
+    // 9. Cleanup temp files
+    fs.rmSync(extractDir, { recursive: true, force: true });
     if (fs.existsSync(tempFilePath)) {
       fs.unlinkSync(tempFilePath);
     }
@@ -161,7 +222,10 @@ export default async function handler(req, res) {
     return res.status(201).json(updated);
 
   } catch (error) {
-    // Cleanup temp file on error
+    // Cleanup temp files on error
+    if (extractDir && fs.existsSync(extractDir)) {
+      try { fs.rmSync(extractDir, { recursive: true, force: true }); } catch {}
+    }
     if (tempFilePath && fs.existsSync(tempFilePath)) {
       try { fs.unlinkSync(tempFilePath); } catch {}
     }

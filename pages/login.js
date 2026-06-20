@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useRouter } from "next/router";
+import Link from "next/link";
 
 export default function Login() {
   const router = useRouter();
@@ -99,6 +100,12 @@ export default function Login() {
             onChange={handleChange}
             required
           />
+
+          <div style={{ textAlign: "right", marginBottom: "1rem" }}>
+            <Link href="/forgot-password" style={{ fontSize: "0.875rem", color: "#3b82f6", textDecoration: "none" }}>
+              Mot de passe oublié ?
+            </Link>
+          </div>
 
           <button type="submit" disabled={loading}>
             {loading ? "Connexion..." : "Se connecter"}
