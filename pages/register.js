@@ -1,16 +1,12 @@
 // ======================================================
-// FICHIER : pages/register.js
-// ======================================================
-// MODIFICATIONS : Ajout des cases à cocher CGU + Prérequis techniques
-//                 Ajout des modales pour afficher les politiques
-//                 Vérification obligatoire avant soumission
+// FICHIER : pages/register.js (STYLISÉ VERT & ORANGE)
 // ======================================================
 
 import { useState } from "react";
 import { useRouter } from "next/router";
 import PolicyModal from "@/components/PolicyModal";
 
-// ✅ CONTENU DES POLITIQUES (à conserver ici)
+// ✅ CONTENU DES POLITIQUES (inchangé)
 const CGU_CONTENT = `
 <h3 style="font-size:1.25rem;font-weight:700;margin-bottom:1rem;">📜 CONDITIONS GÉNÉRALES D'UTILISATION</h3>
 
@@ -116,7 +112,6 @@ export default function RegisterStudent() {
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
-  // ✅ ÉTAT POUR LES CASES À COCHER ET MODALES
   const [cguAccepted, setCguAccepted] = useState(false);
   const [prereqAccepted, setPrereqAccepted] = useState(false);
   const [showCguModal, setShowCguModal] = useState(false);
@@ -134,7 +129,6 @@ export default function RegisterStudent() {
     setSubmitted(true);
     setError("");
 
-    // ✅ VÉRIFICATION DES CASES À COCHER - OBLIGATOIRE
     if (!cguAccepted) {
       setError("Vous devez accepter les conditions générales d'utilisation.");
       return;
@@ -144,7 +138,6 @@ export default function RegisterStudent() {
       return;
     }
 
-    // Vérifications existantes
     if (form.password !== form.confirmPassword) {
       return setError("Les mots de passe ne correspondent pas");
     }
@@ -179,7 +172,6 @@ export default function RegisterStudent() {
             prenom: form.tuteurPrenom,
             telephone: form.telephone,
           },
-          // ✅ AJOUT - Envoi des consentements à l'API
           cguAccepted,
           prereqAccepted,
         }),
@@ -199,37 +191,171 @@ export default function RegisterStudent() {
     }
   };
 
-  return (
-    <div className="auth-wrapper">
-      <div className="auth-container">
-        <h2>Inscription</h2>
+  // 🎨 STYLES
+  const colors = {
+    green: {
+      light: "#ecfdf5",
+      DEFAULT: "#059669",
+      hover: "#047857",
+      gradient: "linear-gradient(135deg, #059669, #10b981)",
+    },
+    orange: {
+      light: "#fffbeb",
+      DEFAULT: "#f59e0b",
+      hover: "#d97706",
+      text: "#92400e",
+    },
+    text: {
+      primary: "#1f2937",
+      secondary: "#6b7280",
+    },
+    border: "#e5e7eb",
+    error: "#ef4444",
+  };
 
-        {error && <p className="error">{error}</p>}
+  const inputStyle = {
+    width: "100%",
+    padding: "0.75rem 1rem",
+    border: `1px solid ${colors.border}`,
+    borderRadius: "0.5rem",
+    fontSize: "0.95rem",
+    transition: "border-color 0.2s, box-shadow 0.2s",
+    outline: "none",
+    boxSizing: "border-box",
+  };
+
+  const inputFocusStyle = {
+    borderColor: colors.green.DEFAULT,
+    boxShadow: `0 0 0 3px rgba(5, 150, 105, 0.15)`,
+  };
+
+  return (
+    <div
+      style={{
+        minHeight: "100vh",
+        background: "linear-gradient(135deg, #ecfdf5, #fef3c7)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: "1.5rem",
+      }}
+    >
+      <div
+        style={{
+          backgroundColor: "white",
+          borderRadius: "1.5rem",
+          boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
+          maxWidth: "28rem",
+          width: "100%",
+          padding: "2rem",
+        }}
+      >
+        {/* En-tête */}
+        <div style={{ textAlign: "center", marginBottom: "2rem" }}>
+          <h1
+            style={{
+              fontSize: "1.875rem",
+              fontWeight: "800",
+              background: colors.green.gradient,
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+              margin: 0,
+            }}
+          >
+            🎓 CB ACADEMY
+          </h1>
+          <p style={{ color: colors.orange.DEFAULT, fontWeight: "500", margin: "0.25rem 0 0" }}>
+            Cheikh Bouamama Academy
+          </p>
+          <p style={{ color: colors.text.secondary, fontSize: "0.875rem", marginTop: "0.5rem" }}>
+            Créer votre compte
+          </p>
+        </div>
+
+        {/* Erreur / Succès */}
+        {error && (
+          <div
+            style={{
+              backgroundColor: "#fef2f2",
+              border: "1px solid #fecaca",
+              color: colors.error,
+              padding: "0.75rem 1rem",
+              borderRadius: "0.5rem",
+              marginBottom: "1.25rem",
+              fontSize: "0.875rem",
+            }}
+          >
+            {error}
+          </div>
+        )}
 
         <form onSubmit={handleSubmit}>
-          <h3>👨‍🎓 Élève</h3>
+          <h3
+            style={{
+              fontSize: "0.875rem",
+              fontWeight: "600",
+              color: colors.text.primary,
+              marginBottom: "0.75rem",
+            }}
+          >
+            👨‍🎓 Élève
+          </h3>
 
-          <input 
-            name="eleveNom" 
-            onChange={handleChange} 
-            placeholder="Nom de l'élève" 
-            required 
-          />
-          <input 
-            name="elevePrenom" 
-            onChange={handleChange} 
-            placeholder="Prénom de l'élève" 
-            required 
-          />
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem" }}>
+            <input
+              name="eleveNom"
+              onChange={handleChange}
+              placeholder="Nom de l'élève"
+              required
+              style={inputStyle}
+              onFocus={(e) => Object.assign(e.target.style, inputFocusStyle)}
+              onBlur={(e) => {
+                e.target.style.borderColor = colors.border;
+                e.target.style.boxShadow = "none";
+              }}
+            />
+            <input
+              name="elevePrenom"
+              onChange={handleChange}
+              placeholder="Prénom de l'élève"
+              required
+              style={inputStyle}
+              onFocus={(e) => Object.assign(e.target.style, inputFocusStyle)}
+              onBlur={(e) => {
+                e.target.style.borderColor = colors.border;
+                e.target.style.boxShadow = "none";
+              }}
+            />
+          </div>
 
-          <select name="niveau" onChange={handleChange} required>
+          <select
+            name="niveau"
+            onChange={handleChange}
+            required
+            style={inputStyle}
+            onFocus={(e) => Object.assign(e.target.style, inputFocusStyle)}
+            onBlur={(e) => {
+              e.target.style.borderColor = colors.border;
+              e.target.style.boxShadow = "none";
+            }}
+          >
             <option value="">Choisir niveau</option>
             <option value="college">Collège</option>
             <option value="lycee">Lycée</option>
           </select>
 
           {form.niveau === "college" && (
-            <select name="classe" onChange={handleChange} required>
+            <select
+              name="classe"
+              onChange={handleChange}
+              required
+              style={inputStyle}
+              onFocus={(e) => Object.assign(e.target.style, inputFocusStyle)}
+              onBlur={(e) => {
+                e.target.style.borderColor = colors.border;
+                e.target.style.boxShadow = "none";
+              }}
+            >
               <option value="">Classe</option>
               <option value="6eme">6ème</option>
               <option value="5eme">5ème</option>
@@ -239,7 +365,17 @@ export default function RegisterStudent() {
           )}
 
           {form.niveau === "lycee" && (
-            <select name="classe" onChange={handleChange} required>
+            <select
+              name="classe"
+              onChange={handleChange}
+              required
+              style={inputStyle}
+              onFocus={(e) => Object.assign(e.target.style, inputFocusStyle)}
+              onBlur={(e) => {
+                e.target.style.borderColor = colors.border;
+                e.target.style.boxShadow = "none";
+              }}
+            >
               <option value="">Classe</option>
               <option value="1AS">1AS</option>
               <option value="2AS">2AS</option>
@@ -247,180 +383,322 @@ export default function RegisterStudent() {
             </select>
           )}
 
-          <h3>👨‍👩‍👦 Tuteur</h3>
+          <h3
+            style={{
+              fontSize: "0.875rem",
+              fontWeight: "600",
+              color: colors.text.primary,
+              marginTop: "1.25rem",
+              marginBottom: "0.75rem",
+            }}
+          >
+            👨‍👩‍👦 Tuteur
+          </h3>
 
-          <input 
-            name="tuteurNom" 
-            onChange={handleChange} 
-            placeholder="Nom tuteur" 
-          />
-          <input 
-            name="tuteurPrenom" 
-            onChange={handleChange} 
-            placeholder="Prénom tuteur" 
-          />
-          <input 
-            name="telephone" 
-            onChange={handleChange} 
-            placeholder="Téléphone" 
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem" }}>
+            <input
+              name="tuteurNom"
+              onChange={handleChange}
+              placeholder="Nom tuteur"
+              style={inputStyle}
+              onFocus={(e) => Object.assign(e.target.style, inputFocusStyle)}
+              onBlur={(e) => {
+                e.target.style.borderColor = colors.border;
+                e.target.style.boxShadow = "none";
+              }}
+            />
+            <input
+              name="tuteurPrenom"
+              onChange={handleChange}
+              placeholder="Prénom tuteur"
+              style={inputStyle}
+              onFocus={(e) => Object.assign(e.target.style, inputFocusStyle)}
+              onBlur={(e) => {
+                e.target.style.borderColor = colors.border;
+                e.target.style.boxShadow = "none";
+              }}
+            />
+          </div>
+
+          <input
+            name="telephone"
             type="tel"
+            onChange={handleChange}
+            placeholder="Téléphone"
+            style={inputStyle}
+            onFocus={(e) => Object.assign(e.target.style, inputFocusStyle)}
+            onBlur={(e) => {
+              e.target.style.borderColor = colors.border;
+              e.target.style.boxShadow = "none";
+            }}
           />
 
-          <input 
-            name="email" 
-            type="email" 
-            onChange={handleChange} 
-            placeholder="Email" 
-            required 
+          <input
+            name="email"
+            type="email"
+            onChange={handleChange}
+            placeholder="Email"
+            required
+            style={inputStyle}
+            onFocus={(e) => Object.assign(e.target.style, inputFocusStyle)}
+            onBlur={(e) => {
+              e.target.style.borderColor = colors.border;
+              e.target.style.boxShadow = "none";
+            }}
           />
-          <input 
-            name="password" 
-            type="password" 
-            onChange={handleChange} 
-            placeholder="Mot de passe" 
-            required 
+
+          <input
+            name="password"
+            type="password"
+            onChange={handleChange}
+            placeholder="Mot de passe (min 6 caractères)"
+            required
             minLength="6"
-          />
-          <input 
-            name="confirmPassword" 
-            type="password" 
-            onChange={handleChange} 
-            placeholder="Confirmer mot de passe" 
-            required 
+            style={inputStyle}
+            onFocus={(e) => Object.assign(e.target.style, inputFocusStyle)}
+            onBlur={(e) => {
+              e.target.style.borderColor = colors.border;
+              e.target.style.boxShadow = "none";
+            }}
           />
 
-          {/* ✅ CASES À COCHER - POLITIQUES OBLIGATOIRES */}
-          <div style={{ 
-            marginTop: "1.5rem", 
-            paddingTop: "1rem", 
-            borderTop: "2px solid #e5e7eb" 
-          }}>
+          <input
+            name="confirmPassword"
+            type="password"
+            onChange={handleChange}
+            placeholder="Confirmer mot de passe"
+            required
+            style={inputStyle}
+            onFocus={(e) => Object.assign(e.target.style, inputFocusStyle)}
+            onBlur={(e) => {
+              e.target.style.borderColor = colors.border;
+              e.target.style.boxShadow = "none";
+            }}
+          />
+
+          {/* 🎨 POLITIQUES - STYLISÉES VERT & ORANGE */}
+          <div
+            style={{
+              marginTop: "1.5rem",
+              paddingTop: "1.25rem",
+              borderTop: `2px solid ${colors.orange.light}`,
+              background: colors.green.light,
+              padding: "1.25rem",
+              borderRadius: "0.75rem",
+            }}
+          >
             {/* CGU */}
-            <div style={{ 
-              display: "flex", 
-              alignItems: "flex-start", 
-              gap: "0.75rem",
-              marginBottom: "0.75rem"
-            }}>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "flex-start",
+                gap: "0.75rem",
+                marginBottom: "0.75rem",
+              }}
+            >
               <input
                 type="checkbox"
                 id="cgu"
                 checked={cguAccepted}
                 onChange={(e) => setCguAccepted(e.target.checked)}
                 style={{
-                  marginTop: "0.25rem",
+                  marginTop: "0.2rem",
                   width: "1.25rem",
                   height: "1.25rem",
-                  accentColor: "#059669",
+                  accentColor: colors.green.DEFAULT,
                   cursor: "pointer",
-                  flexShrink: 0
+                  flexShrink: 0,
+                  borderRadius: "0.25rem",
                 }}
                 required
               />
-              <label htmlFor="cgu" style={{ fontSize: "0.875rem", color: "#374151", lineHeight: "1.5" }}>
+              <label
+                htmlFor="cgu"
+                style={{
+                  fontSize: "0.8rem",
+                  color: colors.text.primary,
+                  lineHeight: "1.5",
+                }}
+              >
                 Je déclare avoir pris connaissance des{" "}
                 <button
                   type="button"
                   onClick={() => setShowCguModal(true)}
                   style={{
-                    color: "#2563eb",
+                    color: colors.green.DEFAULT,
                     textDecoration: "underline",
+                    textUnderlineOffset: "2px",
                     background: "none",
                     border: "none",
                     cursor: "pointer",
                     padding: 0,
-                    fontSize: "inherit"
+                    fontSize: "inherit",
+                    fontWeight: "500",
+                    transition: "color 0.2s",
                   }}
+                  onMouseEnter={(e) => (e.target.style.color = colors.green.hover)}
+                  onMouseLeave={(e) => (e.target.style.color = colors.green.DEFAULT)}
                 >
                   conditions générales d'utilisation, de vente et de la politique de protection des données
                 </button>{" "}
                 à caractère personnel du CB ACADEMY et les accepte sans réserve.
-                <span style={{ color: "#ef4444", marginLeft: "0.25rem" }}>*</span>
+                <span style={{ color: colors.error, marginLeft: "0.25rem" }}>*</span>
               </label>
             </div>
             {submitted && !cguAccepted && (
-              <p style={{ color: "#ef4444", fontSize: "0.8rem", marginLeft: "2rem", marginTop: "-0.25rem" }}>
+              <p
+                style={{
+                  color: colors.error,
+                  fontSize: "0.75rem",
+                  marginLeft: "2rem",
+                  marginTop: "-0.25rem",
+                }}
+              >
                 Vous devez accepter les conditions générales d'utilisation.
               </p>
             )}
 
             {/* Prérequis techniques */}
-            <div style={{ 
-              display: "flex", 
-              alignItems: "flex-start", 
-              gap: "0.75rem",
-              marginBottom: "0.75rem"
-            }}>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "flex-start",
+                gap: "0.75rem",
+                marginBottom: "0.75rem",
+              }}
+            >
               <input
                 type="checkbox"
                 id="prereq"
                 checked={prereqAccepted}
                 onChange={(e) => setPrereqAccepted(e.target.checked)}
                 style={{
-                  marginTop: "0.25rem",
+                  marginTop: "0.2rem",
                   width: "1.25rem",
                   height: "1.25rem",
-                  accentColor: "#059669",
+                  accentColor: colors.green.DEFAULT,
                   cursor: "pointer",
-                  flexShrink: 0
+                  flexShrink: 0,
+                  borderRadius: "0.25rem",
                 }}
                 required
               />
-              <label htmlFor="prereq" style={{ fontSize: "0.875rem", color: "#374151", lineHeight: "1.5" }}>
+              <label
+                htmlFor="prereq"
+                style={{
+                  fontSize: "0.8rem",
+                  color: colors.text.primary,
+                  lineHeight: "1.5",
+                }}
+              >
                 Je déclare avoir pris connaissance des{" "}
                 <button
                   type="button"
                   onClick={() => setShowPrereqModal(true)}
                   style={{
-                    color: "#2563eb",
+                    color: colors.green.DEFAULT,
                     textDecoration: "underline",
+                    textUnderlineOffset: "2px",
                     background: "none",
                     border: "none",
                     cursor: "pointer",
                     padding: 0,
-                    fontSize: "inherit"
+                    fontSize: "inherit",
+                    fontWeight: "500",
+                    transition: "color 0.2s",
                   }}
+                  onMouseEnter={(e) => (e.target.style.color = colors.green.hover)}
+                  onMouseLeave={(e) => (e.target.style.color = colors.green.DEFAULT)}
                 >
                   prérequis techniques
                 </button>{" "}
                 liés à l'enseignement à distance et les accepte sans réserve.
-                <span style={{ color: "#ef4444", marginLeft: "0.25rem" }}>*</span>
+                <span style={{ color: colors.error, marginLeft: "0.25rem" }}>*</span>
               </label>
             </div>
             {submitted && !prereqAccepted && (
-              <p style={{ color: "#ef4444", fontSize: "0.8rem", marginLeft: "2rem", marginTop: "-0.25rem" }}>
+              <p
+                style={{
+                  color: colors.error,
+                  fontSize: "0.75rem",
+                  marginLeft: "2rem",
+                  marginTop: "-0.25rem",
+                }}
+              >
                 Vous devez accepter les prérequis techniques.
               </p>
             )}
           </div>
 
-          {/* ✅ BOUTON D'INSCRIPTION AVEC VÉRIFICATION */}
-          <button 
+          {/* 🎨 BOUTON D'INSCRIPTION */}
+          <button
+            type="submit"
             disabled={loading || !cguAccepted || !prereqAccepted}
             style={{
               marginTop: "1.5rem",
               width: "100%",
-              padding: "0.75rem",
+              padding: "0.85rem",
               border: "none",
-              borderRadius: "0.5rem",
+              borderRadius: "0.75rem",
               fontSize: "1rem",
-              fontWeight: "600",
+              fontWeight: "700",
               color: "white",
-              background: (!cguAccepted || !prereqAccepted) 
-                ? "#9ca3af" 
-                : "linear-gradient(135deg, #059669, #10b981)",
-              cursor: (!cguAccepted || !prereqAccepted) 
-                ? "not-allowed" 
-                : "pointer",
-              transition: "all 0.3s ease"
+              background:
+                !cguAccepted || !prereqAccepted
+                  ? colors.text.secondary
+                  : colors.green.gradient,
+              cursor:
+                !cguAccepted || !prereqAccepted ? "not-allowed" : "pointer",
+              transition: "transform 0.2s, box-shadow 0.2s, background 0.3s",
+              boxShadow:
+                !cguAccepted || !prereqAccepted
+                  ? "none"
+                  : "0 4px 14px rgba(5, 150, 105, 0.35)",
+            }}
+            onMouseEnter={(e) => {
+              if (cguAccepted && prereqAccepted && !loading) {
+                e.target.style.transform = "translateY(-2px)";
+                e.target.style.boxShadow = "0 6px 20px rgba(5, 150, 105, 0.45)";
+              }
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.transform = "translateY(0)";
+              if (cguAccepted && prereqAccepted && !loading) {
+                e.target.style.boxShadow = "0 4px 14px rgba(5, 150, 105, 0.35)";
+              }
             }}
           >
-            {loading ? "Création en cours..." : "S'inscrire"}
+            {loading ? "⏳ Création en cours..." : "🚀 S'inscrire"}
           </button>
         </form>
+
+        {/* Lien connexion */}
+        <p
+          style={{
+            textAlign: "center",
+            fontSize: "0.875rem",
+            color: colors.text.secondary,
+            marginTop: "1.5rem",
+          }}
+        >
+          Déjà un compte ?{" "}
+          <a
+            href="/login"
+            style={{
+              color: colors.green.DEFAULT,
+              fontWeight: "600",
+              textDecoration: "none",
+              transition: "color 0.2s",
+            }}
+            onMouseEnter={(e) => (e.target.style.color = colors.green.hover)}
+            onMouseLeave={(e) => (e.target.style.color = colors.green.DEFAULT)}
+          >
+            Se connecter
+          </a>
+        </p>
       </div>
 
-      {/* ✅ MODALES DES POLITIQUES */}
+      {/* Modales */}
       <PolicyModal
         isOpen={showCguModal}
         onClose={() => setShowCguModal(false)}
