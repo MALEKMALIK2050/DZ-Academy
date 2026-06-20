@@ -658,21 +658,23 @@ export default function StudentDashboard() {
         )}
         
 {/* ── Tab : Catalogue (AMÉLIORÉ) ── */}
+{/* ── Tab : Catalogue (AMÉLIORÉ) ── */}
 {tab === "catalogue" && (
   <div>
+    {/* Filtres */}
     <div
       style={{
-        background: "#ecfdf5",
+        background: COLORS.green.light,
         padding: "1.5rem",
         borderRadius: "15px",
         marginBottom: "2rem",
-        border: "1px solid #e2e8f0",
+        border: `1px solid ${COLORS.border}`,
       }}
     >
       <h3
         style={{
           margin: "0 0 1.25rem",
-          color: "#1f2937",
+          color: COLORS.text.primary,
           fontSize: "1.1rem",
         }}
       >
@@ -686,32 +688,14 @@ export default function StudentDashboard() {
         }}
       >
         <div>
-          <label
-            style={{
-              display: "block",
-              marginBottom: "0.3rem",
-              fontWeight: "600",
-              color: "#1f2937",
-              fontSize: "0.85rem",
-            }}
-          >
-            🎓 Niveau
-          </label>
+          <label style={labelStyle}>🎓 Niveau</label>
           <select
             value={filtreNiveau}
             onChange={(e) => {
               setFiltreNiveau(e.target.value);
               setFiltreAnnee("");
             }}
-            style={{
-              width: "100%",
-              padding: "0.6rem",
-              border: "1.5px solid #e2e8f0",
-              borderRadius: "8px",
-              fontSize: "0.95rem",
-              boxSizing: "border-box",
-              background: "white",
-            }}
+            style={inputStyle}
           >
             <option value="">Tous les niveaux</option>
             <option value="college">Collège</option>
@@ -719,29 +703,11 @@ export default function StudentDashboard() {
           </select>
         </div>
         <div>
-          <label
-            style={{
-              display: "block",
-              marginBottom: "0.3rem",
-              fontWeight: "600",
-              color: "#1f2937",
-              fontSize: "0.85rem",
-            }}
-          >
-            📅 Classe
-          </label>
+          <label style={labelStyle}>📅 Classe</label>
           <select
             value={filtreAnnee}
             onChange={(e) => setFiltreAnnee(e.target.value)}
-            style={{
-              width: "100%",
-              padding: "0.6rem",
-              border: "1.5px solid #e2e8f0",
-              borderRadius: "8px",
-              fontSize: "0.95rem",
-              boxSizing: "border-box",
-              background: "white",
-            }}
+            style={inputStyle}
           >
             <option value="">Toutes les classes</option>
             {filtreNiveau === "college" &&
@@ -765,29 +731,11 @@ export default function StudentDashboard() {
           </select>
         </div>
         <div>
-          <label
-            style={{
-              display: "block",
-              marginBottom: "0.3rem",
-              fontWeight: "600",
-              color: "#1f2937",
-              fontSize: "0.85rem",
-            }}
-          >
-            📖 Matière
-          </label>
+          <label style={labelStyle}>📖 Matière</label>
           <select
             value={filtreMatiere}
             onChange={(e) => setFiltreMatiere(e.target.value)}
-            style={{
-              width: "100%",
-              padding: "0.6rem",
-              border: "1.5px solid #e2e8f0",
-              borderRadius: "8px",
-              fontSize: "0.95rem",
-              boxSizing: "border-box",
-              background: "white",
-            }}
+            style={inputStyle}
           >
             <option value="">Toutes les matières</option>
             {[
@@ -822,7 +770,7 @@ export default function StudentDashboard() {
           style={{
             flex: 1,
             padding: "0.75rem",
-            background: "linear-gradient(135deg, #059669, #10b981)",
+            background: COLORS.green.gradient,
             color: "white",
             border: "none",
             borderRadius: "8px",
@@ -847,9 +795,9 @@ export default function StudentDashboard() {
           onClick={handleCatalogueReset}
           style={{
             padding: "0.75rem 1.5rem",
-            background: "#fffbeb",
-            color: "#92400e",
-            border: "1px solid #f59e0b",
+            background: COLORS.orange.light,
+            color: COLORS.orange.text,
+            border: `1px solid ${COLORS.orange.DEFAULT}`,
             borderRadius: "8px",
             fontWeight: "600",
             cursor: "pointer",
@@ -875,7 +823,7 @@ export default function StudentDashboard() {
           style={{
             marginTop: "1rem",
             padding: "0.6rem 1.5rem",
-            background: "linear-gradient(135deg, #059669, #10b981)",
+            background: COLORS.green.gradient,
             color: "white",
             border: "none",
             borderRadius: "8px",
@@ -895,7 +843,12 @@ export default function StudentDashboard() {
         }}
       >
         {catalogue.map((c) => {
+          // ✅ Récupérer le statut d'inscription
           const enrollment = c.enrollments?.[0];
+          const isEnrolled = enrollment?.statut === "PAYE" || enrollment?.statut === "GRATUIT";
+          const isPending = enrollment?.statut === "EN_ATTENTE";
+          const isRejected = enrollment?.statut === "REJETE";
+
           return (
             <div
               key={c.id}
@@ -904,11 +857,10 @@ export default function StudentDashboard() {
                 borderRadius: "16px",
                 overflow: "hidden",
                 boxShadow: "0 4px 20px rgba(0,0,0,0.06)",
-                border:
-                  enrollment?.statut === "PAYE" || enrollment?.statut === "GRATUIT"
-                    ? "2px solid #059669"
-                    : enrollment?.statut === "EN_ATTENTE"
-                    ? "2px solid #f59e0b"
+                border: isEnrolled 
+                  ? "2px solid #059669" 
+                  : isPending 
+                    ? "2px solid #f59e0b" 
                     : "1px solid #e2e8f0",
                 transition: "transform 0.2s, box-shadow 0.2s",
               }}
@@ -921,12 +873,14 @@ export default function StudentDashboard() {
                 e.currentTarget.style.boxShadow = "0 4px 20px rgba(0,0,0,0.06)";
               }}
             >
+              {/* Cover */}
               <div
                 style={{
                   height: "100px",
-                  background:
-                    enrollment?.statut === "PAYE" || enrollment?.statut === "GRATUIT"
-                      ? "linear-gradient(135deg, #059669, #10b981)"
+                  background: isEnrolled 
+                    ? "linear-gradient(135deg, #059669, #10b981)" 
+                    : isPending 
+                      ? "linear-gradient(135deg, #f59e0b, #d97706)" 
                       : "linear-gradient(135deg, #6b7280, #9ca3af)",
                   display: "flex",
                   alignItems: "center",
@@ -948,9 +902,8 @@ export default function StudentDashboard() {
                 ) : (
                   "📚"
                 )}
-                {/* Badge d'état */}
-                {(enrollment?.statut === "PAYE" || enrollment?.statut === "GRATUIT") && (
-                  <div
+                {isEnrolled && (
+                  <span
                     style={{
                       position: "absolute",
                       top: "0.5rem",
@@ -964,10 +917,10 @@ export default function StudentDashboard() {
                     }}
                   >
                     ✅ Inscrit
-                  </div>
+                  </span>
                 )}
-                {enrollment?.statut === "EN_ATTENTE" && (
-                  <div
+                {isPending && (
+                  <span
                     style={{
                       position: "absolute",
                       top: "0.5rem",
@@ -981,7 +934,7 @@ export default function StudentDashboard() {
                     }}
                   >
                     ⏳ En attente
-                  </div>
+                  </span>
                 )}
               </div>
 
@@ -1068,72 +1021,10 @@ export default function StudentDashboard() {
                   )}
                 </p>
 
-                {/* ✅ SECTION BOUTONS AMÉLIORÉE */}
+                {/* ✅ SECTION BOUTONS CONDITIONNELLE */}
                 <div style={{ minWidth: "180px" }}>
-                  {/* PAS D'INSCRIPTION */}
-                  {!enrollment && (
-                    <div
-                      style={{
-                        display: "flex",
-                        flexDirection: "column",
-                        gap: "0.5rem",
-                      }}
-                    >
-                      <select
-                        value={typePaiements[c.id] || "COURS_SEUL"}
-                        onChange={(e) =>
-                          setTypePaiements({
-                            ...typePaiements,
-                            [c.id]: e.target.value,
-                          })
-                        }
-                        style={{
-                          padding: "0.4rem",
-                          borderRadius: "6px",
-                          border: "1px solid #cbd5e0",
-                          fontSize: "0.85rem",
-                          width: "100%",
-                        }}
-                      >
-                        <option value="COURS_SEUL">💳 Ce cours uniquement</option>
-                        <option value="PARCOURS_COMPLET">🎓 Parcours complet</option>
-                      </select>
-                      <button
-                        onClick={() =>
-                          handleEnroll(c.id, typePaiements[c.id] || "COURS_SEUL")
-                        }
-                        style={{
-                          width: "100%",
-                          padding: "0.6rem",
-                          background: "linear-gradient(135deg, #059669, #10b981)",
-                          color: "white",
-                          border: "none",
-                          borderRadius: "8px",
-                          fontWeight: "700",
-                          cursor: "pointer",
-                          fontSize: "0.85rem",
-                          transition: "transform 0.2s, box-shadow 0.2s",
-                          boxShadow: "0 2px 8px rgba(5, 150, 105, 0.25)",
-                        }}
-                        onMouseEnter={(e) => {
-                          e.target.style.transform = "translateY(-2px)";
-                          e.target.style.boxShadow =
-                            "0 4px 14px rgba(5, 150, 105, 0.35)";
-                        }}
-                        onMouseLeave={(e) => {
-                          e.target.style.transform = "translateY(0)";
-                          e.target.style.boxShadow =
-                            "0 2px 8px rgba(5, 150, 105, 0.25)";
-                        }}
-                      >
-                        ➕ Demander l'accès
-                      </button>
-                    </div>
-                  )}
-
-                  {/* ✅ DÉJÀ INSCRIT (PAYE ou GRATUIT) */}
-                  {(enrollment?.statut === "PAYE" ||
-                    enrollment?.statut === "GRATUIT") && (
+                  {/* CAS 1 : Déjà inscrit */}
+                  {isEnrolled && (
                     <div
                       style={{
                         display: "flex",
@@ -1162,7 +1053,7 @@ export default function StudentDashboard() {
                         style={{
                           width: "100%",
                           padding: "0.6rem",
-                          background: "linear-gradient(135deg, #059669, #10b981)",
+                          background: COLORS.green.gradient,
                           color: "white",
                           border: "none",
                           borderRadius: "8px",
@@ -1188,8 +1079,8 @@ export default function StudentDashboard() {
                     </div>
                   )}
 
-                  {/* EN ATTENTE */}
-                  {enrollment?.statut === "EN_ATTENTE" && (
+                  {/* CAS 2 : En attente */}
+                  {isPending && (
                     <div
                       style={{
                         display: "flex",
@@ -1237,8 +1128,8 @@ export default function StudentDashboard() {
                     </div>
                   )}
 
-                  {/* REJETÉ */}
-                  {enrollment?.statut === "REJETE" && (
+                  {/* CAS 3 : Rejeté */}
+                  {isRejected && (
                     <div
                       style={{
                         background: "#fef2f2",
@@ -1252,6 +1143,67 @@ export default function StudentDashboard() {
                       }}
                     >
                       ❌ Demande rejetée
+                    </div>
+                  )}
+
+                  {/* CAS 4 : Pas d'inscription */}
+                  {!enrollment && (
+                    <div
+                      style={{
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: "0.5rem",
+                      }}
+                    >
+                      <select
+                        value={typePaiements[c.id] || "COURS_SEUL"}
+                        onChange={(e) =>
+                          setTypePaiements({
+                            ...typePaiements,
+                            [c.id]: e.target.value,
+                          })
+                        }
+                        style={{
+                          padding: "0.4rem",
+                          borderRadius: "6px",
+                          border: "1px solid #cbd5e0",
+                          fontSize: "0.85rem",
+                          width: "100%",
+                        }}
+                      >
+                        <option value="COURS_SEUL">💳 Ce cours uniquement</option>
+                        <option value="PARCOURS_COMPLET">🎓 Parcours complet</option>
+                      </select>
+                      <button
+                        onClick={() =>
+                          handleEnroll(c.id, typePaiements[c.id] || "COURS_SEUL")
+                        }
+                        style={{
+                          width: "100%",
+                          padding: "0.6rem",
+                          background: COLORS.green.gradient,
+                          color: "white",
+                          border: "none",
+                          borderRadius: "8px",
+                          fontWeight: "700",
+                          cursor: "pointer",
+                          fontSize: "0.85rem",
+                          transition: "transform 0.2s, box-shadow 0.2s",
+                          boxShadow: "0 2px 8px rgba(5, 150, 105, 0.25)",
+                        }}
+                        onMouseEnter={(e) => {
+                          e.target.style.transform = "translateY(-2px)";
+                          e.target.style.boxShadow =
+                            "0 4px 14px rgba(5, 150, 105, 0.35)";
+                        }}
+                        onMouseLeave={(e) => {
+                          e.target.style.transform = "translateY(0)";
+                          e.target.style.boxShadow =
+                            "0 2px 8px rgba(5, 150, 105, 0.25)";
+                        }}
+                      >
+                        ➕ Demander l'accès
+                      </button>
                     </div>
                   )}
                 </div>

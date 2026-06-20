@@ -1,3 +1,8 @@
+// ======================================================
+// FICHIER : pages/index.js
+// MODIFICATION : Ajout des enrollments pour l'utilisateur connecté
+// ======================================================
+
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import AnimatedLogo from "../components/AnimatedLogo";
@@ -35,11 +40,11 @@ export default function Home() {
     { title: "🏆 Progression", text: "Suivez votre évolution et réalisez vos objectifs" }
   ];
 
-  // Charger les cours au montage
   useEffect(() => {
     fetchCourses();
   }, []);
 
+  // ✅ AJOUT : credentials: "include" pour envoyer le cookie
   const fetchCourses = async (filters = {}) => {
     setLoading(true);
     try {
@@ -48,7 +53,9 @@ export default function Home() {
       if (filters.matiere) params.append("matiere", filters.matiere);
       if (filters.annee)   params.append("annee",   filters.annee);
 
-      const res = await fetch(`/api/courses/public?${params.toString()}`);
+      const res = await fetch(`/api/courses/public?${params.toString()}`, {
+        credentials: "include", // ✅ IMPORTANT
+      });
       const data = await res.json();
       setCourses(Array.isArray(data) ? data : []);
     } catch (e) {
@@ -104,7 +111,6 @@ export default function Home() {
       <section style={{ padding: "4rem 1rem", background: "#f8fafc" }}>
         <div style={{ maxWidth: "1100px", margin: "0 auto" }}>
 
-          {/* Titre section */}
           <div style={{ textAlign: "center", marginBottom: "2.5rem" }}>
             <h2 style={{ fontSize: "clamp(1.5rem, 4vw, 2.5rem)", fontWeight: "800", color: "#1e293b", margin: "0 0 0.5rem" }}>
               📚 Nos Cours
@@ -126,7 +132,6 @@ export default function Home() {
             gap: "1rem",
             alignItems: "end",
           }}>
-            {/* Niveau */}
             <div>
               <label style={{ display: "block", fontWeight: "600", color: "#4a5568", marginBottom: "0.4rem", fontSize: "0.9rem" }}>
                 🎓 Niveau
@@ -142,7 +147,6 @@ export default function Home() {
               </select>
             </div>
 
-            {/* Année */}
             <div>
               <label style={{ display: "block", fontWeight: "600", color: "#4a5568", marginBottom: "0.4rem", fontSize: "0.9rem" }}>
                 📅 Classe
@@ -157,7 +161,6 @@ export default function Home() {
               </select>
             </div>
 
-            {/* Matière */}
             <div>
               <label style={{ display: "block", fontWeight: "600", color: "#4a5568", marginBottom: "0.4rem", fontSize: "0.9rem" }}>
                 📖 Matière
@@ -172,7 +175,6 @@ export default function Home() {
               </select>
             </div>
 
-            {/* Boutons */}
             <div style={{ display: "flex", gap: "0.5rem" }}>
               <button
                 onClick={handleSearch}
@@ -201,79 +203,174 @@ export default function Home() {
             </div>
           ) : (
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: "1.25rem" }}>
-              {courses.map((course) => (
-                <div
-                  key={course.id}
-                  style={{
-                    background: "white",
-                    borderRadius: "16px",
-                    overflow: "hidden",
-                    boxShadow: "0 4px 20px rgba(0,0,0,0.06)",
-                    border: "1px solid #e2e8f0",
-                    transition: "transform 0.2s, box-shadow 0.2s",
-                  }}
-                  onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-4px)"; e.currentTarget.style.boxShadow = "0 8px 30px rgba(0,0,0,0.12)"; }}
-                  onMouseLeave={e => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "0 4px 20px rgba(0,0,0,0.06)"; }}
-                >
-                  {/* Cover */}
-                  <div style={{
-                    height: "120px",
-                    background: "linear-gradient(135deg, #059669, #10b981)",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    fontSize: "3rem",
-                  }}>
-                    {course.coverImage
-                      ? <img src={course.coverImage} alt={course.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                      : "📚"
-                    }
-                  </div>
+              {courses.map((course) => {
+                // ✅ Récupérer le statut d'inscription
+                const enrollment = course.enrollments?.[0];
+                const isEnrolled = enrollment?.statut === "PAYE" || enrollment?.statut === "GRATUIT";
+                const isPending = enrollment?.statut === "EN_ATTENTE";
+                const isRejected = enrollment?.statut === "REJETE";
 
-                  {/* Contenu */}
-                  <div style={{ padding: "1.25rem" }}>
-                    <h3 style={{ margin: "0 0 0.5rem", fontWeight: "700", color: "#1e293b", fontSize: "1rem" }}>
-                      {course.title}
-                    </h3>
-                    <div style={{ display: "flex", gap: "0.4rem", flexWrap: "wrap", marginBottom: "0.75rem" }}>
-                      {course.niveau && (
-                        <span style={{ background: "#f0fdf4", color: "#166534", padding: "0.2rem 0.6rem", borderRadius: "20px", fontSize: "0.75rem", fontWeight: "600" }}>
-                          {course.niveau === "college" ? "Collège" : course.niveau === "lycee" ? "Lycée" : course.niveau}
+                return (
+                  <div
+                    key={course.id}
+                    style={{
+                      background: "white",
+                      borderRadius: "16px",
+                      overflow: "hidden",
+                      boxShadow: "0 4px 20px rgba(0,0,0,0.06)",
+                      border: isEnrolled 
+                        ? "2px solid #059669" 
+                        : isPending 
+                          ? "2px solid #f59e0b" 
+                          : "1px solid #e2e8f0",
+                      transition: "transform 0.2s, box-shadow 0.2s",
+                    }}
+                    onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-4px)"; e.currentTarget.style.boxShadow = "0 8px 30px rgba(0,0,0,0.12)"; }}
+                    onMouseLeave={e => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "0 4px 20px rgba(0,0,0,0.06)"; }}
+                  >
+                    <div style={{
+                      height: "120px",
+                      background: isEnrolled 
+                        ? "linear-gradient(135deg, #059669, #10b981)" 
+                        : isPending 
+                          ? "linear-gradient(135deg, #f59e0b, #d97706)" 
+                          : "linear-gradient(135deg, #6b7280, #9ca3af)",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      fontSize: "3rem",
+                      position: "relative",
+                    }}>
+                      {course.coverImage
+                        ? <img src={course.coverImage} alt={course.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                        : "📚"
+                      }
+                      {isEnrolled && (
+                        <span style={{
+                          position: "absolute",
+                          top: "0.5rem",
+                          right: "0.5rem",
+                          background: "#059669",
+                          color: "white",
+                          padding: "0.2rem 0.6rem",
+                          borderRadius: "20px",
+                          fontSize: "0.7rem",
+                          fontWeight: "700",
+                        }}>
+                          ✅ Inscrit
                         </span>
                       )}
-                      {course.annee && (
-                        <span style={{ background: "#eff6ff", color: "#1d4ed8", padding: "0.2rem 0.6rem", borderRadius: "20px", fontSize: "0.75rem", fontWeight: "600" }}>
-                          {course.annee}
-                        </span>
-                      )}
-                      {course.matiere && (
-                        <span style={{ background: "#fff7ed", color: "#c2410c", padding: "0.2rem 0.6rem", borderRadius: "20px", fontSize: "0.75rem", fontWeight: "600" }}>
-                          {MATIERES.find(m => m.value === course.matiere)?.label || course.matiere}
+                      {isPending && (
+                        <span style={{
+                          position: "absolute",
+                          top: "0.5rem",
+                          right: "0.5rem",
+                          background: "#f59e0b",
+                          color: "white",
+                          padding: "0.2rem 0.6rem",
+                          borderRadius: "20px",
+                          fontSize: "0.7rem",
+                          fontWeight: "700",
+                        }}>
+                          ⏳ En attente
                         </span>
                       )}
                     </div>
-                    <p style={{ margin: "0 0 1rem", color: "#64748b", fontSize: "0.85rem" }}>
-                      {course.chapters?.length || 0} chapitre{course.chapters?.length !== 1 ? "s" : ""}
-                    </p>
-                    <Link
-                      href="/register"
-                      style={{
-                        display: "block",
-                        textAlign: "center",
-                        padding: "0.65rem",
-                        background: "linear-gradient(135deg, #059669, #10b981)",
-                        color: "white",
-                        borderRadius: "8px",
-                        textDecoration: "none",
-                        fontWeight: "700",
-                        fontSize: "0.9rem",
-                      }}
-                    >
-                      🚀 S'inscrire pour accéder
-                    </Link>
+
+                    <div style={{ padding: "1.25rem" }}>
+                      <h3 style={{ margin: "0 0 0.5rem", fontWeight: "700", color: "#1e293b", fontSize: "1rem" }}>
+                        {course.title}
+                      </h3>
+                      <div style={{ display: "flex", gap: "0.4rem", flexWrap: "wrap", marginBottom: "0.75rem" }}>
+                        {course.niveau && (
+                          <span style={{ background: "#f0fdf4", color: "#166534", padding: "0.2rem 0.6rem", borderRadius: "20px", fontSize: "0.75rem", fontWeight: "600" }}>
+                            {course.niveau === "college" ? "Collège" : course.niveau === "lycee" ? "Lycée" : course.niveau}
+                          </span>
+                        )}
+                        {course.annee && (
+                          <span style={{ background: "#eff6ff", color: "#1d4ed8", padding: "0.2rem 0.6rem", borderRadius: "20px", fontSize: "0.75rem", fontWeight: "600" }}>
+                            {course.annee}
+                          </span>
+                        )}
+                        {course.matiere && (
+                          <span style={{ background: "#fff7ed", color: "#c2410c", padding: "0.2rem 0.6rem", borderRadius: "20px", fontSize: "0.75rem", fontWeight: "600" }}>
+                            {MATIERES.find(m => m.value === course.matiere)?.label || course.matiere}
+                          </span>
+                        )}
+                      </div>
+                      <p style={{ margin: "0 0 1rem", color: "#64748b", fontSize: "0.85rem" }}>
+                        {course.chapters?.length || 0} chapitre{course.chapters?.length !== 1 ? "s" : ""}
+                        {course.teacher && ` • 👨‍🏫 ${course.teacher.prenom} ${course.teacher.nom}`}
+                      </p>
+
+                      {/* ✅ Bouton conditionnel */}
+                      {isEnrolled ? (
+                        <Link
+                          href="/dashboard/student"
+                          style={{
+                            display: "block",
+                            textAlign: "center",
+                            padding: "0.65rem",
+                            background: "linear-gradient(135deg, #059669, #10b981)",
+                            color: "white",
+                            borderRadius: "8px",
+                            textDecoration: "none",
+                            fontWeight: "700",
+                            fontSize: "0.9rem",
+                          }}
+                        >
+                          📖 Accéder au cours
+                        </Link>
+                      ) : isPending ? (
+                        <div style={{
+                          display: "block",
+                          textAlign: "center",
+                          padding: "0.65rem",
+                          background: "#fffbeb",
+                          color: "#92400e",
+                          borderRadius: "8px",
+                          border: "1px solid #f59e0b",
+                          fontWeight: "600",
+                          fontSize: "0.9rem",
+                        }}>
+                          ⏳ Demande en attente
+                        </div>
+                      ) : isRejected ? (
+                        <div style={{
+                          display: "block",
+                          textAlign: "center",
+                          padding: "0.65rem",
+                          background: "#fef2f2",
+                          color: "#dc2626",
+                          borderRadius: "8px",
+                          border: "1px solid #ef4444",
+                          fontWeight: "600",
+                          fontSize: "0.9rem",
+                        }}>
+                          ❌ Demande rejetée
+                        </div>
+                      ) : (
+                        <Link
+                          href="/register"
+                          style={{
+                            display: "block",
+                            textAlign: "center",
+                            padding: "0.65rem",
+                            background: "linear-gradient(135deg, #059669, #10b981)",
+                            color: "white",
+                            borderRadius: "8px",
+                            textDecoration: "none",
+                            fontWeight: "700",
+                            fontSize: "0.9rem",
+                          }}
+                        >
+                          🚀 S'inscrire pour accéder
+                        </Link>
+                      )}
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
