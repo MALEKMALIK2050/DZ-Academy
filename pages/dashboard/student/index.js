@@ -656,422 +656,613 @@ export default function StudentDashboard() {
             )}
           </div>
         )}
+        
+{/* ── Tab : Catalogue (AMÉLIORÉ) ── */}
+{tab === "catalogue" && (
+  <div>
+    <div
+      style={{
+        background: "#ecfdf5",
+        padding: "1.5rem",
+        borderRadius: "15px",
+        marginBottom: "2rem",
+        border: "1px solid #e2e8f0",
+      }}
+    >
+      <h3
+        style={{
+          margin: "0 0 1.25rem",
+          color: "#1f2937",
+          fontSize: "1.1rem",
+        }}
+      >
+        🔍 Filtrer les cours
+      </h3>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
+          gap: "1rem",
+        }}
+      >
+        <div>
+          <label
+            style={{
+              display: "block",
+              marginBottom: "0.3rem",
+              fontWeight: "600",
+              color: "#1f2937",
+              fontSize: "0.85rem",
+            }}
+          >
+            🎓 Niveau
+          </label>
+          <select
+            value={filtreNiveau}
+            onChange={(e) => {
+              setFiltreNiveau(e.target.value);
+              setFiltreAnnee("");
+            }}
+            style={{
+              width: "100%",
+              padding: "0.6rem",
+              border: "1.5px solid #e2e8f0",
+              borderRadius: "8px",
+              fontSize: "0.95rem",
+              boxSizing: "border-box",
+              background: "white",
+            }}
+          >
+            <option value="">Tous les niveaux</option>
+            <option value="college">Collège</option>
+            <option value="lycee">Lycée</option>
+          </select>
+        </div>
+        <div>
+          <label
+            style={{
+              display: "block",
+              marginBottom: "0.3rem",
+              fontWeight: "600",
+              color: "#1f2937",
+              fontSize: "0.85rem",
+            }}
+          >
+            📅 Classe
+          </label>
+          <select
+            value={filtreAnnee}
+            onChange={(e) => setFiltreAnnee(e.target.value)}
+            style={{
+              width: "100%",
+              padding: "0.6rem",
+              border: "1.5px solid #e2e8f0",
+              borderRadius: "8px",
+              fontSize: "0.95rem",
+              boxSizing: "border-box",
+              background: "white",
+            }}
+          >
+            <option value="">Toutes les classes</option>
+            {filtreNiveau === "college" &&
+              ANNEES_COLLEGE.map((a) => (
+                <option key={a} value={a}>
+                  {a}
+                </option>
+              ))}
+            {filtreNiveau === "lycee" &&
+              ANNEES_LYCEE.map((a) => (
+                <option key={a} value={a}>
+                  {a}
+                </option>
+              ))}
+            {!filtreNiveau &&
+              [...ANNEES_COLLEGE, ...ANNEES_LYCEE].map((a) => (
+                <option key={a} value={a}>
+                  {a}
+                </option>
+              ))}
+          </select>
+        </div>
+        <div>
+          <label
+            style={{
+              display: "block",
+              marginBottom: "0.3rem",
+              fontWeight: "600",
+              color: "#1f2937",
+              fontSize: "0.85rem",
+            }}
+          >
+            📖 Matière
+          </label>
+          <select
+            value={filtreMatiere}
+            onChange={(e) => setFiltreMatiere(e.target.value)}
+            style={{
+              width: "100%",
+              padding: "0.6rem",
+              border: "1.5px solid #e2e8f0",
+              borderRadius: "8px",
+              fontSize: "0.95rem",
+              boxSizing: "border-box",
+              background: "white",
+            }}
+          >
+            <option value="">Toutes les matières</option>
+            {[
+              "Mathématiques",
+              "Physique",
+              "SVT",
+              "Informatique & Programmation",
+              "Philosophie",
+              "Histoire & Géographie",
+              "Arabe",
+              "Education islamique",
+              "Français",
+              "Anglais",
+              "Espagnol",
+            ].map((m) => (
+              <option key={m} value={m}>
+                {m}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+      <div
+        style={{
+          display: "flex",
+          gap: "0.75rem",
+          marginTop: "1rem",
+        }}
+      >
+        <button
+          onClick={handleCatalogueSearch}
+          style={{
+            flex: 1,
+            padding: "0.75rem",
+            background: "linear-gradient(135deg, #059669, #10b981)",
+            color: "white",
+            border: "none",
+            borderRadius: "8px",
+            fontWeight: "700",
+            cursor: "pointer",
+            fontSize: "1rem",
+            transition: "transform 0.2s, box-shadow 0.2s",
+            boxShadow: "0 4px 14px rgba(5, 150, 105, 0.3)",
+          }}
+          onMouseEnter={(e) => {
+            e.target.style.transform = "translateY(-2px)";
+            e.target.style.boxShadow = "0 6px 20px rgba(5, 150, 105, 0.4)";
+          }}
+          onMouseLeave={(e) => {
+            e.target.style.transform = "translateY(0)";
+            e.target.style.boxShadow = "0 4px 14px rgba(5, 150, 105, 0.3)";
+          }}
+        >
+          🔍 Rechercher
+        </button>
+        <button
+          onClick={handleCatalogueReset}
+          style={{
+            padding: "0.75rem 1.5rem",
+            background: "#fffbeb",
+            color: "#92400e",
+            border: "1px solid #f59e0b",
+            borderRadius: "8px",
+            fontWeight: "600",
+            cursor: "pointer",
+            fontSize: "1rem",
+            transition: "background 0.2s",
+          }}
+        >
+          ✕ Réinitialiser
+        </button>
+      </div>
+    </div>
 
-        {/* ── Tab : Catalogue (AMÉLIORÉ) ── */}
-        {tab === "catalogue" && (
-          <div>
+    {catalogueLoading ? (
+      <div style={{ textAlign: "center", padding: "3rem", color: "#94a3b8" }}>
+        ⏳ Chargement des cours...
+      </div>
+    ) : catalogue.length === 0 ? (
+      <div style={{ textAlign: "center", padding: "3rem", color: "#94a3b8" }}>
+        <div style={{ fontSize: "3rem", marginBottom: "1rem" }}>📭</div>
+        <p>Aucun cours disponible pour ces critères.</p>
+        <button
+          onClick={handleCatalogueReset}
+          style={{
+            marginTop: "1rem",
+            padding: "0.6rem 1.5rem",
+            background: "linear-gradient(135deg, #059669, #10b981)",
+            color: "white",
+            border: "none",
+            borderRadius: "8px",
+            fontWeight: "600",
+            cursor: "pointer",
+          }}
+        >
+          Réinitialiser les filtres
+        </button>
+      </div>
+    ) : (
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
+          gap: "1.25rem",
+        }}
+      >
+        {catalogue.map((c) => {
+          const enrollment = c.enrollments?.[0];
+          return (
             <div
+              key={c.id}
               style={{
-                background: COLORS.green.light,
-                padding: "1.5rem",
-                borderRadius: "15px",
-                marginBottom: "2rem",
-                border: `1px solid ${COLORS.border}`,
+                background: "white",
+                borderRadius: "16px",
+                overflow: "hidden",
+                boxShadow: "0 4px 20px rgba(0,0,0,0.06)",
+                border:
+                  enrollment?.statut === "PAYE" || enrollment?.statut === "GRATUIT"
+                    ? "2px solid #059669"
+                    : enrollment?.statut === "EN_ATTENTE"
+                    ? "2px solid #f59e0b"
+                    : "1px solid #e2e8f0",
+                transition: "transform 0.2s, box-shadow 0.2s",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = "translateY(-4px)";
+                e.currentTarget.style.boxShadow = "0 8px 30px rgba(0,0,0,0.12)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = "translateY(0)";
+                e.currentTarget.style.boxShadow = "0 4px 20px rgba(0,0,0,0.06)";
               }}
             >
-              <h3
-                style={{
-                  margin: "0 0 1.25rem",
-                  color: COLORS.text.primary,
-                  fontSize: "1.1rem",
-                }}
-              >
-                🔍 Filtrer les cours
-              </h3>
               <div
                 style={{
-                  display: "grid",
-                  gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
-                  gap: "1rem",
-                }}
-              >
-                <div>
-                  <label style={labelStyle}>🎓 Niveau</label>
-                  <select
-                    value={filtreNiveau}
-                    onChange={(e) => {
-                      setFiltreNiveau(e.target.value);
-                      setFiltreAnnee("");
-                    }}
-                    style={inputStyle}
-                  >
-                    <option value="">Tous les niveaux</option>
-                    <option value="college">Collège</option>
-                    <option value="lycee">Lycée</option>
-                  </select>
-                </div>
-                <div>
-                  <label style={labelStyle}>📅 Classe</label>
-                  <select
-                    value={filtreAnnee}
-                    onChange={(e) => setFiltreAnnee(e.target.value)}
-                    style={inputStyle}
-                  >
-                    <option value="">Toutes les classes</option>
-                    {filtreNiveau === "college" &&
-                      ANNEES_COLLEGE.map((a) => (
-                        <option key={a} value={a}>
-                          {a}
-                        </option>
-                      ))}
-                    {filtreNiveau === "lycee" &&
-                      ANNEES_LYCEE.map((a) => (
-                        <option key={a} value={a}>
-                          {a}
-                        </option>
-                      ))}
-                    {!filtreNiveau &&
-                      [...ANNEES_COLLEGE, ...ANNEES_LYCEE].map((a) => (
-                        <option key={a} value={a}>
-                          {a}
-                        </option>
-                      ))}
-                  </select>
-                </div>
-                <div>
-                  <label style={labelStyle}>📖 Matière</label>
-                  <select
-                    value={filtreMatiere}
-                    onChange={(e) => setFiltreMatiere(e.target.value)}
-                    style={inputStyle}
-                  >
-                    <option value="">Toutes les matières</option>
-                    {[
-                      "Mathématiques",
-                      "Physique",
-                      "SVT",
-                      "Informatique & Programmation",
-                      "Philosophie",
-                      "Histoire & Géographie",
-                      "Arabe",
-                      "Education islamique",
-                      "Français",
-                      "Anglais",
-                      "Espagnol",
-                    ].map((m) => (
-                      <option key={m} value={m}>
-                        {m}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-              <div
-                style={{
+                  height: "100px",
+                  background:
+                    enrollment?.statut === "PAYE" || enrollment?.statut === "GRATUIT"
+                      ? "linear-gradient(135deg, #059669, #10b981)"
+                      : "linear-gradient(135deg, #6b7280, #9ca3af)",
                   display: "flex",
-                  gap: "0.75rem",
-                  marginTop: "1rem",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: "3rem",
+                  position: "relative",
                 }}
               >
-                <button
-                  onClick={handleCatalogueSearch}
-                  style={{
-                    flex: 1,
-                    padding: "0.75rem",
-                    background: COLORS.green.gradient,
-                    color: "white",
-                    border: "none",
-                    borderRadius: "8px",
-                    fontWeight: "700",
-                    cursor: "pointer",
-                    fontSize: "1rem",
-                    transition: "transform 0.2s, box-shadow 0.2s",
-                    boxShadow: "0 4px 14px rgba(5, 150, 105, 0.3)",
-                  }}
-                  onMouseEnter={(e) => {
-                    e.target.style.transform = "translateY(-2px)";
-                    e.target.style.boxShadow = "0 6px 20px rgba(5, 150, 105, 0.4)";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.target.style.transform = "translateY(0)";
-                    e.target.style.boxShadow = "0 4px 14px rgba(5, 150, 105, 0.3)";
-                  }}
-                >
-                  🔍 Rechercher
-                </button>
-                <button
-                  onClick={handleCatalogueReset}
-                  style={{
-                    padding: "0.75rem 1.5rem",
-                    background: COLORS.orange.light,
-                    color: COLORS.orange.text,
-                    border: `1px solid ${COLORS.orange.DEFAULT}`,
-                    borderRadius: "8px",
-                    fontWeight: "600",
-                    cursor: "pointer",
-                    fontSize: "1rem",
-                    transition: "background 0.2s",
-                  }}
-                  onMouseEnter={(e) => {
-                    e.target.style.background = COLORS.orange.light;
-                  }}
-                  onMouseLeave={(e) => {
-                    e.target.style.background = COLORS.orange.light;
-                  }}
-                >
-                  ✕ Réinitialiser
-                </button>
+                {c.coverImage ? (
+                  <img
+                    src={c.coverImage}
+                    alt={c.title}
+                    style={{
+                      width: "100%",
+                      height: "100%",
+                      objectFit: "cover",
+                    }}
+                  />
+                ) : (
+                  "📚"
+                )}
+                {/* Badge d'état */}
+                {(enrollment?.statut === "PAYE" || enrollment?.statut === "GRATUIT") && (
+                  <div
+                    style={{
+                      position: "absolute",
+                      top: "0.5rem",
+                      right: "0.5rem",
+                      background: "#059669",
+                      color: "white",
+                      padding: "0.2rem 0.6rem",
+                      borderRadius: "20px",
+                      fontSize: "0.7rem",
+                      fontWeight: "700",
+                    }}
+                  >
+                    ✅ Inscrit
+                  </div>
+                )}
+                {enrollment?.statut === "EN_ATTENTE" && (
+                  <div
+                    style={{
+                      position: "absolute",
+                      top: "0.5rem",
+                      right: "0.5rem",
+                      background: "#f59e0b",
+                      color: "white",
+                      padding: "0.2rem 0.6rem",
+                      borderRadius: "20px",
+                      fontSize: "0.7rem",
+                      fontWeight: "700",
+                    }}
+                  >
+                    ⏳ En attente
+                  </div>
+                )}
               </div>
-            </div>
 
-            {catalogueLoading ? (
-              <div style={{ textAlign: "center", padding: "3rem", color: "#94a3b8" }}>
-                ⏳ Chargement des cours...
-              </div>
-            ) : catalogue.length === 0 ? (
-              <div style={{ textAlign: "center", padding: "3rem", color: "#94a3b8" }}>
-                <div style={{ fontSize: "3rem", marginBottom: "1rem" }}>📭</div>
-                <p>Aucun cours disponible pour ces critères.</p>
-                <button
-                  onClick={handleCatalogueReset}
+              <div style={{ padding: "1rem" }}>
+                <h3
                   style={{
-                    marginTop: "1rem",
-                    padding: "0.6rem 1.5rem",
-                    background: COLORS.green.gradient,
-                    color: "white",
-                    border: "none",
-                    borderRadius: "8px",
-                    fontWeight: "600",
-                    cursor: "pointer",
+                    margin: "0 0 0.5rem",
+                    fontWeight: "700",
+                    color: "#1f2937",
+                    fontSize: "1rem",
                   }}
                 >
-                  Réinitialiser les filtres
-                </button>
-              </div>
-            ) : (
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
-                  gap: "1.25rem",
-                }}
-              >
-                {catalogue.map((c) => {
-                  const enrollment = c.enrollments?.[0];
-                  return (
-                    <div
-                      key={c.id}
+                  {c.title}
+                </h3>
+                <div
+                  style={{
+                    display: "flex",
+                    gap: "0.4rem",
+                    flexWrap: "wrap",
+                    marginBottom: "0.5rem",
+                  }}
+                >
+                  {c.niveau && (
+                    <span
                       style={{
-                        background: "white",
-                        borderRadius: "16px",
-                        overflow: "hidden",
-                        boxShadow: "0 4px 20px rgba(0,0,0,0.06)",
-                        border: "1px solid #e2e8f0",
-                        transition: "transform 0.2s, box-shadow 0.2s",
+                        background: "#f0fdf4",
+                        color: "#166534",
+                        padding: "0.15rem 0.5rem",
+                        borderRadius: "20px",
+                        fontSize: "0.7rem",
+                        fontWeight: "600",
                       }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.transform = "translateY(-4px)";
-                        e.currentTarget.style.boxShadow =
-                          "0 8px 30px rgba(0,0,0,0.12)";
+                    >
+                      {c.niveau === "college"
+                        ? "Collège"
+                        : c.niveau === "lycee"
+                        ? "Lycée"
+                        : c.niveau}
+                    </span>
+                  )}
+                  {c.annee && (
+                    <span
+                      style={{
+                        background: "#eff6ff",
+                        color: "#1d4ed8",
+                        padding: "0.15rem 0.5rem",
+                        borderRadius: "20px",
+                        fontSize: "0.7rem",
+                        fontWeight: "600",
                       }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.transform = "translateY(0)";
-                        e.currentTarget.style.boxShadow =
-                          "0 4px 20px rgba(0,0,0,0.06)";
+                    >
+                      {c.annee}
+                    </span>
+                  )}
+                  {c.matiere && (
+                    <span
+                      style={{
+                        background: "#fff7ed",
+                        color: "#c2410c",
+                        padding: "0.15rem 0.5rem",
+                        borderRadius: "20px",
+                        fontSize: "0.7rem",
+                        fontWeight: "600",
+                      }}
+                    >
+                      {c.matiere}
+                    </span>
+                  )}
+                </div>
+                <p
+                  style={{
+                    margin: "0 0 0.75rem",
+                    color: "#64748b",
+                    fontSize: "0.8rem",
+                  }}
+                >
+                  📚 {c.chapters?.length || 0} chapitre
+                  {c.chapters?.length !== 1 ? "s" : ""}
+                  {c.teacher && (
+                    <>
+                      {" "}
+                      • 👨‍🏫 {c.teacher.prenom} {c.teacher.nom}
+                    </>
+                  )}
+                </p>
+
+                {/* ✅ SECTION BOUTONS AMÉLIORÉE */}
+                <div style={{ minWidth: "180px" }}>
+                  {/* PAS D'INSCRIPTION */}
+                  {!enrollment && (
+                    <div
+                      style={{
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: "0.5rem",
+                      }}
+                    >
+                      <select
+                        value={typePaiements[c.id] || "COURS_SEUL"}
+                        onChange={(e) =>
+                          setTypePaiements({
+                            ...typePaiements,
+                            [c.id]: e.target.value,
+                          })
+                        }
+                        style={{
+                          padding: "0.4rem",
+                          borderRadius: "6px",
+                          border: "1px solid #cbd5e0",
+                          fontSize: "0.85rem",
+                          width: "100%",
+                        }}
+                      >
+                        <option value="COURS_SEUL">💳 Ce cours uniquement</option>
+                        <option value="PARCOURS_COMPLET">🎓 Parcours complet</option>
+                      </select>
+                      <button
+                        onClick={() =>
+                          handleEnroll(c.id, typePaiements[c.id] || "COURS_SEUL")
+                        }
+                        style={{
+                          width: "100%",
+                          padding: "0.6rem",
+                          background: "linear-gradient(135deg, #059669, #10b981)",
+                          color: "white",
+                          border: "none",
+                          borderRadius: "8px",
+                          fontWeight: "700",
+                          cursor: "pointer",
+                          fontSize: "0.85rem",
+                          transition: "transform 0.2s, box-shadow 0.2s",
+                          boxShadow: "0 2px 8px rgba(5, 150, 105, 0.25)",
+                        }}
+                        onMouseEnter={(e) => {
+                          e.target.style.transform = "translateY(-2px)";
+                          e.target.style.boxShadow =
+                            "0 4px 14px rgba(5, 150, 105, 0.35)";
+                        }}
+                        onMouseLeave={(e) => {
+                          e.target.style.transform = "translateY(0)";
+                          e.target.style.boxShadow =
+                            "0 2px 8px rgba(5, 150, 105, 0.25)";
+                        }}
+                      >
+                        ➕ Demander l'accès
+                      </button>
+                    </div>
+                  )}
+
+                  {/* ✅ DÉJÀ INSCRIT (PAYE ou GRATUIT) */}
+                  {(enrollment?.statut === "PAYE" ||
+                    enrollment?.statut === "GRATUIT") && (
+                    <div
+                      style={{
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: "0.5rem",
                       }}
                     >
                       <div
                         style={{
-                          height: "100px",
-                          background: COLORS.green.gradient,
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          fontSize: "3rem",
+                          background: "#ecfdf5",
+                          border: "2px solid #059669",
+                          borderRadius: "8px",
+                          padding: "0.5rem",
+                          textAlign: "center",
+                          color: "#059669",
+                          fontWeight: "600",
+                          fontSize: "0.85rem",
                         }}
                       >
-                        {c.coverImage ? (
-                          <img
-                            src={c.coverImage}
-                            alt={c.title}
-                            style={{
-                              width: "100%",
-                              height: "100%",
-                              objectFit: "cover",
-                            }}
-                          />
-                        ) : (
-                          "📚"
-                        )}
+                        ✅ Déjà inscrit
                       </div>
-                      <div style={{ padding: "1rem" }}>
-                        <h3
-                          style={{
-                            margin: "0 0 0.5rem",
-                            fontWeight: "700",
-                            color: COLORS.text.primary,
-                            fontSize: "1rem",
-                          }}
-                        >
-                          {c.title}
-                        </h3>
-                        <div
-                          style={{
-                            display: "flex",
-                            gap: "0.4rem",
-                            flexWrap: "wrap",
-                            marginBottom: "0.5rem",
-                          }}
-                        >
-                          {c.niveau && (
-                            <span
-                              style={{
-                                background: "#f0fdf4",
-                                color: "#166534",
-                                padding: "0.15rem 0.5rem",
-                                borderRadius: "20px",
-                                fontSize: "0.7rem",
-                                fontWeight: "600",
-                              }}
-                            >
-                              {c.niveau === "college"
-                                ? "Collège"
-                                : c.niveau === "lycee"
-                                ? "Lycée"
-                                : c.niveau}
-                            </span>
-                          )}
-                          {c.annee && (
-                            <span
-                              style={{
-                                background: "#eff6ff",
-                                color: "#1d4ed8",
-                                padding: "0.15rem 0.5rem",
-                                borderRadius: "20px",
-                                fontSize: "0.7rem",
-                                fontWeight: "600",
-                              }}
-                            >
-                              {c.annee}
-                            </span>
-                          )}
-                          {c.matiere && (
-                            <span
-                              style={{
-                                background: "#fff7ed",
-                                color: "#c2410c",
-                                padding: "0.15rem 0.5rem",
-                                borderRadius: "20px",
-                                fontSize: "0.7rem",
-                                fontWeight: "600",
-                              }}
-                            >
-                              {c.matiere}
-                            </span>
-                          )}
-                        </div>
-                        <p
-                          style={{
-                            margin: "0 0 0.75rem",
-                            color: COLORS.text.secondary,
-                            fontSize: "0.8rem",
-                          }}
-                        >
-                          📚 {c.chapters?.length || 0} chapitre
-                          {c.chapters?.length !== 1 ? "s" : ""}
-                          {c.teacher && (
-                            <>
-                              {" "}
-                              • 👨‍🏫 {c.teacher.prenom} {c.teacher.nom}
-                            </>
-                          )}
-                        </p>
-                        {enrollment ? (
-                          <button
-                            onClick={() =>
-                              router.push(`/dashboard/student/courses/${c.id}`)
-                            }
-                            style={{
-                              width: "100%",
-                              padding: "0.6rem",
-                              background: COLORS.green.gradient,
-                              color: "white",
-                              border: "none",
-                              borderRadius: "8px",
-                              fontWeight: "700",
-                              cursor: "pointer",
-                              fontSize: "0.85rem",
-                              transition: "transform 0.2s, box-shadow 0.2s",
-                              boxShadow: "0 2px 8px rgba(5, 150, 105, 0.25)",
-                            }}
-                            onMouseEnter={(e) => {
-                              e.target.style.transform = "translateY(-2px)";
-                              e.target.style.boxShadow =
-                                "0 4px 14px rgba(5, 150, 105, 0.35)";
-                            }}
-                            onMouseLeave={(e) => {
-                              e.target.style.transform = "translateY(0)";
-                              e.target.style.boxShadow =
-                                "0 2px 8px rgba(5, 150, 105, 0.25)";
-                            }}
-                          >
-                            {enrollment.statut === "EN_ATTENTE"
-                              ? "⏳ En attente"
-                              : "📖 Accéder au cours"}
-                          </button>
-                        ) : (
-                          <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-                            <select
-                              value={typePaiements[c.id] || "COURS_SEUL"}
-                              onChange={(e) =>
-                                setTypePaiements({
-                                  ...typePaiements,
-                                  [c.id]: e.target.value,
-                                })
-                              }
-                              style={{
-                                padding: "0.4rem",
-                                borderRadius: "6px",
-                                border: `1px solid ${COLORS.border}`,
-                                fontSize: "0.85rem",
-                                width: "100%",
-                              }}
-                            >
-                              <option value="COURS_SEUL">💳 Ce cours uniquement</option>
-                              <option value="PARCOURS_COMPLET">
-                                🎓 Parcours complet
-                              </option>
-                            </select>
-                            <button
-                              onClick={() =>
-                                handleEnroll(c.id, typePaiements[c.id] || "COURS_SEUL")
-                              }
-                              style={{
-                                width: "100%",
-                                padding: "0.6rem",
-                                background: COLORS.orange.DEFAULT,
-                                color: "white",
-                                border: "none",
-                                borderRadius: "8px",
-                                fontWeight: "700",
-                                cursor: "pointer",
-                                fontSize: "0.85rem",
-                                transition: "transform 0.2s, box-shadow 0.2s",
-                                boxShadow: "0 2px 8px rgba(245, 158, 11, 0.3)",
-                              }}
-                              onMouseEnter={(e) => {
-                                e.target.style.transform = "translateY(-2px)";
-                                e.target.style.boxShadow =
-                                  "0 4px 14px rgba(245, 158, 11, 0.4)";
-                              }}
-                              onMouseLeave={(e) => {
-                                e.target.style.transform = "translateY(0)";
-                                e.target.style.boxShadow =
-                                  "0 2px 8px rgba(245, 158, 11, 0.3)";
-                              }}
-                            >
-                              ➕ Demander l'accès
-                            </button>
-                          </div>
-                        )}
-                      </div>
+                      <button
+                        onClick={() =>
+                          router.push(`/dashboard/student/courses/${c.id}`)
+                        }
+                        style={{
+                          width: "100%",
+                          padding: "0.6rem",
+                          background: "linear-gradient(135deg, #059669, #10b981)",
+                          color: "white",
+                          border: "none",
+                          borderRadius: "8px",
+                          fontWeight: "700",
+                          cursor: "pointer",
+                          fontSize: "0.85rem",
+                          transition: "transform 0.2s, box-shadow 0.2s",
+                          boxShadow: "0 2px 8px rgba(5, 150, 105, 0.25)",
+                        }}
+                        onMouseEnter={(e) => {
+                          e.target.style.transform = "translateY(-2px)";
+                          e.target.style.boxShadow =
+                            "0 4px 14px rgba(5, 150, 105, 0.35)";
+                        }}
+                        onMouseLeave={(e) => {
+                          e.target.style.transform = "translateY(0)";
+                          e.target.style.boxShadow =
+                            "0 2px 8px rgba(5, 150, 105, 0.25)";
+                        }}
+                      >
+                        📖 Accéder au cours
+                      </button>
                     </div>
-                  );
-                })}
+                  )}
+
+                  {/* EN ATTENTE */}
+                  {enrollment?.statut === "EN_ATTENTE" && (
+                    <div
+                      style={{
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: "0.5rem",
+                      }}
+                    >
+                      <div
+                        style={{
+                          background: "#fffbeb",
+                          border: "2px solid #f59e0b",
+                          borderRadius: "8px",
+                          padding: "0.5rem",
+                          textAlign: "center",
+                          color: "#92400e",
+                          fontWeight: "600",
+                          fontSize: "0.85rem",
+                        }}
+                      >
+                        ⏳ Demande en attente
+                      </div>
+                      <button
+                        onClick={() => handleUnenroll(c.id)}
+                        style={{
+                          width: "100%",
+                          padding: "0.5rem",
+                          background: "none",
+                          border: "1px solid #ef4444",
+                          color: "#ef4444",
+                          borderRadius: "6px",
+                          cursor: "pointer",
+                          fontWeight: "500",
+                          fontSize: "0.8rem",
+                          transition: "all 0.2s",
+                        }}
+                        onMouseEnter={(e) => {
+                          e.target.style.background = "#fef2f2";
+                        }}
+                        onMouseLeave={(e) => {
+                          e.target.style.background = "transparent";
+                        }}
+                      >
+                        Annuler la demande
+                      </button>
+                    </div>
+                  )}
+
+                  {/* REJETÉ */}
+                  {enrollment?.statut === "REJETE" && (
+                    <div
+                      style={{
+                        background: "#fef2f2",
+                        border: "2px solid #ef4444",
+                        borderRadius: "8px",
+                        padding: "0.5rem",
+                        textAlign: "center",
+                        color: "#dc2626",
+                        fontWeight: "600",
+                        fontSize: "0.85rem",
+                      }}
+                    >
+                      ❌ Demande rejetée
+                    </div>
+                  )}
+                </div>
               </div>
-            )}
-          </div>
-        )}
+            </div>
+          );
+        })}
+      </div>
+    )}
+  </div>
+)}
 
         {/* ── Tab : Messages ── */}
         {tab === "messages" && (
