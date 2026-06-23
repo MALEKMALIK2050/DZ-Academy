@@ -39,44 +39,47 @@ export default async function handler(req, res) {
   const user = getUser(req);
   if (!user || user.role !== "DESIGNER") return res.status(401).json({ error: "Non autorisé" });
 
-  const form = new IncomingForm({ maxFileSize: 200 * 1024 * 1024, keepExtensions: true });
+  try {
+    const form = new IncomingForm({ maxFileSize: 200 * 1024 * 1024, keepExtensions: true });
 
-  form.parse(req, async (err, fields, files) => {
-    if (err) return res.status(500).json({ error: "Erreur upload: " + err.message });
-
-    try {
-      const courseId = parseInt(Array.isArray(fields.courseId) ? fields.courseId[0] : fields.courseId);
-      const title    = Array.isArray(fields.title) ? fields.title[0] : (fields.title || "SCORM Package");
-      const fileObj  = Array.isArray(files.scormFile) ? files.scormFile[0] : files.scormFile;
-
-      if (!courseId || isNaN(courseId)) return res.status(400).json({ error: "courseId manquant" });
-      if (!fileObj) return res.status(400).json({ error: "Fichier ZIP manquant" });
-
-      const zip = new AdmZip(fileObj.filepath);
-      const zipEntries = zip.getEntries();
-
-      if (!zipEntries.some(e => e.entryName === "imsmanifest.xml")) {
-        return res.status(400).json({ error: "imsmanifest.xml introuvable — ce n'est pas un package SCORM valide." });
-      }
-
-      const version    = detectScormVersion(zipEntries);
-      const launchFile = findLaunchFile(zipEntries);
-
-      const extractDir = path.join(process.cwd(), "public", "scorm", String(courseId), Date.now().toString());
-      fs.mkdirSync(extractDir, { recursive: true });
-      zip.extractAllTo(extractDir, true);
-
-      const relPath = extractDir.replace(path.join(process.cwd(), "public"), "").replace(/\\/g, "/");
-
-      const pkg = await prisma.scormPackage.create({
-        data: { courseId, title, version, launchFile, extractedPath: relPath },
+    const { fields, files } = await new Promise((resolve, reject) => {
+      form.parse(req, (err, fields, files) => {
+        if (err) reject(err);
+        else resolve({ fields, files });
       });
+    });
 
-      return res.status(201).json(pkg);
+    const courseId = parseInt(Array.isArray(fields.courseId) ? fields.courseId[0] : fields.courseId);
+    const title    = Array.isArray(fields.title) ? fields.title[0] : (fields.title || "SCORM Package");
+    const fileObj  = Array.isArray(files.scormFile) ? files.scormFile[0] : files.scormFile;
 
-    } catch (error) {
-      console.error("SCORM UPLOAD ERROR:", error);
-      return res.status(500).json({ error: error.message });
+    if (!courseId || isNaN(courseId)) return res.status(400).json({ error: "courseId manquant" });
+    if (!fileObj) return res.status(400).json({ error: "Fichier ZIP manquant" });
+
+    const zip = new AdmZip(fileObj.filepath);
+    const zipEntries = zip.getEntries();
+
+    if (!zipEntries.some(e => e.entryName === "imsmanifest.xml")) {
+      return res.status(400).json({ error: "imsmanifest.xml introuvable — ce n'est pas un package SCORM valide." });
     }
-  });
-}
+
+    const version    = detectScormVersion(zipEntries);
+    const launchFile = findLaunchFile(zipEntries);
+
+    const extractDir = path.join(process.cwd(), "public", "scorm", String(courseId), Date.now().toString());
+    fs.mkdirSync(extractDir, { recursive: true });
+    zip.extractAllTo(extractDir, true);
+
+    const relPath = extractDir.replace(path.join(process.cwd(), "public"), "").replace(/\\/g, "/");
+
+    const pkg = await prisma.scormPackage.create({
+      data: { courseId, title, version, launchFile, extractedPath: relPath },
+    });
+
+    return res.status(201).json(pkg);
+
+  } catch (error) {
+    console.error("SCORM UPLOAD ERROR:", error);
+    return res.status(500).json({ error: error.message || "Erreur serveur" });
+  }
+}

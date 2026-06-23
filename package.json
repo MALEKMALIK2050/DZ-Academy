@@ -17,6 +17,7 @@
   },
   "dependencies": {
     "@aws-sdk/client-bedrock-runtime": "^3.1045.0",
+    "@lmstudio/sdk": "^1.5.0",
     "@prisma/client": "^5.22.0",
     "@react-email/render": "^2.0.8",
     "@supabase/supabase-js": "^2.108.2",

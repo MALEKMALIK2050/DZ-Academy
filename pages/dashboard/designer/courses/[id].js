@@ -150,12 +150,21 @@ useEffect(() => {
     try {
       const res = await fetch("/api/scorm/upload", {
         method: "POST",
+        credentials: "include",
         body: formData,
       });
 
       if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || "Erreur d'upload");
+        let errorMsg = "Erreur d'upload";
+        try {
+          const data = await res.json();
+          errorMsg = data.error || errorMsg;
+        } catch {
+          // La réponse n'est pas du JSON (ex: "Request Entity Too Large")
+          const text = await res.text().catch(() => "");
+          errorMsg = text || `Erreur serveur (${res.status})`;
+        }
+        throw new Error(errorMsg);
       }
 
       setSuccess("✅ SCORM uploadé avec succès !");

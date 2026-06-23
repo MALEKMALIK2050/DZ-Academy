@@ -120,7 +120,14 @@ export default function ProfilePage() {
         body: fd,
       });
 
-      const data = await res.json();
+      let data;
+      try {
+        data = await res.json();
+      } catch {
+        const text = await res.text().catch(() => '');
+        setError(text || `Erreur serveur (${res.status})`);
+        return;
+      }
 
       if (!res.ok) {
         setError(data.error || 'Erreur lors de l\'upload de la photo');
