@@ -1,25 +1,26 @@
+// src/constants/api.ts
 
-// Auto-resolve localhost for emulator vs real devices
-const getBaseUrl = () => {
-  if (__DEV__) {
-    return 'http://192.168.100.18:3000'; // Votre IP locale
-  }
-  return 'https://academy-dz.vercel.app';
-};
-  
-  
+export const API_URL = 'https://cb-academy-dz.vercel.app';
 
-export const API_URL = getBaseUrl();
 export const API_ENDPOINTS = {
+  // Auth
   login: `${API_URL}/api/auth/login`,
+  register: `${API_URL}/api/auth/register`,
   me: `${API_URL}/api/auth/me`,
-  courses: `${API_URL}/api/student/courses`,
-  courseDetails: (id: string | number) => `${API_URL}/api/courses/${id}`,
-  chapterDetails: (id: string | number) => `${API_URL}/api/chapters/${id}`,
-  progress: `${API_URL}/api/student/progress`,
+
+  // Student Courses
+  studentCourses: `${API_URL}/api/student/courses`,
+  
+  // Pretest
+  pretest: (courseId: string | number) => `${API_URL}/api/student/pretest?courseId=${courseId}`,
+  submitPretest: (courseId: string | number) => `${API_URL}/api/student/pretest/${courseId}/submit`,
+  
+  // Chapter
+  chapter: (chapterId: string | number) => `${API_URL}/api/chapters/${chapterId}`,
+  
+  // Quiz
   quiz: `${API_URL}/api/student/quiz`,
-  pretestResult: (pretestId: string | number, courseId: string | number) => 
-    `${API_URL}/api/pretest/${pretestId}/result?courseId=${courseId}`,
-  submitPretest: (courseId: string | number) => 
-    `${API_URL}/api/student/submit-pretest?courseId=${courseId}`,
+  
+  // Course
+  course: (courseId: string | number) => `${API_URL}/api/courses/${courseId}`,
 };

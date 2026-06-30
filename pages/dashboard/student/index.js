@@ -70,7 +70,9 @@ export default function StudentDashboard() {
       if (annee) params.append("annee", annee);
       if (matiere) params.append("matiere", matiere);
 
-      const res = await fetch(`/api/courses/public?${params.toString()}`);
+      const res = await fetch(`/api/courses/public?${params.toString()}`, {
+        credentials: "include",
+      });
       const data = await res.json();
       setCatalogue(Array.isArray(data) ? data : []);
     } catch (err) {
@@ -1013,10 +1015,10 @@ export default function StudentDashboard() {
                 >
                   📚 {c.chapters?.length || 0} chapitre
                   {c.chapters?.length !== 1 ? "s" : ""}
-                  {c.teacher && (
+                  {c.teachers?.[0] && (
                     <>
                       {" "}
-                      • 👨‍🏫 {c.teacher.prenom} {c.teacher.nom}
+                      • 👨‍🏫 {c.teachers[0].prenom} {c.teachers[0].nom}
                     </>
                   )}
                 </p>
