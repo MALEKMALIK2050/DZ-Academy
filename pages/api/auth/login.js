@@ -1,8 +1,18 @@
 import prisma from "@/lib/prisma";
-import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
 
 export default async function handler(req, res) {
+  // ✅ CORS HEADERS
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+
+  // ✅ Gerer les preflight requests (OPTIONS)
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+
   if (req.method !== "POST") {
     return res.status(405).json({
       success: false,
@@ -23,8 +33,9 @@ export default async function handler(req, res) {
     const user = await prisma.user.findUnique({
       where: { email },
     });
-     console.log("USER TROUVÉ :", user);
- if (!user) {
+    console.log("USER TROUVÉ :", user);
+    
+    if (!user) {
       return res.status(401).json({
         success: false,
         error: "Invalid credentials",
@@ -32,12 +43,12 @@ export default async function handler(req, res) {
     }
 
     if (!user.active) return res.status(403).json({
-       error: "Compte désactivé"
-       }); 
+      error: "Compte désactivé"
+    }); 
 
     if (user.verificationToken && user.role === "STUDENT") {
-  return res.status(403).json({ error: "Veuillez activer votre compte via l'email reçu" });
-}
+      return res.status(403).json({ error: "Veuillez activer votre compte via l'email reçu" });
+    }
 
     const isValid = await bcrypt.compare(password, user.password);
 
@@ -59,7 +70,7 @@ export default async function handler(req, res) {
       {
         id: user.id,
         role: user.role,
-        email: user.email, // ✅ ajouté
+        email: user.email,
       },
       process.env.JWT_SECRET,
       { expiresIn: "7d" }
@@ -67,11 +78,12 @@ export default async function handler(req, res) {
 
     res.setHeader(
       "Set-Cookie",
-      `token=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=604800` // ✅ Max-Age ajouté
+      `token=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=604800`
     );
 
     return res.status(200).json({
       success: true,
+      token,
       user: {
         id: user.id,
         nom: user.nom,

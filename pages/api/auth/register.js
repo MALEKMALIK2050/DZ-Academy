@@ -2,18 +2,29 @@
 // FICHIER : pages/api/auth/register.js
 // ======================================================
 // MODIFICATIONS : Ajout des champs politiques dans la création utilisateur
+//                 Ajout CORS pour la mobile app
 //                 et ajout de la constante POLICY_VERSION
 
+import { sendEmail } from "@/lib/mail";
 import prisma from "@/lib/prisma";
 import bcrypt from "bcryptjs";
-import jwt from "jsonwebtoken";
 import crypto from "crypto";
-import { sendEmail } from "@/lib/mail";
+import jwt from "jsonwebtoken";
 
 // ✅ NOUVEAU : Version des politiques
 const POLICY_VERSION = '2026-06-20_v1';
 
 export default async function handler(req, res) {
+  // ✅ CORS HEADERS - Pour la mobile app
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+
+  // ✅ Gerer les preflight requests (OPTIONS)
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
   }
