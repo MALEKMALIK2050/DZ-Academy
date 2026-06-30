@@ -181,9 +181,10 @@ export default async function handler(req, res) {
     res.setHeader("Set-Cookie", `token=${token}; HttpOnly; Path=/; Max-Age=604800; SameSite=Strict`);
 
     return res.status(201).json({
-      message: "Compte créé. Vérifiez votre email pour activer votre compte.",
-      user: { id: user.id, role: user.role, email: user.email },
-    });
+  success: true,
+  message: "Compte créé. Vérifiez votre email pour activer votre compte.",
+  user: { id: user.id, role: user.role, email: user.email },
+});
 
   } catch (error) {
     console.error("REGISTER ERROR:", error);
