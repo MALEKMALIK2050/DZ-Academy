@@ -1,5 +1,4 @@
 {
-  "rootDirectory": "backend",
   "buildCommand": "prisma generate && next build",
   "functions": {
     "pages/api/**/*.js": {
