@@ -171,17 +171,34 @@ export default async function handler(req, res) {
     let indexPathFound = null;
     const BUCKET_NAME = "scorm";
 
+    // 5.5 Find index file before uploading
+    const relativePaths = allFiles.map(f => path.relative(extractDir, f).replace(/\\/g, "/"));
+    const rootIndexFiles = ["story.html", "story_html5.html", "index_lms.html", "index_lms_html5.html", "index.html"];
+    
+    // Check root files first
+    for (const p of rootIndexFiles) {
+      if (relativePaths.includes(p)) {
+        indexPathFound = `${support.id}/${p}`;
+        break;
+      }
+    }
+    
+    // Fallback: search anywhere in the zip
+    if (!indexPathFound) {
+      for (const p of rootIndexFiles) {
+        const found = relativePaths.find(r => path.basename(r).toLowerCase() === p);
+        if (found) {
+          indexPathFound = `${support.id}/${found}`;
+          break;
+        }
+      }
+    }
+
     // 6. Upload files to Supabase Storage concurrently in batches
     await processInBatches(allFiles, 20, async (filePath) => {
       // Create a relative path for Supabase Storage (e.g. 12/index.html)
       let relativePath = path.relative(extractDir, filePath).replace(/\\/g, "/");
       const storagePath = `${support.id}/${relativePath}`;
-
-      // Check if this is our entry point
-      const lowerName = path.basename(filePath).toLowerCase();
-      if (!indexPathFound && (lowerName === "index.html" || lowerName === "index_lms.html" || lowerName === "story.html")) {
-        indexPathFound = storagePath;
-      }
 
       const fileBuffer = fs.readFileSync(filePath);
       const mimeType = getMimeType(filePath);

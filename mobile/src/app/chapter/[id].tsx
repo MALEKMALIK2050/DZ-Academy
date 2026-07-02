@@ -70,7 +70,7 @@ interface ChapterDetail {
 
 const SUPPORT_CONFIG: Record<SupportType, { icon: string; label: string; color: string; bg: string }> = {
   VIDEO: { icon: '🎬', label: 'Vidéo', color: '#DC2626', bg: '#FEF2F2' },
-  PDF: { icon: '📄', label: 'Document PDF', color: '#2563EB', bg: '#EFF6FF' },
+  PDF: { icon: '📄', label: 'PDF', color: '#2563EB', bg: '#EFF6FF' },
   PPT: { icon: '📊', label: 'Présentation', color: '#D97706', bg: '#FFFBEB' },
   IMAGE: { icon: '🖼️', label: 'Image', color: '#059669', bg: '#ECFDF5' },
   SCORM: { icon: '📦', label: 'Module SCORM', color: '#7C3AED', bg: '#F5F3FF' },
@@ -153,6 +153,8 @@ export default function ChapterScreen() {
 
   const [videoModalVisible, setVideoModalVisible] = useState(false);
   const [selectedVideo, setSelectedVideo] = useState<{ id: number; url: string; nom?: string } | null>(null);
+  
+  const [expandedTextId, setExpandedTextId] = useState<number | null>(null);
 
   const fetchChapter = async () => {
     try {
@@ -185,13 +187,11 @@ export default function ChapterScreen() {
   };
 
   const handleVideoPress = (support: Support) => {
-    console.log('🎬 VIDEO PRESSED:', support);
     setSelectedVideo({
       id: support.id,
       url: support.url || '',
       nom: support.nom,
     });
-    console.log('📺 MODAL OPENING...');
     setVideoModalVisible(true);
   };
 
@@ -199,6 +199,10 @@ export default function ChapterScreen() {
     if (chapter?.quiz) {
       router.push({ pathname: '/quiz/[id]', params: { id: chapter.quiz.id } });
     }
+  };
+
+  const toggleTextSupport = (id: number) => {
+    setExpandedTextId(expandedTextId === id ? null : id);
   };
 
   const renderHTMLContent = (htmlContent: string) => {
@@ -244,21 +248,32 @@ export default function ChapterScreen() {
 
     return (
       <RenderHTML
-        contentWidth={width}
+        contentWidth={width - 32}
         source={{ html: cleanHtml }}
         tagsStyles={{
-          p: { fontSize: 14, lineHeight: 24, color: C.gray700, marginBottom: 8 },
+          p: { fontSize: 15, lineHeight: 26, color: C.gray700, marginBottom: 10 },
           strong: { fontWeight: '700', color: C.gray900 },
           b: { fontWeight: '700', color: C.gray900 },
           sup: { fontSize: 11, lineHeight: 16, color: C.gray700, top: -4 },
           sub: { fontSize: 11, lineHeight: 16, color: C.gray700, bottom: -4 },
-          h1: { fontSize: 22, fontWeight: 'bold', color: C.gray900, marginTop: 12, marginBottom: 8 },
-          h2: { fontSize: 19, fontWeight: 'bold', color: C.gray900, marginTop: 10, marginBottom: 6 },
-          h3: { fontSize: 16, fontWeight: 'bold', color: C.gray800, marginTop: 8, marginBottom: 4 },
-          ul: { marginBottom: 8, paddingLeft: 20 },
-          ol: { marginBottom: 8, paddingLeft: 20 },
-          li: { fontSize: 14, lineHeight: 24, color: C.gray700, marginBottom: 4 },
+          h1: { fontSize: 24, fontWeight: 'bold', color: C.gray900, marginTop: 16, marginBottom: 10 },
+          h2: { fontSize: 20, fontWeight: 'bold', color: C.gray900, marginTop: 14, marginBottom: 8 },
+          h3: { fontSize: 17, fontWeight: 'bold', color: C.gray800, marginTop: 12, marginBottom: 6 },
+          ul: { marginBottom: 10, paddingLeft: 20 },
+          ol: { marginBottom: 10, paddingLeft: 20 },
+          li: { fontSize: 15, lineHeight: 26, color: C.gray700, marginBottom: 4 },
           a: { color: C.accent, textDecorationLine: 'underline' },
+          blockquote: { 
+            backgroundColor: C.gray50, 
+            padding: 12, 
+            borderRadius: 8, 
+            borderLeftWidth: 4, 
+            borderLeftColor: C.accent,
+            marginVertical: 8,
+          },
+          table: { borderWidth: 1, borderColor: C.gray200, marginVertical: 10 },
+          td: { borderWidth: 1, borderColor: C.gray200, padding: 8 },
+          th: { borderWidth: 1, borderColor: C.gray200, padding: 8, fontWeight: 'bold', backgroundColor: C.gray50 },
         }}
       />
     );
@@ -266,7 +281,50 @@ export default function ChapterScreen() {
 
   const chapterTitle = chapter?.titre || chapter?.title || 'Chapitre';
   const videos = chapter?.supports?.filter(s => s.type === 'VIDEO') ?? [];
-  const otherSupports = chapter?.supports?.filter(s => s.type !== 'VIDEO') ?? [];
+  const textSupports = chapter?.supports?.filter(s => s.type === 'TEXTE') ?? [];
+  const resourceSupports = chapter?.supports?.filter(s => 
+    s.type === 'PDF' || s.type === 'PPT' || s.type === 'IMAGE'
+  ) ?? [];
+  const otherSupports = chapter?.supports?.filter(s => 
+    s.type !== 'VIDEO' && s.type !== 'TEXTE' && 
+    s.type !== 'PDF' && s.type !== 'PPT' && s.type !== 'IMAGE'
+  ) ?? [];
+
+  const getResourceIcon = (type: string): string => {
+    switch(type) {
+      case 'PDF': return '📄';
+      case 'PPT': return '📊';
+      case 'IMAGE': return '🖼️';
+      default: return '📎';
+    }
+  };
+
+  const getResourceLabel = (type: string): string => {
+    switch(type) {
+      case 'PDF': return 'PDF';
+      case 'PPT': return 'Présentation';
+      case 'IMAGE': return 'Image';
+      default: return 'Fichier';
+    }
+  };
+
+  const getResourceColor = (type: string): string => {
+    switch(type) {
+      case 'PDF': return '#2563EB';
+      case 'PPT': return '#D97706';
+      case 'IMAGE': return '#059669';
+      default: return '#6B7280';
+    }
+  };
+
+  const getResourceBg = (type: string): string => {
+    switch(type) {
+      case 'PDF': return '#EFF6FF';
+      case 'PPT': return '#FFFBEB';
+      case 'IMAGE': return '#ECFDF5';
+      default: return '#F3F4F6';
+    }
+  };
 
   return (
     <ThemedView style={styles.container}>
@@ -286,6 +344,7 @@ export default function ChapterScreen() {
           </View>
         ) : chapter ? (
           <>
+            {/* En-tête du chapitre */}
             <View style={styles.header}>
               <ThemedText style={styles.title}>{chapterTitle}</ThemedText>
               {chapter.objectifs && (
@@ -296,35 +355,106 @@ export default function ChapterScreen() {
               )}
             </View>
 
+            {/* Contenu principal du chapitre */}
             {chapter.content && (
               <View style={styles.section}>
-                <ThemedText style={styles.sectionTitle}>📖 Contenu</ThemedText>
+                <ThemedText style={styles.sectionTitle}>📖 Contenu du chapitre</ThemedText>
                 <View style={styles.textCard}>
                   {renderHTMLContent(chapter.content)}
                 </View>
               </View>
             )}
 
-            {videos.length > 0 && (
+            {/* Supports de type TEXTE */}
+            {textSupports.length > 0 && (
               <View style={styles.section}>
-                <ThemedText style={styles.sectionTitle}>🎬 Vidéos ({videos.length})</ThemedText>
-                {videos.map(v => {
-                  const config = SUPPORT_CONFIG[v.type];
+                <ThemedText style={styles.sectionTitle}>📝 Supports de cours</ThemedText>
+                {textSupports.map((s, index) => {
+                  const config = SUPPORT_CONFIG[s.type];
+                  const isExpanded = expandedTextId === s.id;
                   return (
-                    <View key={v.id}>
+                    <View key={s.id} style={[styles.textSupportWrapper, index === textSupports.length - 1 && { marginBottom: 0 }]}>
                       <Pressable
-                        style={({ pressed }) => [styles.supportCard, pressed && { opacity: 0.8, transform: [{ scale: 0.98 }] }]}
-                        onPress={() => handleVideoPress(v)}
+                        style={({ pressed }) => [
+                          styles.supportCard,
+                          isExpanded && styles.supportCardExpanded,
+                          pressed && { opacity: 0.8, transform: [{ scale: 0.98 }] }
+                        ]}
+                        onPress={() => toggleTextSupport(s.id)}
                       >
                         <View style={[styles.supportIconBox, { backgroundColor: config.bg }]}>
                           <ThemedText style={styles.supportIconText}>{config.icon}</ThemedText>
                         </View>
                         <View style={styles.supportInfo}>
-                          <ThemedText style={styles.supportName}>{v.nom || 'Vidéo'}</ThemedText>
-                          <ThemedText style={[styles.supportType, { color: config.color }]}>Cliquer pour regarder</ThemedText>
+                          <ThemedText style={styles.supportName}>{s.nom || config.label}</ThemedText>
+                          <ThemedText style={[styles.supportType, { color: config.color }]}>
+                            {isExpanded ? '▼ Cliquez pour fermer' : '▶ Cliquez pour lire'}
+                          </ThemedText>
                         </View>
                         <View style={[styles.supportAction, { backgroundColor: config.bg }]}>
-                          <ThemedText style={[styles.supportActionText, { color: config.color }]}>▶</ThemedText>
+                          <ThemedText style={[styles.supportActionText, { color: config.color }]}>
+                            {isExpanded ? '−' : '+'}
+                          </ThemedText>
+                        </View>
+                      </Pressable>
+
+                      {isExpanded && s.contenu && (
+                        <View style={styles.textContentExpanded}>
+                          <View style={styles.textContentHeader}>
+                            <View style={styles.textContentDot} />
+                            <ThemedText style={styles.textContentTitle}>Contenu</ThemedText>
+                          </View>
+                          <View style={styles.textContentBody}>
+                            {renderHTMLContent(s.contenu)}
+                          </View>
+                        </View>
+                      )}
+                      
+                      {isExpanded && !s.contenu && (
+                        <View style={styles.textContentEmpty}>
+                          <ThemedText style={styles.textContentEmptyText}>
+                            Aucun contenu disponible pour ce support.
+                          </ThemedText>
+                        </View>
+                      )}
+                    </View>
+                  );
+                })}
+              </View>
+            )}
+
+            {/* Ressources (PDF, PPT, IMAGE) - Version simplifiée */}
+            {resourceSupports.length > 0 && (
+              <View style={styles.section}>
+                <ThemedText style={styles.sectionTitle}>📎 Ressources ({resourceSupports.length})</ThemedText>
+                {resourceSupports.map((s) => {
+                  const fileIcon = getResourceIcon(s.type);
+                  const fileLabel = getResourceLabel(s.type);
+                  const fileColor = getResourceColor(s.type);
+                  const fileBg = getResourceBg(s.type);
+                  
+                  return (
+                    <View key={s.id} style={styles.resourceWrapper}>
+                      <Pressable
+                        style={({ pressed }) => [
+                          styles.resourceCard,
+                          pressed && { opacity: 0.7, transform: [{ scale: 0.98 }] }
+                        ]}
+                        onPress={() => {
+                          if (s.url) {
+                            WebBrowser.openBrowserAsync(s.url);
+                          }
+                        }}
+                      >
+                        <View style={[styles.resourceIconBox, { backgroundColor: fileBg }]}>
+                          <ThemedText style={styles.resourceIconText}>{fileIcon}</ThemedText>
+                        </View>
+                        <View style={styles.resourceInfo}>
+                          <ThemedText style={styles.resourceName}>{s.nom || fileLabel}</ThemedText>
+                          <ThemedText style={[styles.resourceType, { color: fileColor }]}>{fileLabel}</ThemedText>
+                        </View>
+                        <View style={[styles.resourceAction, { backgroundColor: fileBg }]}>
+                          <ThemedText style={[styles.resourceActionText, { color: fileColor }]}>📖</ThemedText>
                         </View>
                       </Pressable>
                     </View>
@@ -333,9 +463,38 @@ export default function ChapterScreen() {
               </View>
             )}
 
+            {/* Vidéos */}
+            {videos.length > 0 && (
+              <View style={styles.section}>
+                <ThemedText style={styles.sectionTitle}>🎬 Vidéos ({videos.length})</ThemedText>
+                {videos.map(v => {
+                  const config = SUPPORT_CONFIG[v.type];
+                  return (
+                    <Pressable
+                      key={v.id}
+                      style={({ pressed }) => [styles.supportCard, pressed && { opacity: 0.8, transform: [{ scale: 0.98 }] }]}
+                      onPress={() => handleVideoPress(v)}
+                    >
+                      <View style={[styles.supportIconBox, { backgroundColor: config.bg }]}>
+                        <ThemedText style={styles.supportIconText}>{config.icon}</ThemedText>
+                      </View>
+                      <View style={styles.supportInfo}>
+                        <ThemedText style={styles.supportName}>{v.nom || 'Vidéo'}</ThemedText>
+                        <ThemedText style={[styles.supportType, { color: config.color }]}>Cliquer pour regarder</ThemedText>
+                      </View>
+                      <View style={[styles.supportAction, { backgroundColor: config.bg }]}>
+                        <ThemedText style={[styles.supportActionText, { color: config.color }]}>▶</ThemedText>
+                      </View>
+                    </Pressable>
+                  );
+                })}
+              </View>
+            )}
+
+            {/* Autres supports */}
             {otherSupports.length > 0 && (
               <View style={styles.section}>
-                <ThemedText style={styles.sectionTitle}>📎 Supports</ThemedText>
+                <ThemedText style={styles.sectionTitle}>📎 Autres ressources</ThemedText>
                 {otherSupports.map(s => {
                   const config = SUPPORT_CONFIG[s.type];
                   return (
@@ -360,6 +519,7 @@ export default function ChapterScreen() {
               </View>
             )}
 
+            {/* Quiz */}
             {chapter.quiz && (
               <View style={styles.quizSection}>
                 <Pressable style={({ pressed }) => [styles.quizCard, pressed && { opacity: 0.85 }]} onPress={handleQuizPress}>
@@ -378,15 +538,13 @@ export default function ChapterScreen() {
         ) : null}
       </ScrollView>
 
+      {/* Modal Vidéo */}
       {videoModalVisible && selectedVideo && (
         <VideoModal
           visible={videoModalVisible}
           videoUrl={selectedVideo.url}
           videoName={selectedVideo.nom}
-          onClose={() => {
-            console.log('🔙 MODAL CLOSING');
-            setVideoModalVisible(false);
-          }}
+          onClose={() => setVideoModalVisible(false)}
         />
       )}
     </ThemedView>
@@ -413,13 +571,92 @@ const styles = StyleSheet.create({
   section: { marginBottom: Spacing.five },
   sectionTitle: { fontSize: 16, fontWeight: '700', color: '#374151', marginBottom: Spacing.three },
 
-  textCard: { backgroundColor: 'white', borderRadius: 12, padding: Spacing.four, borderWidth: 1, borderColor: '#E5E7EB', marginBottom: Spacing.two },
+  textCard: { 
+    backgroundColor: 'white', 
+    borderRadius: 12, 
+    padding: Spacing.four, 
+    borderWidth: 1, 
+    borderColor: '#E5E7EB', 
+    marginBottom: Spacing.two 
+  },
+
+  textSupportWrapper: { 
+    marginBottom: Spacing.three,
+  },
+  
+  textContentExpanded: {
+    marginTop: 8,
+    marginLeft: 56,
+    backgroundColor: '#F9FAFB',
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    overflow: 'hidden',
+  },
+  
+  textContentHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    backgroundColor: '#F3F4F6',
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E7EB',
+  },
+  
+  textContentDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: C.primary,
+    marginRight: 10,
+  },
+  
+  textContentTitle: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: C.gray700,
+    letterSpacing: 0.5,
+    textTransform: 'uppercase',
+  },
+  
+  textContentBody: {
+    padding: 16,
+  },
+  
+  textContentEmpty: {
+    marginTop: 8,
+    marginLeft: 56,
+    backgroundColor: '#FEF2F2',
+    borderRadius: 10,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#FEE2E2',
+  },
+  
+  textContentEmptyText: {
+    fontSize: 14,
+    color: C.gray500,
+    textAlign: 'center',
+  },
 
   supportCard: {
-    backgroundColor: 'white', borderRadius: 12, padding: Spacing.three,
-    borderWidth: 1, borderColor: '#E5E7EB', marginBottom: Spacing.two,
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    backgroundColor: 'white',
+    borderRadius: 12,
+    padding: Spacing.three,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
+  
+  supportCardExpanded: {
+    borderColor: C.primary,
+    borderWidth: 2,
+    backgroundColor: '#F0FDF4',
+  },
+  
   supportIconBox: { width: 44, height: 44, borderRadius: 10, alignItems: 'center', justifyContent: 'center', marginRight: 12 },
   supportIconText: { fontSize: 22 },
   supportInfo: { flex: 1 },
@@ -427,6 +664,62 @@ const styles = StyleSheet.create({
   supportType: { fontSize: 12 },
   supportAction: { width: 44, height: 44, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
   supportActionText: { fontWeight: '700', fontSize: 18 },
+
+  // Styles pour les ressources (PDF, PPT, IMAGE)
+  resourceWrapper: {
+    marginBottom: Spacing.two,
+  },
+
+  resourceCard: {
+    backgroundColor: 'white',
+    borderRadius: 12,
+    padding: Spacing.three,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+
+  resourceIconBox: {
+    width: 44,
+    height: 44,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+
+  resourceIconText: {
+    fontSize: 22,
+  },
+
+  resourceInfo: {
+    flex: 1,
+  },
+
+  resourceName: {
+    fontWeight: '600',
+    color: '#1F2937',
+    marginBottom: 2,
+  },
+
+  resourceType: {
+    fontSize: 12,
+  },
+
+  resourceAction: {
+    width: 44,
+    height: 44,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  resourceActionText: {
+    fontWeight: '700',
+    fontSize: 18,
+  },
 
   quizSection: { marginBottom: Spacing.five },
   quizCard: { backgroundColor: 'white', borderRadius: 12, padding: Spacing.four, borderWidth: 1, borderColor: '#E5E7EB', flexDirection: 'row', alignItems: 'center' },

@@ -15,8 +15,28 @@ function getUser(req) {
 // ====================================================
 // 🎓 GESTION SCORM (NOUVEAU)
 // ====================================================
+import { createClient } from "@supabase/supabase-js";
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const supabase = supabaseUrl && supabaseKey ? createClient(supabaseUrl, supabaseKey) : null;
+
+function getMimeType(filePath) {
+  const ext = path.extname(filePath).toLowerCase();
+  const mimeTypes = {
+    '.html': 'text/html', '.js': 'application/javascript', '.css': 'text/css',
+    '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.gif': 'image/gif',
+    '.svg': 'image/svg+xml', '.json': 'application/json', '.xml': 'application/xml',
+    '.mp4': 'video/mp4', '.mp3': 'audio/mpeg', '.woff': 'font/woff', '.woff2': 'font/woff2'
+  };
+  return mimeTypes[ext] || 'application/octet-stream';
+}
+
 async function handleScormImport(zip, manifestEntry, courseId, res) {
   console.log('🎓 Paquet SCORM détecté !');
+
+  if (!supabase) {
+    return res.status(500).json({ error: "Supabase non configuré pour l'upload SCORM." });
+  }
 
   try {
     // 1. Parser le manifest
@@ -40,14 +60,19 @@ async function handleScormImport(zip, manifestEntry, courseId, res) {
     console.log(`📂 Dossier racine : "${scormRootFolder || '(racine)'}"`);
     console.log(`🎯 Fichier de lancement : ${launchFile}`);
 
-    // 3. Créer le dossier de destination
+    // 3. Créer le dossier temporaire de destination
     const timestamp = Date.now();
     const storageFolder = `course-${courseId}-${timestamp}`;
-    const uploadDir = path.join(process.cwd(), 'public', 'scorm', storageFolder);
-    await fs.mkdir(uploadDir, { recursive: true });
+    const TEMP_DIR = path.join("/tmp", "scorm-uploads");
+    await fs.mkdir(TEMP_DIR, { recursive: true });
+    
+    const extractDir = path.join(TEMP_DIR, storageFolder);
+    await fs.mkdir(extractDir, { recursive: true });
 
     // 4. Extraire tous les fichiers
     let extractCount = 0;
+    const allFilesToUpload = [];
+
     for (const entry of zip.getEntries()) {
       if (entry.isDirectory) continue;
 
@@ -61,15 +86,37 @@ async function handleScormImport(zip, manifestEntry, courseId, res) {
         : entryName;
       if (!relativePath) continue;
 
-      const filePath = path.join(uploadDir, relativePath);
+      const filePath = path.join(extractDir, relativePath);
       await fs.mkdir(path.dirname(filePath), { recursive: true });
       await fs.writeFile(filePath, entry.getData());
+      allFilesToUpload.push({ filePath, relativePath });
       extractCount++;
     }
+    
+    console.log(`📤 ${extractCount} fichiers extraits localement. Upload vers Supabase...`);
 
-    console.log(`📤 ${extractCount} fichiers extraits`);
+    const BUCKET_NAME = "scorm";
 
-    // 5. Créer l'enregistrement en base
+    // 5. Upload files to Supabase Storage concurrently in batches
+    for (let i = 0; i < allFilesToUpload.length; i += 20) {
+      const batch = allFilesToUpload.slice(i, i + 20);
+      await Promise.all(batch.map(async ({ filePath, relativePath }) => {
+        const storagePath = `${storageFolder}/${relativePath.replace(/\\/g, "/")}`;
+        const fileBuffer = await fs.readFile(filePath);
+        const mimeType = getMimeType(filePath);
+
+        const { error } = await supabase.storage.from(BUCKET_NAME).upload(storagePath, fileBuffer, {
+          contentType: mimeType,
+          upsert: true,
+        });
+
+        if (error) {
+          throw new Error(`Erreur Supabase sur ${relativePath}: ${error.message}`);
+        }
+      }));
+    }
+
+    // 6. Créer l'enregistrement en base
     const scormPackage = await prisma.scormPackage.create({
       data: {
         courseId,
@@ -81,6 +128,9 @@ async function handleScormImport(zip, manifestEntry, courseId, res) {
     });
 
     console.log(`✅ SCORM créé en base : id=${scormPackage.id}`);
+    
+    // Nettoyage temporaire
+    await fs.rm(extractDir, { recursive: true, force: true });
 
     return res.status(200).json({
       success: true,

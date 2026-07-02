@@ -486,9 +486,25 @@ const handleAddSupport = async () => {
                         {s.type}
                       </span>
                       <strong>{s.nom || s.url || "Texte"}</strong>
-                      {s.url && s.type !== "TEXTE" && (
+                      {s.url && s.type !== "TEXTE" && !isScormType(s.type) && (
                         <div style={{ fontSize: "0.8rem", color: "#64748b", marginTop: "0.25rem" }}>
                           <a href={s.url} target="_blank" rel="noreferrer" style={{ color: "#1e40af" }}>{s.url}</a>
+                        </div>
+                      )}
+                      {s.url && isScormType(s.type) && (
+                        <div style={{ marginTop: "0.75rem" }}>
+                          <a href={s.url} target="_blank" rel="noreferrer" style={{
+                            display: "inline-block",
+                            background: s.type === "ARTICULATE" ? "#d69e2e" : "#805ad5",
+                            color: "white",
+                            padding: "0.4rem 1rem",
+                            borderRadius: "8px",
+                            textDecoration: "none",
+                            fontSize: "0.85rem",
+                            fontWeight: "600",
+                          }}>
+                            ▶️ Prévisualiser le module {s.type}
+                          </a>
                         </div>
                       )}
                       {s.type === "TEXTE" && <div style={{ fontSize: "0.8rem", color: "#64748b", marginTop: "0.25rem" }}>📄 Contenu texte riche</div>}

@@ -679,6 +679,68 @@ export default function StudentCourse() {
                           );
                         }
 
+                        if (s.type === "SCORM" || s.type === "ARTICULATE") {
+                          return (
+                            <div key={s.id} style={{
+                              background: "white",
+                              border: "1px solid #E9ECEF",
+                              borderRadius: "12px",
+                              overflow: "hidden",
+                              marginBottom: "1rem",
+                              boxShadow: "0 4px 15px rgba(0,0,0,0.05)",
+                            }}>
+                              <div style={{
+                                background: s.type === "ARTICULATE" ? "#d69e2e" : "#805ad5",
+                                padding: isMobile ? "0.8rem 1rem" : "1rem 1.5rem",
+                                color: "white",
+                                display: "flex",
+                                alignItems: "center",
+                                flexWrap: "wrap",
+                                gap: "1rem",
+                              }}>
+                                <span style={{ fontSize: "1.2rem" }}>{s.type === "ARTICULATE" ? "🎯" : "🎓"}</span>
+                                <h3 style={{ margin: 0, fontSize: isMobile ? "1rem" : "1.1rem" }}>{s.nom || s.title || `Module ${s.type}`}</h3>
+                                <a 
+                                  href={s.url} 
+                                  target="_blank" 
+                                  rel="noreferrer"
+                                  style={{
+                                    marginLeft: "auto",
+                                    background: "rgba(255,255,255,0.2)",
+                                    padding: "0.4rem 1rem",
+                                    borderRadius: "8px",
+                                    color: "white",
+                                    textDecoration: "none",
+                                    fontSize: "0.85rem",
+                                    fontWeight: "600",
+                                    display: "flex",
+                                    alignItems: "center",
+                                    gap: "0.5rem",
+                                    transition: "background 0.2s"
+                                  }}
+                                  onMouseEnter={(e) => e.target.style.background = "rgba(255,255,255,0.3)"}
+                                  onMouseLeave={(e) => e.target.style.background = "rgba(255,255,255,0.2)"}
+                                >
+                                  ↗️ Plein écran
+                                </a>
+                              </div>
+                              <div style={{ position: "relative", width: "100%", height: isMobile ? "400px" : "600px", background: "#f8fafc" }}>
+                                <iframe
+                                  src={s.url}
+                                  title={s.nom || `Contenu ${s.type}`}
+                                  style={{
+                                    width: "100%",
+                                    height: "100%",
+                                    border: "none",
+                                    display: "block"
+                                  }}
+                                  allowFullScreen
+                                />
+                              </div>
+                            </div>
+                          );
+                        }
+
                         return (
                           <a
                             key={s.id}
