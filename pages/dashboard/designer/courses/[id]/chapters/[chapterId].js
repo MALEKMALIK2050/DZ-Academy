@@ -641,7 +641,11 @@ const handleAddSupport = async () => {
                     {uploading && (
                       <div style={{ marginTop: "0.75rem" }}>
                         <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.85rem", color: "#475569", marginBottom: "0.3rem" }}>
-                          <span>⏳ Upload en cours...</span>
+                          <span>
+                            {uploadProgress < 100 
+                              ? "⏳ Envoi du fichier..." 
+                              : "⚙️ Décompression et traitement (veuillez patienter...)"}
+                          </span>
                           <span style={{ fontWeight: "700" }}>{uploadProgress}%</span>
                         </div>
                         <div style={{ background: "#e2e8f0", borderRadius: "8px", height: "8px", overflow: "hidden" }}>
@@ -649,10 +653,17 @@ const handleAddSupport = async () => {
                             height: "100%",
                             borderRadius: "8px",
                             width: `${uploadProgress}%`,
-                            background: `linear-gradient(90deg, ${newSupport.type === "SCORM" ? "#7c3aed, #a855f7" : "#0d9488, #14b8a6"})`,
+                            background: uploadProgress < 100 
+                              ? `linear-gradient(90deg, ${newSupport.type === "SCORM" ? "#7c3aed, #a855f7" : "#0d9488, #14b8a6"})` 
+                              : "#f59e0b",
                             transition: "width 0.3s ease",
                           }} />
                         </div>
+                        {uploadProgress === 100 && (
+                          <div style={{ marginTop: "0.5rem", fontSize: "0.8rem", color: "#d97706", fontStyle: "italic", textAlign: "center" }}>
+                            Le serveur analyse et sauvegarde les centaines de fichiers du module. Cela peut prendre 1 à 2 minutes, merci de ne pas fermer cette page !
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
