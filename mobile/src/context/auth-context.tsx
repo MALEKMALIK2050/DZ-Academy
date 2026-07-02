@@ -20,7 +20,10 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<boolean>;
   logout: () => Promise<void>;
   updateUser: (updatedUser: User) => void;
+  fetchStudentProfile: () => Promise<void>;
+  studentProfile?: User;
 }
+
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -39,11 +42,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const storedToken = await AsyncStorage.getItem('auth_token');
       if (storedToken) {
         // Verify token with backend
-        const res = await fetch(API_ENDPOINTS.me, {
-          headers: {
-            'Authorization': `Bearer ${storedToken}`,
-          },
-        });
+          console.log('Loading session from', API_ENDPOINTS.me, 'with token', storedToken);
+          const res = await fetch(API_ENDPOINTS.me, {
+            headers: {
+              'Authorization': `Bearer ${storedToken}`,
+            },
+          });
 
         if (res.ok) {
           const data = await res.json();
@@ -111,6 +115,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const fetchStudentProfile = async () => {
+    if (!token) return;
+    try {
+      const res = await fetch(`${API_ENDPOINTS.me}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setUser(data.user);
+      }
+    } catch (e) {
+      console.error('Failed to fetch profile', e);
+    }
+  };
+
   const logout = async () => {
     try {
       await AsyncStorage.removeItem('auth_token');
@@ -127,7 +146,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, loading, error, login, logout, updateUser }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        token,
+        loading,
+        error,
+        login,
+        logout,
+        updateUser,
+        fetchStudentProfile,
+        studentProfile: user,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

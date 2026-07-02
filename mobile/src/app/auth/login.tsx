@@ -14,19 +14,23 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const Colors = {
-  primary: '#16A34A',
-  secondary: '#F97316',
-  accent: '#208AEF',
+  green: '#7FBF3F',      // Vert CBA
+  orange: '#F97316',     // Orange vif
+  gold: '#DAA520',       // Or/Doré
+  darkText: '#1F2937',
+  lightText: '#6B7280',
+  border: '#E5E7EB',
   danger: '#DC2626',
-  lightGray: '#F3F4F6',
-  darkGray: '#6B7280',
+  white: '#FFFFFF',
+  lightBg: '#F9FAFB',
 };
 
 export default function LoginScreen() {
   const { login, loading, error } = useAuth();
+  const insets = useSafeAreaInsets();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [localError, setLocalError] = useState('');
@@ -56,109 +60,128 @@ export default function LoginScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       style={styles.container}
     >
-      <SafeAreaView style={styles.safeArea}>
+      <View style={[styles.safeArea, { paddingTop: insets.top }]}>
         <ScrollView
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
         >
-          <ThemedView style={styles.logoContainer}>
-            <Image
-              source={require('@/assets/images/cba-logo.png')} 
-              style={styles.logo}
-              contentFit="contain"
-            />
-          </ThemedView>
+          {/* Header blanc clean */}
+          <View style={styles.headerWrapper}>
+            <View style={styles.logoContainer}>
+              <Image
+                source={require('@/assets/images/cba-logo.png')}
+                style={styles.logo}
+                contentFit="contain"
+              />
+            </View>
 
-          <ThemedView style={styles.headerContainer}>
-            <ThemedText style={styles.titleMain}>
-              Cheikh Bouamama
-            </ThemedText>
-            <ThemedText style={[styles.titleMain, styles.academyText]}>
-              Academy
-            </ThemedText>
+            <ThemedText style={styles.titleMain}>Cheikh Bouamama Academy</ThemedText>
             <ThemedText style={styles.subtitle}>
               Plateforme d'apprentissage en ligne
             </ThemedText>
-          </ThemedView>
+          </View>
 
-          <ThemedView style={styles.formContainer}>
-            {displayError ? (
-              <ThemedView style={styles.errorContainer}>
-                <ThemedText style={styles.errorText}>{displayError}</ThemedText>
-              </ThemedView>
-            ) : null}
+          {/* Formulaire avec 3 couleurs */}
+          <View style={styles.formWrapper}>
+            <ThemedView style={styles.formContainer}>
+              {displayError ? (
+                <View style={styles.errorContainer}>
+                  <ThemedText style={styles.errorText}>⚠️ {displayError}</ThemedText>
+                </View>
+              ) : null}
 
-            <ThemedView style={styles.inputGroup}>
-              <ThemedText style={styles.label}>Email</ThemedText>
-              <TextInput
-                style={styles.input}
-                placeholder="votre.email@example.com"
-                placeholderTextColor={Colors.darkGray}
-                keyboardType="email-address"
-                autoCapitalize="none"
-                value={email}
-                onChangeText={setEmail}
-                editable={!loading}
-              />
-            </ThemedView>
-
-            <ThemedView style={styles.inputGroup}>
-              <ThemedText style={styles.label}>Mot de passe</ThemedText>
-              <TextInput
-                style={styles.input}
-                placeholder="••••••••"
-                placeholderTextColor={Colors.darkGray}
-                secureTextEntry
-                value={password}
-                onChangeText={setPassword}
-                editable={!loading}
-              />
-            </ThemedView>
-
-            <Pressable
-              style={({ pressed }) => [
-                styles.loginButton,
-                pressed && styles.loginButtonPressed,
-                loading && styles.loginButtonDisabled,
-              ]}
-              onPress={handleLogin}
-              disabled={loading}
-            >
-              {loading ? (
-                <ActivityIndicator color="white" size="small" />
-              ) : (
-                <ThemedText style={styles.loginButtonText}>
-                  Se connecter
+              {/* Email - Bordure verte */}
+              <View style={styles.inputGroup}>
+                <ThemedText style={[styles.label, { color: Colors.green }]}>
+                  Email
                 </ThemedText>
-              )}
-            </Pressable>
+                <View style={[styles.inputBorder, { borderColor: Colors.green }]}>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="vous@exemple.com"
+                    placeholderTextColor={Colors.lightText}
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                    value={email}
+                    onChangeText={setEmail}
+                    editable={!loading}
+                  />
+                </View>
+              </View>
 
-            <ThemedView style={styles.divider}>
-              <View style={styles.dividerLine} />
-              <ThemedText style={styles.dividerText}>ou</ThemedText>
-              <View style={styles.dividerLine} />
+              {/* Mot de passe - Bordure verte */}
+              <View style={styles.inputGroup}>
+                <ThemedText style={[styles.label, { color: Colors.green }]}>
+                  Mot de passe
+                </ThemedText>
+                <View style={[styles.inputBorder, { borderColor: Colors.green }]}>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="••••••••"
+                    placeholderTextColor={Colors.lightText}
+                    secureTextEntry
+                    value={password}
+                    onChangeText={setPassword}
+                    editable={!loading}
+                  />
+                </View>
+              </View>
+
+              {/* Bouton Connexion - Vert */}
+              <Pressable
+                style={({ pressed }) => [
+                  styles.loginButton,
+                  { backgroundColor: Colors.green },
+                  pressed && styles.loginButtonPressed,
+                  loading && styles.loginButtonDisabled,
+                ]}
+                onPress={handleLogin}
+                disabled={loading}
+              >
+                {loading ? (
+                  <ActivityIndicator color={Colors.white} size="small" />
+                ) : (
+                  <ThemedText style={styles.loginButtonText}>
+                    ✓ Se connecter
+                  </ThemedText>
+                )}
+              </Pressable>
+
+              {/* Divider avec couleurs */}
+              <View style={styles.divider}>
+                <View style={[styles.dividerLine, { backgroundColor: Colors.green }]} />
+                <ThemedText style={[styles.dividerText, { color: Colors.gold }]}>
+                  ou
+                </ThemedText>
+                <View style={[styles.dividerLine, { backgroundColor: Colors.orange }]} />
+              </View>
+
+              {/* Bouton Créer compte - Orange */}
+              <Pressable
+                style={({ pressed }) => [
+                  styles.registerButton,
+                  { borderColor: Colors.orange, borderWidth: 2 },
+                  pressed && styles.registerButtonPressed,
+                ]}
+                onPress={() => router.push('/auth/register')}
+              >
+                <ThemedText style={[styles.registerButtonText, { color: Colors.orange }]}>
+                  + Créer un compte
+                </ThemedText>
+              </Pressable>
+
+
             </ThemedView>
+          </View>
 
-            <Pressable
-              style={({ pressed }) => [
-                styles.registerButton,
-                pressed && styles.registerButtonPressed,
-              ]}
-              onPress={() => router.push('/auth/register')}
-            >
-              <ThemedText style={styles.registerButtonText}>
-                Créer un compte
-              </ThemedText>
-            </Pressable>
-
-            <ThemedView style={styles.infoContainer}>
-              <ThemedText style={styles.infoText}>
-                🔒 Votre connexion est sécurisée
-              </ThemedText>
-            </ThemedView>
-          </ThemedView>
+          {/* Footer */}
+          <View style={styles.footer}>
+            <ThemedText style={styles.footerText}>
+              CB Academy © 2026
+            </ThemedText>
+          </View>
         </ScrollView>
-      </SafeAreaView>
+      </View>
     </KeyboardAvoidingView>
   );
 }
@@ -166,58 +189,63 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.white,
   },
   safeArea: {
     flex: 1,
   },
   scrollContent: {
     flexGrow: 1,
-    justifyContent: 'center',
-    paddingHorizontal: 20,
+    paddingBottom: 20,
+  },
+  headerWrapper: {
     paddingVertical: 40,
+    paddingHorizontal: 20,
+    alignItems: 'center',
+    backgroundColor: Colors.white,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.border,
   },
   logoContainer: {
-    alignItems: 'center',
-    marginBottom: 30,
-    backgroundColor: 'transparent',
+    marginBottom: 20,
   },
   logo: {
-    width: 140,
-    height: 140,
-    borderRadius: 70,
-  },
-  headerContainer: {
-    alignItems: 'center',
-    marginBottom: 40,
-    backgroundColor: 'transparent',
+    width: 120,
+    height: 120,
+    borderRadius: 60,
   },
   titleMain: {
+    fontSize: 22,
+    fontWeight: '800',
+    color: Colors.darkText,
     textAlign: 'center',
-    fontSize: 28,
-    fontWeight: '700',
-    marginVertical: 4,
-    color: '#1F2937',
-  },
-  academyText: {
-    color: Colors.primary,
+    marginBottom: 8,
   },
   subtitle: {
+    fontSize: 13,
+    color: Colors.lightText,
     textAlign: 'center',
-    color: Colors.darkGray,
-    marginTop: 12,
-    fontSize: 14,
+    fontWeight: '500',
+  },
+  formWrapper: {
+    paddingHorizontal: 16,
+    marginVertical: 24,
   },
   formContainer: {
-    backgroundColor: 'white',
-    borderRadius: 12,
+    backgroundColor: Colors.white,
+    borderRadius: 16,
     padding: 24,
-    gap: 16,
+    gap: 20,
     borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderColor: Colors.border,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.06,
+    shadowRadius: 12,
+    elevation: 3,
   },
   errorContainer: {
-    backgroundColor: '#FEE2E2',
+    backgroundColor: '#FEF2F2',
     borderLeftWidth: 4,
     borderLeftColor: Colors.danger,
     paddingVertical: 12,
@@ -226,33 +254,38 @@ const styles = StyleSheet.create({
   },
   errorText: {
     color: Colors.danger,
-    fontWeight: '500',
+    fontWeight: '600',
+    fontSize: 14,
   },
   inputGroup: {
     gap: 8,
   },
   label: {
-    fontWeight: '600',
-    color: '#1F2937',
+    fontWeight: '700',
     fontSize: 14,
   },
+  inputBorder: {
+    borderWidth: 2,
+    borderRadius: 10,
+    overflow: 'hidden',
+  },
   input: {
-    borderWidth: 1,
-    borderColor: '#D1D5DB',
-    borderRadius: 8,
-    paddingHorizontal: 12,
+    paddingHorizontal: 14,
     paddingVertical: 12,
     fontSize: 16,
-    fontFamily: 'System',
-    color: '#1F2937',
-    backgroundColor: '#FFFFFF',
+    color: Colors.darkText,
+    backgroundColor: Colors.white,
   },
   loginButton: {
-    backgroundColor: Colors.primary,
-    borderRadius: 8,
+    borderRadius: 10,
     paddingVertical: 14,
     alignItems: 'center',
     marginTop: 8,
+    shadowColor: Colors.green,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 3,
   },
   loginButtonPressed: {
     opacity: 0.85,
@@ -261,50 +294,55 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
   loginButtonText: {
-    color: 'white',
-    fontWeight: '700',
+    color: Colors.white,
+    fontWeight: '800',
     fontSize: 16,
   },
   divider: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    marginVertical: 8,
+    marginVertical: 4,
   },
   dividerLine: {
     flex: 1,
-    height: 1,
-    backgroundColor: '#D1D5DB',
+    height: 2,
   },
   dividerText: {
-    color: Colors.darkGray,
-    fontSize: 12,
+    fontSize: 13,
+    fontWeight: '700',
   },
   registerButton: {
-    borderWidth: 2,
-    borderColor: Colors.primary,
-    borderRadius: 8,
+    borderRadius: 10,
     paddingVertical: 12,
     alignItems: 'center',
+    backgroundColor: Colors.white,
   },
   registerButtonPressed: {
-    backgroundColor: '#F0FDF4',
+    backgroundColor: Colors.lightBg,
   },
   registerButtonText: {
-    color: Colors.primary,
-    fontWeight: '700',
+    fontWeight: '800',
     fontSize: 16,
   },
   infoContainer: {
-    gap: 8,
-    marginTop: 16,
-    backgroundColor: '#F0FDF4',
+    borderLeftWidth: 4,
     padding: 12,
     borderRadius: 8,
+    marginTop: 8,
   },
   infoText: {
-    color: Colors.primary,
     textAlign: 'center',
     fontSize: 13,
+    fontWeight: '600',
+  },
+  footer: {
+    alignItems: 'center',
+    paddingVertical: 12,
+    backgroundColor: Colors.white,
+  },
+  footerText: {
+    color: Colors.lightText,
+    fontSize: 12,
   },
 });
