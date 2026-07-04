@@ -3,8 +3,9 @@ import StarterKit from "@tiptap/starter-kit";
 import Underline from "@tiptap/extension-underline";
 import TextAlign from "@tiptap/extension-text-align";
 import Link from "@tiptap/extension-link";
+import Superscript from "@tiptap/extension-superscript";
+import Subscript from "@tiptap/extension-subscript";
 import { useEffect } from "react";
-
 
 export default function RichEditor({ value, onChange, placeholder }) {
   const editor = useEditor({
@@ -12,6 +13,8 @@ export default function RichEditor({ value, onChange, placeholder }) {
     extensions: [
       StarterKit,
       Underline,
+      Superscript,
+      Subscript,
       Link.configure({ openOnClick: false }),
       TextAlign.configure({ types: ["heading", "paragraph"] }),
     ],
@@ -54,6 +57,8 @@ export default function RichEditor({ value, onChange, placeholder }) {
         {btn(() => editor.chain().focus().toggleItalic().run(), "I", editor.isActive("italic"))}
         {btn(() => editor.chain().focus().toggleUnderline().run(), "S", editor.isActive("underline"))}
         {btn(() => editor.chain().focus().toggleStrike().run(), "Str", editor.isActive("strike"))}
+        {btn(() => editor.chain().focus().toggleSuperscript().run(), "X²", editor.isActive("superscript"))}
+        {btn(() => editor.chain().focus().toggleSubscript().run(), "X₂", editor.isActive("subscript"))}
 
         <span style={{ width: "1px", background: "#e2e8f0", margin: "0 0.2rem" }} />
 
