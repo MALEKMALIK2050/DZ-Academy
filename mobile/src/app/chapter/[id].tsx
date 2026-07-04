@@ -156,6 +156,9 @@ export default function ChapterScreen() {
   
   const [expandedTextId, setExpandedTextId] = useState<number | null>(null);
 
+  const [quizScore, setQuizScore] = useState<number | null>(null);
+  const [quizCompleted, setQuizCompleted] = useState<boolean>(false);
+
   const fetchChapter = async () => {
     try {
       setError(null);
@@ -165,6 +168,24 @@ export default function ChapterScreen() {
       if (!res.ok) throw new Error(`Erreur ${res.status}`);
       const data = await res.json();
       setChapter(data);
+
+      if (data.quiz && data.quiz.id) {
+        try {
+          const quizRes = await fetch(API_ENDPOINTS.quizGet(data.quiz.id), {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          if (quizRes.ok) {
+            const quizData = await quizRes.json();
+            setQuizScore(quizData.bestScore);
+            setQuizCompleted(quizData.dejaReussi || false);
+          }
+        } catch (quizErr) {
+          console.log("Erreur chargement quiz score:", quizErr);
+        }
+      } else {
+        setQuizScore(null);
+        setQuizCompleted(false);
+      }
     } catch (err: any) {
       setError('Erreur lors du chargement du chapitre');
     } finally {
@@ -532,6 +553,30 @@ export default function ChapterScreen() {
                   </View>
                   <ThemedText style={styles.quizArrow}>→</ThemedText>
                 </Pressable>
+
+                {quizCompleted && (
+                  <View style={{
+                    backgroundColor: '#E8F5E9',
+                    borderColor: '#86efac',
+                    borderWidth: 1,
+                    borderRadius: 12,
+                    padding: 12,
+                    marginTop: 12,
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                  }}>
+                    <View style={{ flex: 1 }}>
+                      <ThemedText style={{ color: '#166534', fontWeight: '700', fontSize: 14 }}>
+                        🎉 Quiz réussi avec succès !
+                      </ThemedText>
+                      <ThemedText style={{ color: '#2d6a4f', fontSize: 12, fontWeight: '500', marginTop: 2 }}>
+                        Résultat obtenu : <ThemedText style={{ fontWeight: '700', color: '#166534' }}>{quizScore}%</ThemedText>
+                      </ThemedText>
+                    </View>
+                    <ThemedText style={{ fontSize: 20 }}>🌸</ThemedText>
+                  </View>
+                )}
               </View>
             )}
           </>

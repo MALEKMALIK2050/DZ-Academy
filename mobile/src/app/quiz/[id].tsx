@@ -214,12 +214,39 @@ export default function QuizScreen() {
             <ThemedText style={[styles.resultTitle, { color: passed ? C.success : C.danger }]}>
               {passed ? '✅ Quiz Réussi !' : '❌ Non réussi'}
             </ThemedText>
-            <ThemedText style={styles.resultMessage}>
-              {results.message || (passed
-                ? `Félicitations, vous avez dépassé le seuil de ${seuil}%.`
-                : `Vous avez obtenu ${score}%. Il faut au moins ${seuil}% pour valider ce quiz.`)}
-            </ThemedText>
+            {!passed && (
+              <ThemedText style={styles.resultMessage}>
+                {results.message || `Vous avez obtenu ${score}%. Il faut au moins ${seuil}% pour valider ce quiz.`}
+              </ThemedText>
+            )}
           </View>
+
+          {passed && (
+            <View style={{
+              backgroundColor: 'white',
+              borderRadius: 16,
+              padding: 24,
+              alignItems: 'center',
+              borderWidth: 2,
+              borderColor: C.success,
+              marginVertical: 16,
+              shadowColor: '#000',
+              shadowOffset: { width: 0, height: 4 },
+              shadowOpacity: 0.05,
+              shadowRadius: 10,
+              elevation: 2,
+            }}>
+              <ThemedText style={{ fontSize: 34, fontWeight: '900', color: C.primaryDark, textAlign: 'center' }}>
+                Bravo !
+              </ThemedText>
+              <ThemedText style={{ fontSize: 24, marginVertical: 6, textAlign: 'center' }}>
+                🌸
+              </ThemedText>
+              <ThemedText style={{ color: C.gray700, fontSize: 14, textAlign: 'center', lineHeight: 20 }}>
+                {results.message || "Vous avez validé ce quiz formatif avec succès !"}
+              </ThemedText>
+            </View>
+          )}
 
           {Object.keys(selectedAnswers).length > 0 && (
             <View style={styles.reviewSection}>
@@ -262,11 +289,32 @@ export default function QuizScreen() {
           <View style={{ flexDirection: 'column', gap: 12 }}>
             {passed && results.nextChapterId ? (
               <Pressable 
-                style={({ pressed }) => [styles.finishButton, pressed && { opacity: 0.85 }]}
+                style={({ pressed }) => [
+                  {
+                    backgroundColor: C.secondary, // Orange
+                    borderColor: C.primaryDark, // Green border
+                    borderWidth: 2,
+                    borderRadius: 14,
+                    paddingVertical: 16,
+                    paddingHorizontal: 20,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    marginTop: 10,
+                    shadowColor: '#000',
+                    shadowOffset: { width: 0, height: 2 },
+                    shadowOpacity: 0.1,
+                    shadowRadius: 4,
+                    elevation: 3,
+                  },
+                  pressed && { opacity: 0.85, transform: [{ scale: 0.98 }] }
+                ]}
                 onPress={() => router.replace({ pathname: '/chapter/[id]', params: { id: results.nextChapterId } })}
               >
-                <ThemedText style={styles.finishButtonText}>
-                  Bravo : Accéder au chapitre suivant {results.nextChapterNumber ? `${results.nextChapterNumber} ` : ''}{results.nextChapterTitle ? `- ${results.nextChapterTitle}` : ''} →
+                <ThemedText style={{ color: 'white', fontSize: 13, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1.2 }}>
+                  Accéder au Chapitre Suivant :
+                </ThemedText>
+                <ThemedText style={{ color: 'white', fontSize: 15, fontWeight: '800', marginTop: 4, textAlign: 'center' }}>
+                  "{results.nextChapterTitle}" →
                 </ThemedText>
               </Pressable>
             ) : (
