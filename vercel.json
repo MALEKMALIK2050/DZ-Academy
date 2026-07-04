@@ -2,7 +2,8 @@
   "buildCommand": "prisma generate && next build",
   "functions": {
     "pages/api/**/*.js": {
-      "memory": 1024
+      "memory": 1024,
+      "maxDuration": 30
     }
   }
-}
+}

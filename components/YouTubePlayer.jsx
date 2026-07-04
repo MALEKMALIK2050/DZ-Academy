@@ -1,186 +1,108 @@
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState, useCallback } from "react";
+import YouTube from "react-youtube";
 
 function extractYouTubeId(url) {
   if (!url) return null;
-  const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+  // Gère youtu.be, youtube.com/watch?v=, /embed/, /shorts/
+  const regExp =
+    /(?:youtu\.be\/|youtube\.com\/(?:watch\?(?:.*&)?v=|embed\/|shorts\/|v\/))([A-Za-z0-9_-]{11})/;
   const match = url.match(regExp);
-  return (match && match[2].length === 11) ? match[2] : null;
+  return match ? match[1] : null;
 }
 
-const YouTubePlayer = ({ videoId: propVideoId, supportId: propSupportId, onProgressUpdate, support, onProgress }) => {
-  const containerRef = useRef(null);
+const YouTubePlayer = ({
+  videoId: propVideoId,
+  supportId: propSupportId,
+  onProgressUpdate,
+  support,
+  onProgress,
+  userId,
+}) => {
   const playerRef = useRef(null);
-  const lastPositionRef = useRef(0);
-  const [isReady, setIsReady] = useState(false);
-  const [error, setError] = useState("");
   const intervalRef = useRef(null);
+  const lastPositionRef = useRef(0);
   const reportedEventsRef = useRef([]);
+  const [error, setError] = useState("");
+  const [isReady, setIsReady] = useState(false);
 
   const supportId = propSupportId || support?.id;
   const videoId = propVideoId || support?.videoId || extractYouTubeId(support?.url);
   const progressCallback = onProgressUpdate || onProgress;
 
-  // ✅ Charger YouTube API au montage
-  useEffect(() => {
-    if (!videoId) {
-      setError("URL ou ID de vidéo invalide");
-      return;
-    }
-
-    // Si API déjà chargée, initialiser directement
-    if (window.YT && window.YT.Player) {
-      initializePlayer();
-      return;
-    }
-
-    // Charger YouTube API seulement si pas encore chargée
-    if (!document.querySelector('script[src="https://www.youtube.com/iframe_api"]')) {
-      const tag = document.createElement("script");
-      tag.src = "https://www.youtube.com/iframe_api";
-      tag.async = true;
-      document.head.appendChild(tag);
-    }
-
-    window.onYouTubeIframeAPIReady = () => {
-      console.log("✅ YouTube API chargée");
-      initializePlayer();
-    };
-
-    return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current);
-      // Détruire le player proprement
-      if (playerRef.current) {
-        playerRef.current.destroy();
-        playerRef.current = null;
-      }
-    };
-  }, [videoId]);
-
-  const initializePlayer = () => {
-    if (!containerRef.current || playerRef.current) return;
-
-    console.log("🎬 Initialisation player pour:", videoId);
-
-    playerRef.current = new window.YT.Player(containerRef.current, {
-      height: "500",
-      width: "100%",
-      videoId,
-      playerVars: {
-        autoplay: 0,
-        controls: 1,
-        modestbranding: 1,
-        rel: 0,
-      },
-      events: {
-        onReady: onPlayerReady,
-        onStateChange: onPlayerStateChange,
-        onError: onPlayerError,
-      },
-    });
+  // Options du player YouTube
+  const opts = {
+    height: "500",
+    width: "100%",
+    playerVars: {
+      autoplay: 0,
+      controls: 1,
+      modestbranding: 1,
+      rel: 0,
+      origin:
+        typeof window !== "undefined" ? window.location.origin : "",
+    },
   };
 
-  const onPlayerReady = (event) => {
-    console.log("🎬 Player prêt");
-    setIsReady(true);
-
-    // ✅ Récupérer et restaurer la position
-    fetchLastPosition();
-  };
-
-  const fetchLastPosition = async () => {
-    try {
-      const res = await fetch(`/api/video/progress?supportId=${supportId}`);
-      const data = await res.json();
-
-      if (data.lastPosition && data.lastPosition > 0) {
-        console.log(`📍 Restauration position: ${data.lastPosition}s`);
-        lastPositionRef.current = data.lastPosition;
-        
-        // Seek et pause
-        playerRef.current.seekTo(lastPositionRef.current);
-        setTimeout(() => {
-          playerRef.current.pauseVideo();
-        }, 500);
-      }
-    } catch (err) {
-      console.error("Erreur lecture position:", err);
-    }
-  };
-
-  const onPlayerStateChange = (event) => {
-    const { PLAYING, PAUSED, ENDED } = window.YT.PlayerState;
-
-    if (event.data === PLAYING) {
-      console.log("▶️ Lecture...");
-      startTracking();
-    } else if (event.data === PAUSED) {
-      console.log("⏸ Pause");
-      if (intervalRef.current) clearInterval(intervalRef.current);
-    } else if (event.data === ENDED) {
-      console.log("✅ Fin vidéo");
-      trackProgress(true);
-      if (intervalRef.current) clearInterval(intervalRef.current);
-    }
-  };
-
-  const onPlayerError = (event) => {
-    console.error("❌ Erreur vidéo:", event.data);
-    setError(`Erreur vidéo (code ${event.data})`);
-  };
-
-  const startTracking = () => {
-    if (intervalRef.current) clearInterval(intervalRef.current);
-
-    intervalRef.current = setInterval(() => {
-      trackProgress(false);
-    }, 10000); // Toutes les 10 secondes
-  };
-
-  const trackProgress = async (isFinal = false) => {
-    if (!playerRef.current || !isReady) return;
-
-    try {
-      const currentTime = playerRef.current.getCurrentTime();
-      const duration = playerRef.current.getDuration();
-      lastPositionRef.current = currentTime;
-
-      const progression = duration > 0 ? (currentTime / duration) * 100 : 0;
-
-      // Déterminer les événements de progression (25, 50, 75, 100)
-      let event = null;
-      if (progression >= 100) event = 100;
-      else if (progression >= 75 && !reportedEventsRef.current.includes(75))
-        event = 75;
-      else if (progression >= 50 && !reportedEventsRef.current.includes(50))
-        event = 50;
-      else if (progression >= 25 && !reportedEventsRef.current.includes(25))
-        event = 25;
-
-      if (event && !reportedEventsRef.current.includes(event)) {
-        reportedEventsRef.current.push(event);
-      }
-
-      console.log(
-        `📊 Progression: ${progression.toFixed(0)}% | Position: ${currentTime.toFixed(0)}s`
-      );
-
-      // Envoyer au serveur
-      const res = await fetch("/api/video/progress", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({
-          supportId,
-          progression,
-          event,
-          lastPosition: currentTime,
-          duration,
-        }),
-      });
-
-      if (res.ok) {
+  // Restaurer la dernière position depuis l'API
+  const fetchAndRestorePosition = useCallback(
+    async (player) => {
+      if (!supportId) return;
+      try {
+        const res = await fetch(`/api/video/progress?supportId=${supportId}`, {
+          credentials: "include",
+        });
+        if (!res.ok) return;
         const data = await res.json();
-        if (progressCallback) {
+        if (data.lastPosition && data.lastPosition > 5) {
+          lastPositionRef.current = data.lastPosition;
+          player.seekTo(data.lastPosition, true);
+          player.pauseVideo();
+        }
+      } catch (err) {
+        console.error("Erreur restauration position:", err);
+      }
+    },
+    [supportId]
+  );
+
+  const trackProgress = useCallback(
+    async (isFinal = false) => {
+      const player = playerRef.current;
+      if (!player || !isReady) return;
+      try {
+        const currentTime = player.getCurrentTime();
+        const duration = player.getDuration();
+        lastPositionRef.current = currentTime;
+        const progression = duration > 0 ? (currentTime / duration) * 100 : 0;
+
+        // Jalons : 25, 50, 75, 100
+        let event = null;
+        const milestones = [25, 50, 75, 100];
+        for (const m of milestones) {
+          if (
+            progression >= m &&
+            !reportedEventsRef.current.includes(m)
+          ) {
+            reportedEventsRef.current.push(m);
+            event = m;
+          }
+        }
+
+        const res = await fetch("/api/video/progress", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({
+            supportId,
+            progression,
+            event,
+            lastPosition: currentTime,
+            duration,
+          }),
+        });
+
+        if (res.ok && progressCallback) {
+          const data = await res.json();
           progressCallback({
             supportId,
             progression: data.progression,
@@ -188,38 +110,113 @@ const YouTubePlayer = ({ videoId: propVideoId, supportId: propSupportId, onProgr
             events: data.events,
           });
         }
+      } catch (err) {
+        console.error("Erreur tracking:", err);
       }
-    } catch (err) {
-      console.error("Erreur tracking:", err);
-    }
-  };
+    },
+    [isReady, supportId, progressCallback]
+  );
 
-  // ✅ Sauvegarder position avant de quitter
-  useEffect(() => {
-    const handleBeforeUnload = () => {
-      if (lastPositionRef.current > 0) {
-        navigator.sendBeacon(
-          "/api/video/progress",
-          JSON.stringify({
-            supportId,
-            lastPosition: lastPositionRef.current,
-          })
-        );
+  // Handlers du player
+  const onReady = useCallback(
+    (event) => {
+      playerRef.current = event.target;
+      setIsReady(true);
+      fetchAndRestorePosition(event.target);
+    },
+    [fetchAndRestorePosition]
+  );
+
+  const onStateChange = useCallback(
+    (event) => {
+      const YT = window.YT?.PlayerState;
+      if (!YT) return;
+      if (event.data === YT.PLAYING) {
+        if (intervalRef.current) clearInterval(intervalRef.current);
+        intervalRef.current = setInterval(() => trackProgress(false), 10000);
+      } else if (event.data === YT.PAUSED) {
+        if (intervalRef.current) clearInterval(intervalRef.current);
+        trackProgress(false);
+      } else if (event.data === YT.ENDED) {
+        if (intervalRef.current) clearInterval(intervalRef.current);
+        trackProgress(true);
       }
+    },
+    [trackProgress]
+  );
+
+  const onError = useCallback((event) => {
+    const codes = {
+      2: "URL invalide",
+      5: "Erreur lecteur HTML5",
+      100: "Vidéo introuvable ou privée",
+      101: "Lecture non autorisée en iframe",
+      150: "Lecture non autorisée en iframe",
     };
+    setError(codes[event.data] || `Erreur YouTube (code ${event.data})`);
+  }, []);
 
-    window.addEventListener("beforeunload", handleBeforeUnload);
-    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
-  }, [supportId]);
+  if (!videoId) {
+    return (
+      <div
+        style={{
+          background: "#1a1a2e",
+          borderRadius: "12px",
+          padding: "2rem",
+          textAlign: "center",
+          color: "#ff6b6b",
+        }}
+      >
+        ❌ URL ou ID de vidéo invalide
+      </div>
+    );
+  }
 
   return (
-    <div style={{ background: "#000", borderRadius: "12px", overflow: "hidden" }}>
+    <div
+      style={{
+        background: "#000",
+        borderRadius: "12px",
+        overflow: "hidden",
+        position: "relative",
+      }}
+    >
       {error && (
-        <div style={{ color: "#ff6b6b", padding: "1rem", textAlign: "center" }}>
+        <div
+          style={{
+            background: "#1a1a2e",
+            color: "#ff6b6b",
+            padding: "1rem 1.5rem",
+            display: "flex",
+            alignItems: "center",
+            gap: "0.5rem",
+            fontSize: "0.9rem",
+          }}
+        >
           ❌ {error}
+          <a
+            href={`https://www.youtube.com/watch?v=${videoId}`}
+            target="_blank"
+            rel="noreferrer"
+            style={{
+              marginLeft: "auto",
+              color: "#60a5fa",
+              fontSize: "0.8rem",
+              textDecoration: "underline",
+            }}
+          >
+            Ouvrir sur YouTube ↗
+          </a>
         </div>
       )}
-      <div ref={containerRef} />
+      <YouTube
+        videoId={videoId}
+        opts={opts}
+        onReady={onReady}
+        onStateChange={onStateChange}
+        onError={onError}
+        style={{ display: "block" }}
+      />
     </div>
   );
 };
