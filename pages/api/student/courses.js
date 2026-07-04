@@ -48,8 +48,20 @@ export default async function handler(req, res) {
           include: {
             course: {
               include: {
-                chapters: { select: { id: true } },
+                chapters: { 
+                  select: { 
+                    id: true,
+                    progress: { where: { studentId } },
+                    quiz: {
+                      select: {
+                        id: true,
+                        quizResults: { where: { studentId } }
+                      }
+                    }
+                  } 
+                },
                 teachers: { select: { id: true, nom: true, prenom: true } },
+                pretestResults: { where: { studentId } },
               },
             },
           },

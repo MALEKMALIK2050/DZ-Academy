@@ -192,11 +192,23 @@ export default function MesCoursScreen() {
                         <ThemedText type="small" style={styles.grayTxt}>
                           📖 {e.course.chapters?.length || 0} chapitre{(e.course.chapters?.length || 0) !== 1 ? 's' : ''}
                         </ThemedText>
-                        <View style={[styles.btn, { backgroundColor: e.cooldownLocked ? '#9CA3AF' : (e.progression || 0) > 0 ? C.blue : C.green }]}>
-                          <ThemedText style={styles.btnTxt}>
-                            {e.cooldownLocked ? '🔒 Verrouillé' : (e.progression || 0) > 0 ? 'Continuer →' : 'Commencer →'}
-                          </ThemedText>
-                        </View>
+                        
+                        {(() => {
+                          const hasStarted = (e.progression || 0) > 0 
+                            || (e.course?.pretestResults && e.course.pretestResults.length > 0) 
+                            || (e.course?.chapters && e.course.chapters.some((c: any) => 
+                                (c.progress && c.progress.length > 0) || 
+                                (c.quiz?.quizResults && c.quiz.quizResults.length > 0)
+                               ));
+                            
+                          return (
+                            <View style={[styles.btn, { backgroundColor: e.cooldownLocked ? '#9CA3AF' : hasStarted ? C.blue : C.green }]}>
+                              <ThemedText style={styles.btnTxt}>
+                                {e.cooldownLocked ? '🔒 Verrouillé' : hasStarted ? 'Continuer →' : 'Commencer →'}
+                              </ThemedText>
+                            </View>
+                          );
+                        })()}
                       </View>
                     </View>
                   </Pressable>

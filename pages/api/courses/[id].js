@@ -39,6 +39,9 @@ export default async function handler(req, res) {
           designer: { select: { id: true, nom: true, prenom: true } },
           teachers: { select: { id: true, nom: true, prenom: true } },
           pretest: { include: { questions: true } },
+          pretestResults: {
+            where: { studentId: user.id }
+          },
           chapters: {
             orderBy: { ordre: "asc" },
             include: {
@@ -61,7 +64,13 @@ export default async function handler(req, res) {
       });
 
       if (!course) return res.status(404).json({ error: "Cours introuvable" });
-      return res.status(200).json(course);
+      
+      const courseWithPretestStatus = {
+        ...course,
+        isPretestDone: course.pretestResults && course.pretestResults.length > 0
+      };
+
+      return res.status(200).json(courseWithPretestStatus);
     }
 
     // PUT — modifier infos cours ou statut

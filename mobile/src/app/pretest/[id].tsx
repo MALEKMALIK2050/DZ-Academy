@@ -35,7 +35,7 @@ interface Question {
 }
 
 export default function PretestScreen() {
-  const { id: courseId } = useLocalSearchParams();
+  const { id: courseId } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { token } = useAuth();
   const insets = useSafeAreaInsets();
@@ -45,6 +45,7 @@ export default function PretestScreen() {
   const [submitting, setSubmitting] = useState(false);
   const [answers, setAnswers] = useState<Record<number, string>>({});
   const [result, setResult] = useState<any>(null);
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
 
   useEffect(() => {
     fetchPretest();
@@ -52,8 +53,6 @@ export default function PretestScreen() {
 
   const fetchPretest = async () => {
     try {
-      // Le endpoint pretest sur Vercel n'accepte pas toujours les headers correctement.
-      // On fetch donc le cours entier qui contient le pretest.
       const response = await fetch(API_ENDPOINTS.courseDetail(courseId as string), {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -81,15 +80,31 @@ export default function PretestScreen() {
     }));
   };
 
+  const handleNextQuestion = () => {
+    if (currentQuestionIndex < questions.length - 1) {
+      setCurrentQuestionIndex(currentQuestionIndex + 1);
+    }
+  };
+
+  const handlePreviousQuestion = () => {
+    if (currentQuestionIndex > 0) {
+      setCurrentQuestionIndex(currentQuestionIndex - 1);
+    }
+  };
+
   const handleSubmit = async () => {
     if (Object.keys(answers).length < questions.length) {
-      Alert.alert('Attention', 'Veuillez répondre à toutes les questions.');
+      const missingCount = questions.length - Object.keys(answers).length;
+      Alert.alert(
+        'Questions non répondues',
+        `Veuillez répondre aux ${missingCount} question(s) manquante(s) avant de soumettre.`
+      );
       return;
     }
 
     Alert.alert(
-      'Soumettre le prétest',
-      'Êtes-vous sûr ?',
+      'Soumettre l\'évaluation',
+      'Êtes-vous sûr de vouloir soumettre ?',
       [
         { text: 'Annuler', style: 'cancel' },
         {
@@ -107,12 +122,14 @@ export default function PretestScreen() {
               });
               
               const data = await response.json();
-              if (!response.ok) throw new Error(data.error || 'Erreur réseau');
+              
+              if (!response.ok) {
+                throw new Error(data.error || 'Erreur réseau');
+              }
               
               setResult(data.data || data);
             } catch (error: any) {
               Alert.alert('Erreur', error.message);
-            } finally {
               setSubmitting(false);
             }
           }
@@ -147,7 +164,7 @@ export default function PretestScreen() {
           </View>
           
           <ThemedText style={[styles.resultTitle, { color: isGood ? C.primaryDark : C.secondary }]}>
-            {isGood ? '✅ Bon niveau !' : '⚠️ Prétest terminé'}
+            {isGood ? '✅ Bon niveau !' : '⚠️ Évaluation terminée'}
           </ThemedText>
           
           <ThemedText style={styles.resultFeedback}>
@@ -167,7 +184,14 @@ export default function PretestScreen() {
           
           <Pressable 
             style={({ pressed }) => [styles.button, pressed && { opacity: 0.85 }]}
-            onPress={() => router.replace(`/course/${courseId}`)}
+            onPress={() => {
+              if (courseId) {
+                router.replace({
+                  pathname: '/course/[id]',
+                  params: { id: courseId }
+                });
+              }
+            }}
           >
             <ThemedText style={styles.buttonText}>🚀 Accéder au chapitre 1</ThemedText>
           </Pressable>
@@ -176,7 +200,22 @@ export default function PretestScreen() {
     );
   }
 
-  // ═══ ECRAN DU QUIZ ═══
+  // ═══ ECRAN DU QUIZ - UNE QUESTION PAR PAGE ═══
+  if (questions.length === 0) {
+    return (
+      <ThemedView style={styles.container}>
+        <View style={styles.centerContainer}>
+          <ThemedText style={{ color: C.gray500 }}>Aucune question trouvée</ThemedText>
+        </View>
+      </ThemedView>
+    );
+  }
+
+  const currentQuestion = questions[currentQuestionIndex];
+  const isCurrentQuestionAnswered = answers[currentQuestion.id] !== undefined;
+  const isLastQuestion = currentQuestionIndex === questions.length - 1;
+  const isFirstQuestion = currentQuestionIndex === 0;
+
   return (
     <ThemedView style={styles.container}>
       <ScrollView 
@@ -187,7 +226,7 @@ export default function PretestScreen() {
           <View style={styles.headerBadge}>
             <ThemedText style={styles.headerBadgeText}>🎯 Évaluation</ThemedText>
           </View>
-          <ThemedText style={styles.title}>Prétest du cours</ThemedText>
+          <ThemedText style={styles.title}>Évaluation diagnostique</ThemedText>
           <ThemedText style={styles.subtitle}>
             Répondez à ces questions pour évaluer votre niveau avant de commencer.
           </ThemedText>
@@ -202,150 +241,362 @@ export default function PretestScreen() {
           </View>
         </View>
 
-        {questions.map((q, index) => (
-          <View key={q.id} style={styles.questionCard}>
-            <View style={styles.questionHeader}>
-              <View style={styles.questionNumberBadge}>
-                <ThemedText style={styles.questionNumberText}>{index + 1}</ThemedText>
-              </View>
-              <ThemedText style={styles.questionText}>{q.texte}</ThemedText>
+        {/* QUESTION ACTUELLE - UNE SEULE */}
+        <View style={styles.questionCard}>
+          <View style={styles.questionHeader}>
+            <View style={styles.questionNumberBadge}>
+              <ThemedText style={styles.questionNumberText}>{currentQuestionIndex + 1}</ThemedText>
             </View>
-            
-            <View style={styles.optionsContainer}>
-              {q.choix?.map((option, i) => {
-                const isSelected = answers[q.id] === option;
-                return (
-                  <Pressable
-                    key={i}
-                    style={({ pressed }) => [
-                      styles.optionButton,
-                      isSelected && styles.optionButtonSelected,
-                      pressed && !isSelected && { backgroundColor: C.gray50 }
-                    ]}
-                    onPress={() => handleSelect(q.id, option)}
-                  >
-                    <View style={[styles.radioCircle, isSelected && styles.radioCircleSelected]}>
-                      {isSelected && <View style={styles.radioDot} />}
-                    </View>
-                    <ThemedText style={[styles.optionText, isSelected && styles.optionTextSelected]}>
-                      {option}
-                    </ThemedText>
-                  </Pressable>
-                );
-              })}
-            </View>
+            <ThemedText style={styles.questionText}>{currentQuestion.texte}</ThemedText>
           </View>
-        ))}
+          
+          <View style={styles.optionsContainer}>
+            {currentQuestion.choix?.map((option, i) => {
+              const isSelected = answers[currentQuestion.id] === option;
+              return (
+                <Pressable
+                  key={i}
+                  style={({ pressed }) => [
+                    styles.optionButton,
+                    isSelected && styles.optionButtonSelected,
+                    pressed && !isSelected && { backgroundColor: C.gray50 }
+                  ]}
+                  onPress={() => handleSelect(currentQuestion.id, option)}
+                >
+                  <View style={[styles.radioCircle, isSelected && styles.radioCircleSelected]}>
+                    {isSelected && <View style={styles.radioDot} />}
+                  </View>
+                  <ThemedText style={[styles.optionText, isSelected && styles.optionTextSelected]}>
+                    {option}
+                  </ThemedText>
+                </Pressable>
+              );
+            })}
+          </View>
+        </View>
 
-        <Pressable 
-          style={({ pressed }) => [
-            styles.submitButton,
-            answeredCount < totalQuestions && styles.submitButtonDisabled,
-            pressed && answeredCount === totalQuestions && { opacity: 0.85 }
-          ]}
-          onPress={handleSubmit}
-          disabled={submitting || answeredCount < totalQuestions}
-        >
-          {submitting ? (
-            <ActivityIndicator color="white" />
-          ) : (
-            <ThemedText style={styles.submitButtonText}>
-              {answeredCount < totalQuestions 
-                ? `Il reste ${totalQuestions - answeredCount} question(s)` 
-                : 'Soumettre mes réponses'}
-            </ThemedText>
+        {/* BOUTONS DE NAVIGATION */}
+        <View style={styles.navigationButtons}>
+          {!isFirstQuestion && (
+            <Pressable 
+              style={({ pressed }) => [
+                styles.prevButton,
+                pressed && { opacity: 0.85 }
+              ]}
+              onPress={handlePreviousQuestion}
+            >
+              <ThemedText style={styles.prevButtonText}>← Précédent</ThemedText>
+            </Pressable>
           )}
-        </Pressable>
+
+          {!isLastQuestion ? (
+            <Pressable 
+              style={({ pressed }) => [
+                styles.nextButton,
+                !isCurrentQuestionAnswered && styles.nextButtonDisabled,
+                pressed && isCurrentQuestionAnswered && { opacity: 0.85 }
+              ]}
+              onPress={handleNextQuestion}
+              disabled={!isCurrentQuestionAnswered}
+            >
+              <ThemedText style={[styles.nextButtonText, !isCurrentQuestionAnswered && styles.nextButtonTextDisabled]}>
+                Suivant →
+              </ThemedText>
+            </Pressable>
+          ) : (
+            <Pressable 
+              style={({ pressed }) => [
+                styles.submitButton,
+                answeredCount < totalQuestions && styles.submitButtonDisabled,
+                pressed && answeredCount === totalQuestions && { opacity: 0.85 }
+              ]}
+              onPress={handleSubmit}
+              disabled={submitting}
+            >
+              {submitting ? (
+                <ActivityIndicator color="white" />
+              ) : (
+                <ThemedText style={styles.submitButtonText}>Soumettre l'évaluation</ThemedText>
+              )}
+            </Pressable>
+          )}
+        </View>
       </ScrollView>
     </ThemedView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: C.gray50 },
-  centerContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: C.gray50 },
-  scrollContent: { padding: 16 },
-
-  // Header
-  header: { marginBottom: 24 },
-  headerBadge: { 
-    backgroundColor: C.primaryLight, alignSelf: 'flex-start',
-    paddingHorizontal: 12, paddingVertical: 6, borderRadius: 12, marginBottom: 12 
+  container: {
+    flex: 1,
   },
-  headerBadgeText: { color: C.primaryDark, fontWeight: '800', fontSize: 12 },
-  title: { fontSize: 24, fontWeight: '800', color: C.gray900, marginBottom: 8 },
-  subtitle: { color: C.gray600, fontSize: 14, lineHeight: 20, marginBottom: 20 },
-
-  // Progress Bar
-  progressHeader: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 },
-  progressText: { fontSize: 13, fontWeight: '700', color: C.gray700 },
-  progressValues: { fontSize: 13, fontWeight: '700', color: C.primary },
-  progressBarBg: { height: 8, backgroundColor: C.gray200, borderRadius: 4, overflow: 'hidden' },
-  progressBarFill: { height: '100%', backgroundColor: C.primary, borderRadius: 4 },
-
-  // Question Card
+  centerContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  scrollContent: {
+    paddingHorizontal: 16,
+    paddingTop: 16,
+  },
+  header: {
+    marginBottom: 24,
+  },
+  headerBadge: {
+    backgroundColor: C.primaryLight,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+    alignSelf: 'flex-start',
+    marginBottom: 12,
+  },
+  headerBadgeText: {
+    color: C.primaryDark,
+    fontWeight: '700',
+    fontSize: 12,
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: '800',
+    color: C.gray900,
+    marginBottom: 8,
+  },
+  subtitle: {
+    fontSize: 14,
+    color: C.gray500,
+    marginBottom: 16,
+    lineHeight: 20,
+  },
+  progressHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  progressText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: C.gray500,
+  },
+  progressValues: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: C.primary,
+  },
+  progressBarBg: {
+    height: 8,
+    backgroundColor: C.gray200,
+    borderRadius: 4,
+    overflow: 'hidden',
+  },
+  progressBarFill: {
+    height: '100%',
+    backgroundColor: C.primary,
+  },
   questionCard: {
-    backgroundColor: 'white', borderRadius: 16, padding: 16, marginBottom: 16,
-    borderWidth: 1, borderColor: C.gray200,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04, shadowRadius: 4, elevation: 2,
+    backgroundColor: 'white',
+    borderRadius: 12,
+    padding: 20,
+    marginBottom: 24,
+    borderWidth: 1,
+    borderColor: C.gray200,
   },
-  questionHeader: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 16, gap: 12 },
+  questionHeader: {
+    flexDirection: 'row',
+    gap: 12,
+    marginBottom: 20,
+  },
   questionNumberBadge: {
-    width: 28, height: 28, borderRadius: 14, backgroundColor: C.primaryLight,
-    alignItems: 'center', justifyContent: 'center', marginTop: 2
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: C.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    flexShrink: 0,
   },
-  questionNumberText: { color: C.primaryDark, fontWeight: '800', fontSize: 14 },
-  questionText: { fontSize: 16, fontWeight: '700', color: C.gray800, flex: 1, lineHeight: 24 },
-  
-  // Options
-  optionsContainer: { gap: 8 },
+  questionNumberText: {
+    color: 'white',
+    fontWeight: '700',
+    fontSize: 14,
+  },
+  questionText: {
+    flex: 1,
+    fontSize: 16,
+    fontWeight: '700',
+    color: C.gray900,
+    lineHeight: 22,
+  },
+  optionsContainer: {
+    gap: 12,
+  },
   optionButton: {
-    flexDirection: 'row', alignItems: 'center', padding: 14,
-    borderWidth: 2, borderColor: C.gray200, borderRadius: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: C.gray200,
+    backgroundColor: 'white',
   },
   optionButtonSelected: {
-    borderColor: C.primary, backgroundColor: C.primaryLight,
+    backgroundColor: C.primaryLight,
+    borderColor: C.primary,
+    borderWidth: 2,
   },
   radioCircle: {
-    width: 20, height: 20, borderRadius: 10, borderWidth: 2, borderColor: C.gray300,
-    alignItems: 'center', justifyContent: 'center', marginRight: 12,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    borderWidth: 2,
+    borderColor: C.gray300,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  radioCircleSelected: { borderColor: C.primary },
-  radioDot: { width: 10, height: 10, borderRadius: 5, backgroundColor: C.primary },
-  optionText: { color: C.gray700, fontSize: 15, flex: 1 },
-  optionTextSelected: { color: C.primaryDark, fontWeight: '700' },
-
-  // Submit Button
+  radioCircleSelected: {
+    borderColor: C.primary,
+    backgroundColor: C.primary,
+  },
+  radioDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: 'white',
+  },
+  optionText: {
+    flex: 1,
+    fontSize: 14,
+    color: C.gray700,
+    fontWeight: '500',
+  },
+  optionTextSelected: {
+    color: C.primary,
+    fontWeight: '700',
+  },
+  navigationButtons: {
+    flexDirection: 'row',
+    gap: 12,
+    marginBottom: 24,
+  },
+  prevButton: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 10,
+    borderWidth: 2,
+    borderColor: C.secondary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'white',
+  },
+  prevButtonText: {
+    color: C.secondary,
+    fontWeight: '700',
+    fontSize: 14,
+  },
+  nextButton: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 10,
+    backgroundColor: C.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  nextButtonDisabled: {
+    backgroundColor: C.gray300,
+    opacity: 0.6,
+  },
+  nextButtonText: {
+    color: 'white',
+    fontWeight: '700',
+    fontSize: 14,
+  },
+  nextButtonTextDisabled: {
+    color: C.gray500,
+  },
   submitButton: {
-    backgroundColor: C.primary, padding: 16, borderRadius: 14,
-    alignItems: 'center', marginTop: 8,
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 10,
+    backgroundColor: C.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  submitButtonDisabled: { backgroundColor: C.gray300 },
-  submitButtonText: { color: 'white', fontWeight: '800', fontSize: 16 },
-
-  // Result Screen
-  resultContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 24 },
+  submitButtonDisabled: {
+    backgroundColor: C.gray300,
+    opacity: 0.6,
+  },
+  submitButtonText: {
+    color: 'white',
+    fontWeight: '700',
+    fontSize: 14,
+  },
+  button: {
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    borderRadius: 12,
+    backgroundColor: C.primary,
+    alignItems: 'center',
+    marginTop: 12,
+  },
+  buttonText: {
+    color: 'white',
+    fontWeight: '700',
+    fontSize: 16,
+  },
+  resultContainer: {
+    paddingHorizontal: 20,
+    paddingTop: 40,
+    paddingBottom: 40,
+    alignItems: 'center',
+  },
   scoreCircle: {
-    width: 140, height: 140, borderRadius: 70, alignItems: 'center', justifyContent: 'center',
-    marginBottom: 24, shadowColor: '#000', shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2, shadowRadius: 8, elevation: 6,
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 20,
   },
-  scoreText: { fontSize: 44, fontWeight: '800', color: 'white' },
-  resultTitle: { fontSize: 26, fontWeight: '800', marginBottom: 12 },
+  scoreText: {
+    color: 'white',
+    fontSize: 48,
+    fontWeight: '900',
+  },
+  resultTitle: {
+    fontSize: 24,
+    fontWeight: '800',
+    marginBottom: 12,
+  },
   resultFeedback: {
-    fontSize: 15, color: C.gray600, textAlign: 'center', lineHeight: 22, marginBottom: 24
+    fontSize: 14,
+    color: C.gray700,
+    textAlign: 'center',
+    lineHeight: 20,
+    marginBottom: 24,
   },
   infoBox: {
-    flexDirection: 'row', alignItems: 'center', gap: 12,
-    backgroundColor: '#EFF6FF', padding: 16, borderRadius: 12, marginBottom: 32,
-    borderWidth: 1, borderColor: '#BFDBFE'
+    backgroundColor: C.primaryLight,
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+    marginBottom: 24,
+    borderLeftWidth: 4,
+    borderLeftColor: C.primary,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
   },
-  infoBoxIcon: { fontSize: 24 },
-  infoBoxText: { flex: 1, color: '#1E3A8A', fontWeight: '600', fontSize: 14 },
-  button: {
-    backgroundColor: C.primary, paddingHorizontal: 32, paddingVertical: 16,
-    borderRadius: 14, width: '100%', alignItems: 'center'
+  infoBoxIcon: {
+    fontSize: 24,
   },
-  buttonText: { color: 'white', fontWeight: '800', fontSize: 16 },
+  infoBoxText: {
+    flex: 1,
+    fontSize: 14,
+    color: C.primaryDark,
+    fontWeight: '600',
+    lineHeight: 20,
+  },
 });
+ 

@@ -79,6 +79,19 @@ export default function QuizScreen() {
 
       const data = await response.json();
       setQuiz(data.quiz || data);
+
+      if (data.dejaReussi) {
+        setResults({
+          score: data.bestScore,
+          seuil: data.seuilReussite,
+          reussi: true,
+          message: "Vous avez déjà réussi ce quiz.",
+          nextChapterId: data.nextChapterId,
+          nextChapterTitle: data.nextChapterTitle,
+          nextChapterNumber: data.nextChapterNumber
+        });
+        setSubmitted(true);
+      }
     } catch (err) {
       console.error('Fetch quiz error:', err);
       setError('Erreur lors du chargement du quiz');
@@ -208,48 +221,76 @@ export default function QuizScreen() {
             </ThemedText>
           </View>
 
-          <View style={styles.reviewSection}>
-            <ThemedText style={styles.reviewTitle}>Récapitulatif des réponses</ThemedText>
-            
-            {quiz.questions.map((q, index) => {
-              const userAnswer = selectedAnswers[q.id];
-              const correctAnswer = q.reponse;
-              const isCorrect = String(userAnswer || "").trim().toLowerCase() === String(correctAnswer || "").trim().toLowerCase();
+          {Object.keys(selectedAnswers).length > 0 && (
+            <View style={styles.reviewSection}>
+              <ThemedText style={styles.reviewTitle}>Récapitulatif des réponses</ThemedText>
+              
+              {quiz.questions.map((q, index) => {
+                const userAnswer = selectedAnswers[q.id];
+                const correctAnswer = q.reponse;
+                const isCorrect = String(userAnswer || "").trim().toLowerCase() === String(correctAnswer || "").trim().toLowerCase();
 
-              return (
-                <View key={q.id} style={[styles.reviewCard, { borderLeftColor: isCorrect ? C.success : C.danger }]}>
-                  <View style={styles.reviewCardHeader}>
-                    <View style={[styles.reviewBadge, { backgroundColor: isCorrect ? C.successLight : C.dangerLight }]}>
-                      <ThemedText style={{ fontSize: 16 }}>{isCorrect ? '✓' : '✗'}</ThemedText>
+                return (
+                  <View key={q.id} style={[styles.reviewCard, { borderLeftColor: isCorrect ? C.success : C.danger }]}>
+                    <View style={styles.reviewCardHeader}>
+                      <View style={[styles.reviewBadge, { backgroundColor: isCorrect ? C.successLight : C.dangerLight }]}>
+                        <ThemedText style={{ fontSize: 16 }}>{isCorrect ? '✓' : '✗'}</ThemedText>
+                      </View>
+                      <ThemedText style={styles.reviewQuestionText}>Question {index + 1}</ThemedText>
                     </View>
-                    <ThemedText style={styles.reviewQuestionText}>Question {index + 1}</ThemedText>
-                  </View>
-                  <ThemedText style={styles.reviewQuestionBody}>{q.texte}</ThemedText>
-                  
-                  <View style={styles.reviewAnswerBox}>
-                    <ThemedText style={styles.reviewAnswerLabel}>Votre réponse :</ThemedText>
-                    <ThemedText style={[styles.reviewAnswerValue, { color: isCorrect ? C.success : C.danger }]}>
-                      {userAnswer || 'Aucune réponse'}
-                    </ThemedText>
-                  </View>
-                  
-                  {!isCorrect && correctAnswer && (
-                    <View style={[styles.reviewAnswerBox, { backgroundColor: C.successLight, marginTop: 8 }]}>
-                      <ThemedText style={[styles.reviewAnswerLabel, { color: C.primaryDark }]}>Bonne réponse :</ThemedText>
-                      <ThemedText style={[styles.reviewAnswerValue, { color: C.primaryDark }]}>{correctAnswer}</ThemedText>
+                    <ThemedText style={styles.reviewQuestionBody}>{q.texte}</ThemedText>
+                    
+                    <View style={styles.reviewAnswerBox}>
+                      <ThemedText style={styles.reviewAnswerLabel}>Votre réponse :</ThemedText>
+                      <ThemedText style={[styles.reviewAnswerValue, { color: isCorrect ? C.success : C.danger }]}>
+                        {userAnswer || 'Aucune réponse'}
+                      </ThemedText>
                     </View>
-                  )}
-                </View>
-              );
-            })}
+                    
+                    {!isCorrect && correctAnswer && (
+                      <View style={[styles.reviewAnswerBox, { backgroundColor: C.successLight, marginTop: 8 }]}>
+                        <ThemedText style={[styles.reviewAnswerLabel, { color: C.primaryDark }]}>Bonne réponse :</ThemedText>
+                        <ThemedText style={[styles.reviewAnswerValue, { color: C.primaryDark }]}>{correctAnswer}</ThemedText>
+                      </View>
+                    )}
+                  </View>
+                );
+              })}
+            </View>
+          )}
+
+          <View style={{ flexDirection: 'column', gap: 12 }}>
+            {passed && results.nextChapterId ? (
+              <Pressable 
+                style={({ pressed }) => [styles.finishButton, pressed && { opacity: 0.85 }]}
+                onPress={() => router.replace({ pathname: '/chapter/[id]', params: { id: results.nextChapterId } })}
+              >
+                <ThemedText style={styles.finishButtonText}>
+                  Bravo : Accéder au chapitre suivant {results.nextChapterNumber ? `${results.nextChapterNumber} ` : ''}{results.nextChapterTitle ? `- ${results.nextChapterTitle}` : ''} →
+                </ThemedText>
+              </Pressable>
+            ) : (
+              <Pressable 
+                style={({ pressed }) => [
+                  styles.finishButton, 
+                  (!passed || results.isReset) && { backgroundColor: C.danger },
+                  pressed && { opacity: 0.85 }
+                ]}
+                onPress={() => {
+                  const targetCourseId = quiz?.courseId || quiz?.chapter?.courseId;
+                  if (targetCourseId) {
+                    router.navigate({ pathname: '/course/[id]', params: { id: targetCourseId } });
+                  } else {
+                    router.back();
+                  }
+                }}
+              >
+                <ThemedText style={styles.finishButtonText}>
+                  {results.isReset ? 'Recommencer le chapitre' : 'Retour au cours'}
+                </ThemedText>
+              </Pressable>
+            )}
           </View>
-
-          <Pressable 
-            style={({ pressed }) => [styles.finishButton, pressed && { opacity: 0.85 }]}
-            onPress={() => router.back()}
-          >
-            <ThemedText style={styles.finishButtonText}>Retour au cours</ThemedText>
-          </Pressable>
 
         </ScrollView>
       </ThemedView>

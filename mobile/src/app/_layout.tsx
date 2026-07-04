@@ -45,6 +45,14 @@ function NavigationLayout() {
         }}
       />
       <Stack.Screen
+        name="pretest/[id]"
+        options={{
+          headerShown: true,
+          title: 'Prétest',
+          headerBackTitle: 'Retour',
+        }}
+      />
+      <Stack.Screen
         name="chapter/[id]"
         options={{
           headerShown: true,
