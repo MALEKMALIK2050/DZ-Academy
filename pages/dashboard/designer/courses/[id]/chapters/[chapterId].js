@@ -65,6 +65,22 @@ export default function ManageChapter() {
     finally { setLoading(false); }
   };
 
+  // ── FORMATTING (MathJax & Highlight.js) ──────────────────
+  useEffect(() => {
+    const triggerFormatting = () => {
+      setTimeout(() => {
+        if (window.MathJax && window.MathJax.typesetPromise) {
+          window.MathJax.typesetPromise().catch((err) => console.log('MathJax error:', err));
+        }
+        if (window.hljs) {
+          window.hljs.highlightAll();
+        }
+      }, 100);
+    };
+    triggerFormatting();
+  }, [chapter, tab, questions, devoirs]);
+
+
 
   const handleMoveSupport = async (supportId, direction) => {
   const sorted   = [...chapter.supports].sort((a, b) => a.ordre - b.ordre);

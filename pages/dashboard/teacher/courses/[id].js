@@ -25,6 +25,21 @@ export default function TeacherCourse() {
     fetchAll();
   }, [id]);
 
+  // ── FORMATTING (MathJax & Highlight.js) ──────────────────
+  useEffect(() => {
+    const triggerFormatting = () => {
+      setTimeout(() => {
+        if (window.MathJax && window.MathJax.typesetPromise) {
+          window.MathJax.typesetPromise().catch((err) => console.log('MathJax error:', err));
+        }
+        if (window.hljs) {
+          window.hljs.highlightAll();
+        }
+      }, 100);
+    };
+    triggerFormatting();
+  }, [activeChapter, tab, devoirs]);
+
   const fetchAll = async () => {
     try {
       const [cRes, sRes, vRes] = await Promise.all([
