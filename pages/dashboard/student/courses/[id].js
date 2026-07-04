@@ -71,6 +71,21 @@ export default function StudentCourse() {
   // État pour le menu mobile
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
+  // ====== FORMATTING (MathJax & Highlight.js) ======
+  useEffect(() => {
+    const triggerFormatting = () => {
+      setTimeout(() => {
+        if (window.MathJax && window.MathJax.typesetPromise) {
+          window.MathJax.typesetPromise().catch((err) => console.log('MathJax error:', err));
+        }
+        if (window.hljs) {
+          window.hljs.highlightAll();
+        }
+      }, 100);
+    };
+    triggerFormatting();
+  }, [activeChapter, activeQuiz, course, pretestFeedback]);
+
   // ====== FETCH INITIAL ======
   useEffect(() => {
     if (!id) return;
@@ -652,7 +667,8 @@ export default function StudentCourse() {
                               )}
                               <div
                                 dangerouslySetInnerHTML={{ __html: s.contenu }}
-                                style={{ lineHeight: "1.6", color: "#1a202c", fontSize: isMobile ? "0.85rem" : "0.95rem", overflowX: "auto" }}
+                                className="rich-text-content"
+                                style={{ color: "#1a202c", fontSize: isMobile ? "0.85rem" : "0.95rem" }}
                               />
                             </div>
                           );

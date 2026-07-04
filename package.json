@@ -38,6 +38,7 @@
     "dotenv": "^17.4.2",
     "extract-zip": "^2.0.1",
     "formidable": "^2.1.5",
+    "highlight.js": "^11.11.1",
     "jose": "^6.2.2",
     "jsonwebtoken": "^9.0.3",
     "lucide-react": "^1.17.0",

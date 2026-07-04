@@ -12,8 +12,32 @@ export default function Document() {
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link
-          href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+          href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Cairo:wght@400;600;700;800&display=swap"
           rel="stylesheet"
+        />
+        
+        {/* ── MathJax ────────────────────────────────────────────────
+            • Support des Maths (LaTeX) : x^2, \frac{1}{2}
+            • Support de la Chimie (mhchem) : \ce{H2O}
+        ──────────────────────────────────────────────────────────── */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              window.MathJax = {
+                tex: {
+                  inlineMath: [['$', '$'], ['\\\\(', '\\\\)']],
+                  displayMath: [['$$', '$$'], ['\\\\[', '\\\\]']],
+                  packages: {'[+]': ['mhchem']}
+                },
+                loader: {load: ['[tex]/mhchem']}
+              };
+            `,
+          }}
+        />
+        <script
+          id="MathJax-script"
+          async
+          src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"
         />
       </Head>
       <body>

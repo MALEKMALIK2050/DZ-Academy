@@ -137,7 +137,7 @@ export default function TeacherCourse() {
                           s.type === "TEXTE" ? (
                             <div key={s.id} style={{ background: "white", border: "1px solid #e2e8f0", padding: "1.5rem", borderRadius: "10px" }}>
                               {s.nom && <h4 style={{ margin: "0 0 0.75rem", color: "#2d3748", borderBottom: "2px solid #e2e8f0", paddingBottom: "0.5rem" }}>{s.nom}</h4>}
-                              <div dangerouslySetInnerHTML={{ __html: s.contenu }} style={{ lineHeight: "1.6", color: "#2d3748" }} />
+                              <div dangerouslySetInnerHTML={{ __html: s.contenu }} className="rich-text-content" style={{ color: "#2d3748" }} />
                             </div>
                           ) : (
                             <a key={s.id} href={s.url} target="_blank" rel="noreferrer"

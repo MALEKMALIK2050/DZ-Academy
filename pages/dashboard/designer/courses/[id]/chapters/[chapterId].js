@@ -511,7 +511,7 @@ const handleAddSupport = async () => {
                       {s.type === "FORUM" && (
                         <div style={{ marginLeft: "1rem", marginTop: "0.5rem", padding: "0.75rem", background: "#f0f9ff", borderRadius: "8px", border: "1px solid #bae6fd" }}>
                           <div style={{ fontSize: "0.85rem", color: "#0369a1", fontWeight: "bold", marginBottom: "0.25rem" }}>💬 Forum de discussion</div>
-                          {s.contenu && <div style={{ fontSize: "0.8rem", color: "#0c4a6e", fontStyle: "italic" }} dangerouslySetInnerHTML={{ __html: s.contenu }} />}
+                          {s.contenu && <div style={{ fontSize: "0.8rem", color: "#0c4a6e", fontStyle: "italic" }} className="rich-text-content" dangerouslySetInnerHTML={{ __html: s.contenu }} />}
                         </div>
                       )}
                     </div>

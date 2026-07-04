@@ -1448,3 +1448,71 @@ section {
   h1 { font-size: clamp(1.2rem, 5vw, 2rem) !important; }
   h2 { font-size: clamp(1rem, 4vw, 1.5rem) !important; }
 }
+
+/* ===== SPECIFICITES MATIERES & RICH TEXT ===== */
+.rich-text-content {
+  line-height: 1.8;
+  color: #1a202c;
+  word-wrap: break-word;
+}
+.rich-text-content h1, .rich-text-content h2, .rich-text-content h3, .rich-text-content h4 {
+  color: #2D6A4F;
+  margin-top: 1.5rem;
+  margin-bottom: 0.75rem;
+  font-weight: 700;
+}
+.rich-text-content p {
+  margin-bottom: 1.2rem;
+}
+.rich-text-content ul, .rich-text-content ol {
+  margin-bottom: 1.2rem;
+  padding-inline-start: 1.5rem;
+}
+.rich-text-content li {
+  margin-bottom: 0.5rem;
+}
+.rich-text-content blockquote {
+  border-left: 4px solid #74C69D;
+  padding-left: 1rem;
+  margin-left: 0;
+  color: #4a5568;
+  font-style: italic;
+  background: #f0fdf4;
+  padding: 10px;
+  border-radius: 4px;
+}
+.rich-text-content table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 1.5rem;
+}
+.rich-text-content th, .rich-text-content td {
+  border: 1px solid #e2e8f0;
+  padding: 0.75rem;
+  text-align: left;
+}
+.rich-text-content th {
+  background-color: #f8fafc;
+  font-weight: 600;
+}
+.rich-text-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+}
+.rich-text-content pre {
+  margin-bottom: 1.5rem;
+  border-radius: 8px;
+  overflow-x: auto;
+}
+.rich-text-content code {
+  font-family: var(--font-mono);
+}
+.rich-text-content :not(pre) > code {
+  background-color: #f1f5f9;
+  padding: 0.2rem 0.4rem;
+  border-radius: 4px;
+  color: #e11d48;
+  font-size: 0.9em;
+}
