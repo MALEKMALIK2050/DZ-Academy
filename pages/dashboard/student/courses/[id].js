@@ -779,22 +779,35 @@ export default function StudentCourse() {
                 {/* Marquer comme lu */}
                 <div style={{ background: "white", border: "1px solid #E9ECEF", padding: isMobile ? "1rem" : "1.25rem", borderRadius: "12px", marginBottom: "1.5rem", boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}>
                   {!chapterProgress[activeChapter.id]?.lu ? (
-                    <div>
-                      <p style={{ margin: "0 0 1rem", color: "#1B4332", fontWeight: "500", fontSize: "0.9rem" }}>
-                        <strong>Avez-vous consulté toutes les ressources de ce chapitre ?</strong>
+                    <div style={{ textAlign: "center" }}>
+                      <p style={{ margin: "0 0 0.5rem", fontSize: "1.5rem" }}>📚</p>
+                      <p style={{ margin: "0 0 1rem", color: "#1B4332", fontWeight: "600", fontSize: isMobile ? "0.85rem" : "0.95rem", lineHeight: "1.5" }}>
+                        Avez-vous consulté tous les supports de ce chapitre ?<br/>
+                        <span style={{ fontSize: "0.8rem", color: "#6B7280", fontWeight: "400" }}>Consultez les vidéos, documents et ressources ci-dessus avant de passer au quiz.</span>
                       </p>
                       <button 
                         onClick={() => handleMarkRead(activeChapter.id)} 
-                        style={{ ...btnSuccess, padding: isMobile ? "0.4rem 1rem" : "0.5rem 1.2rem", fontSize: isMobile ? "0.8rem" : "0.85rem" }}
-                        onMouseEnter={(e) => e.target.style.background = "#74C69D"}
-                        onMouseLeave={(e) => e.target.style.background = "#40916C"}
+                        style={{
+                          background: "linear-gradient(135deg, #F97316, #40916C)",
+                          color: "white",
+                          padding: isMobile ? "0.6rem 1.2rem" : "0.75rem 1.5rem",
+                          border: "none",
+                          borderRadius: "10px",
+                          cursor: "pointer",
+                          fontSize: isMobile ? "0.85rem" : "0.9rem",
+                          fontWeight: "700",
+                          transition: "all 0.2s ease",
+                          boxShadow: "0 2px 8px rgba(249, 115, 22, 0.3)"
+                        }}
+                        onMouseEnter={(e) => { e.target.style.transform = "translateY(-1px)"; e.target.style.boxShadow = "0 4px 12px rgba(249, 115, 22, 0.4)"; }}
+                        onMouseLeave={(e) => { e.target.style.transform = "translateY(0)"; e.target.style.boxShadow = "0 2px 8px rgba(249, 115, 22, 0.3)"; }}
                       >
-                        ✅ J'ai terminé ce chapitre
+                        ✅ J'ai consulté tous les supports de ce chapitre
                       </button>
                     </div>
                   ) : (
                     <p style={{ margin: 0, color: "#40916C", fontWeight: "600", fontSize: "0.85rem" }}>
-                      ✅ Chapitre consulté
+                      ✅ Supports consultés — Quiz débloqué ci-dessous
                     </p>
                   )}
                 </div>
@@ -851,9 +864,10 @@ export default function StudentCourse() {
                 )}
 
                 {activeChapter.quiz && !chapterProgress[activeChapter.id]?.lu && (
-                  <div style={{ background: "#E8F5E9", borderLeft: "4px solid #40916C", padding: "0.75rem 1rem", borderRadius: "8px" }}>
-                    <p style={{ margin: 0, color: "#2D6A4F", fontSize: "0.8rem", fontWeight: "500" }}>
-                      🔒 Marquez le chapitre comme terminé pour accéder au quiz.
+                  <div style={{ background: "#FFF7ED", borderLeft: "4px solid #F97316", padding: "0.75rem 1rem", borderRadius: "8px", display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                    <span style={{ fontSize: "1.2rem" }}>🔒</span>
+                    <p style={{ margin: 0, color: "#9A3412", fontSize: "0.8rem", fontWeight: "500" }}>
+                      Consultez d'abord tous les supports puis confirmez ci-dessus pour débloquer le quiz formatif.
                     </p>
                   </div>
                 )}

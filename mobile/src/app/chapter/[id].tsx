@@ -158,6 +158,7 @@ export default function ChapterScreen() {
 
   const [quizScore, setQuizScore] = useState<number | null>(null);
   const [quizCompleted, setQuizCompleted] = useState<boolean>(false);
+  const [supportsConfirmed, setSupportsConfirmed] = useState<boolean>(false);
 
   const fetchChapter = async () => {
     try {
@@ -217,8 +218,32 @@ export default function ChapterScreen() {
   };
 
   const handleQuizPress = () => {
+    if (!supportsConfirmed && !quizCompleted) {
+      Alert.alert(
+        'Supports non consultés',
+        'Veuillez d\'abord consulter tous les supports de ce chapitre et confirmer en appuyant sur le bouton "J\'ai consulté tous les supports".',
+      );
+      return;
+    }
     if (chapter?.quiz) {
       router.push({ pathname: '/quiz/[id]', params: { id: chapter.quiz.id } });
+    }
+  };
+
+  const handleConfirmSupports = async () => {
+    setSupportsConfirmed(true);
+    // Marquer aussi la progression côté serveur
+    try {
+      await fetch(API_ENDPOINTS.studentProgress, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ chapterId: id }),
+      });
+    } catch (err) {
+      console.log('Erreur enregistrement progression:', err);
     }
   };
 
@@ -540,18 +565,102 @@ export default function ChapterScreen() {
               </View>
             )}
 
-            {/* Quiz */}
+            {/* Bouton de confirmation des supports + Quiz */}
             {chapter.quiz && (
               <View style={styles.quizSection}>
-                <Pressable style={({ pressed }) => [styles.quizCard, pressed && { opacity: 0.85 }]} onPress={handleQuizPress}>
+                {/* Bouton de confirmation */}
+                {!supportsConfirmed && !quizCompleted && (
+                  <View style={{
+                    backgroundColor: 'white',
+                    borderRadius: 14,
+                    padding: 20,
+                    marginBottom: 14,
+                    borderWidth: 1,
+                    borderColor: '#E5E7EB',
+                    alignItems: 'center',
+                    shadowColor: '#000',
+                    shadowOffset: { width: 0, height: 1 },
+                    shadowOpacity: 0.05,
+                    shadowRadius: 3,
+                    elevation: 1,
+                  }}>
+                    <ThemedText style={{ fontSize: 28, marginBottom: 8 }}>📚</ThemedText>
+                    <ThemedText style={{ color: '#1F2937', fontWeight: '600', fontSize: 14, textAlign: 'center', marginBottom: 4 }}>
+                      Avez-vous consulté tous les supports ?
+                    </ThemedText>
+                    <ThemedText style={{ color: '#6B7280', fontSize: 12, textAlign: 'center', marginBottom: 14, lineHeight: 18 }}>
+                      Consultez les vidéos, documents et ressources ci-dessus avant de passer au quiz.
+                    </ThemedText>
+                    <Pressable
+                      style={({ pressed }) => [{
+                        backgroundColor: C.secondary,
+                        borderColor: C.primaryDark,
+                        borderWidth: 2,
+                        borderRadius: 12,
+                        paddingVertical: 14,
+                        paddingHorizontal: 24,
+                        alignItems: 'center',
+                        width: '100%',
+                        shadowColor: '#F97316',
+                        shadowOffset: { width: 0, height: 2 },
+                        shadowOpacity: 0.3,
+                        shadowRadius: 4,
+                        elevation: 3,
+                      }, pressed && { opacity: 0.85, transform: [{ scale: 0.98 }] }]}
+                      onPress={handleConfirmSupports}
+                    >
+                      <ThemedText style={{ color: 'white', fontWeight: '700', fontSize: 14 }}>
+                        ✅ J'ai consulté tous les supports
+                      </ThemedText>
+                    </Pressable>
+                  </View>
+                )}
+
+                {/* Message de confirmation */}
+                {(supportsConfirmed || quizCompleted) && !quizCompleted && (
+                  <View style={{
+                    backgroundColor: '#F0FDF4',
+                    borderRadius: 10,
+                    padding: 10,
+                    marginBottom: 12,
+                    borderWidth: 1,
+                    borderColor: '#86efac',
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 8,
+                  }}>
+                    <ThemedText style={{ fontSize: 16 }}>✅</ThemedText>
+                    <ThemedText style={{ color: '#166534', fontSize: 13, fontWeight: '600' }}>
+                      Supports consultés — Quiz débloqué
+                    </ThemedText>
+                  </View>
+                )}
+
+                {/* Bouton quiz - grisé si non confirmé */}
+                <Pressable
+                  style={({ pressed }) => [
+                    styles.quizCard,
+                    (!supportsConfirmed && !quizCompleted) && { opacity: 0.5 },
+                    pressed && (supportsConfirmed || quizCompleted) && { opacity: 0.85 },
+                  ]}
+                  onPress={handleQuizPress}
+                >
                   <View style={styles.quizIconBox}>
-                    <ThemedText style={styles.quizIconText}>✏️</ThemedText>
+                    <ThemedText style={styles.quizIconText}>
+                      {(!supportsConfirmed && !quizCompleted) ? '🔒' : '✏️'}
+                    </ThemedText>
                   </View>
                   <View style={{ flex: 1 }}>
                     <ThemedText style={styles.quizTitle}>Quiz Formatif</ThemedText>
-                    <ThemedText style={styles.quizSubtitle}>{chapter.quiz.questions?.length || 0} questions</ThemedText>
+                    <ThemedText style={styles.quizSubtitle}>
+                      {(!supportsConfirmed && !quizCompleted)
+                        ? 'Confirmez d\'abord la consultation des supports'
+                        : `${chapter.quiz.questions?.length || 0} questions`}
+                    </ThemedText>
                   </View>
-                  <ThemedText style={styles.quizArrow}>→</ThemedText>
+                  <ThemedText style={styles.quizArrow}>
+                    {(!supportsConfirmed && !quizCompleted) ? '🔒' : '→'}
+                  </ThemedText>
                 </Pressable>
 
                 {quizCompleted && (
