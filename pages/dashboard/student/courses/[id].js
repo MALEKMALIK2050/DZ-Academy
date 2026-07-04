@@ -805,9 +805,27 @@ export default function StudentCourse() {
                     <h3 style={{ margin: "0 0 0.5rem", fontSize: isMobile ? "1rem" : "1.1rem", color: "#1B4332" }}>📝 Quiz formatif</h3>
 
                     {quizStats[activeChapter.quiz.id]?.reussi ? (
-                      <p style={{ color: "#40916C", margin: 0, fontWeight: "500", fontSize: "0.85rem" }}>
-                        ✅ Quiz réussi ({quizStats[activeChapter.quiz.id].score}%)
-                      </p>
+                      <div style={{
+                        background: "linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)",
+                        border: "1px solid #86efac",
+                        borderRadius: "12px",
+                        padding: "1rem 1.25rem",
+                        marginTop: "0.75rem",
+                        boxShadow: "0 2px 8px rgba(46, 125, 50, 0.05)",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between"
+                      }}>
+                        <div>
+                          <p style={{ color: "#166534", margin: 0, fontWeight: "700", fontSize: "0.95rem" }}>
+                            🎉 Quiz réussi avec succès !
+                          </p>
+                          <p style={{ color: "#2d6a4f", margin: "0.2rem 0 0", fontSize: "0.85rem", fontWeight: "500" }}>
+                            Résultat obtenu : <strong>{quizStats[activeChapter.quiz.id].score}%</strong>
+                          </p>
+                        </div>
+                        <span style={{ fontSize: "1.5rem" }}>🌸</span>
+                      </div>
                     ) : (
                       <div>
                         {quizStats[activeChapter.quiz.id]?.tentatives > 0 && (
@@ -960,46 +978,47 @@ function QuizDisplay({ quiz, answers, setAnswers, result, submitting, onSubmit, 
 
                 {result.reussi && (
                   <div style={{
-                    background: "linear-gradient(135deg, #f0fdf4, #dcfce7)",
+                    background: "#ffffff",
                     border: "2px solid #86efac",
-                    borderRadius: "16px",
-                    padding: isMobile ? "1.2rem" : "1.75rem",
+                    borderRadius: "20px",
+                    padding: isMobile ? "1.5rem 1.2rem" : "2.5rem 2rem",
                     marginBottom: "1.5rem",
                     textAlign: "center",
-                    boxShadow: "0 4px 20px rgba(64,145,108,0.15)"
+                    boxShadow: "0 10px 30px rgba(64,145,108,0.08)",
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center"
                   }}>
-                    {/* Ligne 1 : Bravo + fleur */}
-                    <div style={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      gap: "0.5rem",
-                      marginBottom: "0.4rem"
-                    }}>
-                      <span style={{ fontSize: isMobile ? "1.6rem" : "2rem" }}>🌸</span>
-                      <span style={{
-                        fontSize: isMobile ? "1.8rem" : "2.2rem",
-                        fontWeight: "900",
-                        background: "linear-gradient(135deg, #16a34a, #059669, #10b981)",
-                        WebkitBackgroundClip: "text",
-                        WebkitTextFillColor: "transparent",
-                        letterSpacing: "-0.5px"
-                      }}>Bravo !</span>
-                      <span style={{ fontSize: isMobile ? "1.6rem" : "2rem" }}>🌸</span>
+                    {/* Grande police Bravo + fleur en ligne séparée */}
+                    <div style={{ fontSize: isMobile ? "2.5rem" : "3.5rem", marginBottom: "0.5rem" }}>
+                      🌸
                     </div>
+                    <h1 style={{
+                      fontSize: isMobile ? "2.5rem" : "3.8rem",
+                      fontWeight: "900",
+                      background: "linear-gradient(135deg, #2D6A4F 0%, #40916C 50%, #D97706 100%)",
+                      WebkitBackgroundClip: "text",
+                      WebkitTextFillColor: "transparent",
+                      margin: "0 0 1rem 0",
+                      letterSpacing: "-1px",
+                      lineHeight: 1.1
+                    }}>
+                      Bravo !
+                    </h1>
 
                     {/* Message de réussite */}
                     <p style={{
-                      color: "#166534",
-                      fontSize: isMobile ? "0.8rem" : "0.88rem",
+                      color: "#4A5563",
+                      fontSize: isMobile ? "0.9rem" : "1.05rem",
                       fontWeight: "500",
-                      margin: "0 0 1.4rem",
-                      opacity: 0.85
+                      margin: "0 0 2rem 0",
+                      maxWidth: "500px",
+                      lineHeight: "1.5"
                     }}>
-                      {result.message || "Quiz validé avec succès ! Continuez sur votre lancée."}
+                      {result.message || "Vous avez validé ce quiz avec succès ! Continuez sur votre lancée."}
                     </p>
 
-                    {/* Ligne 2 : CTA Chapitre suivant */}
+                    {/* Ligne 2 : CTA Chapitre suivant utilisant l'orange et le vert */}
                     {nextChapterInfo && (
                       <button
                         onClick={nextChapterInfo.onGo}
@@ -1007,32 +1026,32 @@ function QuizDisplay({ quiz, answers, setAnswers, result, submitting, onSubmit, 
                           display: "inline-flex",
                           flexDirection: "column",
                           alignItems: "center",
-                          gap: "0.25rem",
-                          background: "linear-gradient(135deg, #16a34a, #059669)",
+                          gap: "0.3rem",
+                          background: "linear-gradient(135deg, #2D6A4F 0%, #D97706 100%)", // Vert vers Orange
                           color: "white",
                           border: "none",
-                          borderRadius: "14px",
-                          padding: isMobile ? "0.85rem 1.4rem" : "1rem 2rem",
+                          borderRadius: "16px",
+                          padding: isMobile ? "1rem 1.5rem" : "1.2rem 2.5rem",
                           cursor: "pointer",
-                          boxShadow: "0 4px 15px rgba(22,163,74,0.4)",
+                          boxShadow: "0 6px 20px rgba(217,119,6,0.3)",
                           transition: "all 0.2s ease",
                           width: "100%",
-                          maxWidth: "380px"
+                          maxWidth: "420px"
                         }}
                         onMouseEnter={(e) => {
-                          e.currentTarget.style.transform = "translateY(-2px)";
-                          e.currentTarget.style.boxShadow = "0 6px 20px rgba(22,163,74,0.5)";
+                          e.currentTarget.style.transform = "translateY(-3px)";
+                          e.currentTarget.style.boxShadow = "0 10px 25px rgba(217,119,6,0.45)";
                         }}
                         onMouseLeave={(e) => {
                           e.currentTarget.style.transform = "translateY(0)";
-                          e.currentTarget.style.boxShadow = "0 4px 15px rgba(22,163,74,0.4)";
+                          e.currentTarget.style.boxShadow = "0 6px 20px rgba(217,119,6,0.3)";
                         }}
                       >
-                        <span style={{ fontSize: isMobile ? "0.65rem" : "0.72rem", fontWeight: "600", opacity: 0.85, textTransform: "uppercase", letterSpacing: "0.8px" }}>
-                          Accéder au Chapitre {nextChapterInfo.number}
+                        <span style={{ fontSize: isMobile ? "0.68rem" : "0.75rem", fontWeight: "600", opacity: 0.9, textTransform: "uppercase", letterSpacing: "1.2px" }}>
+                          Accéder au Chapitre Suivant :
                         </span>
-                        <span style={{ fontSize: isMobile ? "0.9rem" : "1rem", fontWeight: "800", letterSpacing: "-0.2px" }}>
-                          {nextChapterInfo.title} →
+                        <span style={{ fontSize: isMobile ? "0.95rem" : "1.1rem", fontWeight: "800", letterSpacing: "-0.2px" }}>
+                          "{nextChapterInfo.title}" →
                         </span>
                       </button>
                     )}
@@ -1040,13 +1059,14 @@ function QuizDisplay({ quiz, answers, setAnswers, result, submitting, onSubmit, 
                     {/* Si dernier chapitre : pas de suivant */}
                     {!nextChapterInfo && quiz.type !== "SOMMATIF" && (
                       <div style={{
-                        background: "rgba(255,255,255,0.7)",
+                        background: "#f0fdf4",
                         border: "1px solid #86efac",
-                        borderRadius: "10px",
-                        padding: "0.8rem 1.2rem",
+                        borderRadius: "12px",
+                        padding: "1rem 1.5rem",
                         color: "#166534",
-                        fontSize: isMobile ? "0.8rem" : "0.85rem",
-                        fontWeight: "600"
+                        fontSize: isMobile ? "0.85rem" : "0.95rem",
+                        fontWeight: "600",
+                        maxWidth: "400px"
                       }}>
                         🏁 Dernier chapitre complété ! Vous pouvez maintenant passer l'examen final.
                       </div>
