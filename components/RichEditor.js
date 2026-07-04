@@ -62,6 +62,17 @@ export default function RichEditor({ value, onChange, placeholder }) {
 
         <span style={{ width: "1px", background: "#e2e8f0", margin: "0 0.2rem" }} />
 
+        {/* Symboles Maths */}
+        {btn(() => editor.chain().focus().insertContent('√').run(), "√", false)}
+        {btn(() => editor.chain().focus().insertContent('×').run(), "×", false)}
+        {btn(() => editor.chain().focus().insertContent('÷').run(), "÷", false)}
+        {btn(() => editor.chain().focus().insertContent('≠').run(), "≠", false)}
+        {btn(() => editor.chain().focus().insertContent('≈').run(), "≈", false)}
+        {btn(() => editor.chain().focus().insertContent('π').run(), "π", false)}
+
+
+        <span style={{ width: "1px", background: "#e2e8f0", margin: "0 0.2rem" }} />
+
         {/* Titres */}
         {btn(() => editor.chain().focus().toggleHeading({ level: 1 }).run(), "H1", editor.isActive("heading", { level: 1 }))}
         {btn(() => editor.chain().focus().toggleHeading({ level: 2 }).run(), "H2", editor.isActive("heading", { level: 2 }))}
