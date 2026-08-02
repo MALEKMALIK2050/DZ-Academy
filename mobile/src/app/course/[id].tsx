@@ -1,663 +1,823 @@
+// src/app/course/[id].tsx
+import React, { useState, useEffect, useCallback } from 'react';
+import {
+  StyleSheet,
+  ScrollView,
+  View,
+  Pressable,
+  RefreshControl,
+  Alert,
+  useWindowDimensions,
+  ActivityIndicator,
+} from 'react-native';
+import { useLocalSearchParams, useRouter, Stack, useFocusEffect } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import RenderHTML from 'react-native-render-html';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { BottomTabInset, Spacing } from '@/constants/theme';
-import { API_URL, API_ENDPOINTS } from '@/constants/api';
+import { LoadingScreen } from '@/components/loading-screen';
+import { PaymentModal } from '@/components/payment-modal';
 import { useAuth } from '@/context/auth-context';
-import { router, useLocalSearchParams, useFocusEffect } from 'expo-router';
-import { useEffect, useState, useCallback } from 'react';
+import { API_ENDPOINTS, API_URL } from '@/constants/api';
+import { BottomTabInset, Spacing } from '@/constants/theme';
 import {
-    ActivityIndicator,
-    Pressable,
-    RefreshControl,
-    ScrollView,
-    StyleSheet,
-    View,
-} from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+  getMatiereStyles,
+  getSubjectIcon,
+  getClasseLabel,
+  getNiveauLabel,
+  getMatiereLabel,
+} from '@/constants/algerian-education';
 
-// ✅ STYLES (inchangés)
 const C = {
-    primary: '#16A34A',
-    primaryDark: '#15803D',
-    primaryLight: '#DCFCE7',
-    secondary: '#F97316',
-    secondaryLight: '#FFF7ED',
-    accent: '#208AEF',
-    danger: '#DC2626',
-    success: '#22C55E',
-    warning: '#EAB308',
-    gray50: '#F9FAFB',
-    gray100: '#F3F4F6',
-    gray200: '#E5E7EB',
-    gray300: '#D1D5DB',
-    gray400: '#9CA3AF',
-    gray500: '#6B7280',
-    gray700: '#374151',
-    gray800: '#1F2937',
-    gray900: '#111827',
+  primary: '#059669',
+  primaryDark: '#047857',
+  primaryLight: '#ECFDF5',
+  secondary: '#F97316',
+  secondaryLight: '#FFF7ED',
+  blue: '#2563EB',
+  danger: '#DC2626',
+  success: '#16A34A',
+  warning: '#EAB308',
+  gray: '#6B7280',
+  gray700: '#374151',
+  gray900: '#111827',
+  lightGray: '#F3F4F6',
+  white: '#FFFFFF',
+  border: '#E5E7EB',
+  bg: '#FAF8F5',
 };
 
 interface QuizInfo {
-    id: number;
-    type: string;
+  id: number;
+  type: string;
 }
 
 interface Chapter {
-    id: number;
-    title?: string;
-    titre?: string;
-    description?: string;
-    objectifs?: string;
-    ordre?: number;
-    isLocked?: boolean;
-    quiz?: QuizInfo;
-    quizScore?: number;
-    quizCompleted?: boolean;
+  id: number;
+  title?: string;
+  titre?: string;
+  description?: string;
+  objectifs?: string;
+  ordre?: number;
+  isLocked?: boolean;
+  quiz?: QuizInfo;
+  quizScore?: number;
+  quizCompleted?: boolean;
+  requiresPayment?: boolean;
 }
 
 interface CourseDetail {
-    id: number;
-    title?: string;
-    titre?: string;
-    description?: string;
-    objectifs?: string;
-    matiere?: string;
-    niveau?: string;
-    annee?: string;
-    chapters?: Chapter[];
-    hasPretest?: boolean;
-    isPretestDone?: boolean;
-    isFinalQuizLocked?: boolean;
-    quizFinal?: QuizInfo;
-    pretest?: any;
+  id: number;
+  title?: string;
+  titre?: string;
+  description?: string;
+  objectifs?: string;
+  matiere?: string;
+  niveau?: string;
+  annee?: string;
+  prix?: number;
+  chapters?: Chapter[];
+  hasPretest?: boolean;
+  isPretestDone?: boolean;
+  isFinalQuizLocked?: boolean;
+  quizFinal?: QuizInfo;
+  pretest?: any;
 }
 
 export default function CourseDetailScreen() {
-    const { id } = useLocalSearchParams();
-    const { token } = useAuth();
-    const insets = useSafeAreaInsets();
+  const { id } = useLocalSearchParams();
+  const router = useRouter();
+  const { token } = useAuth();
+  const insets = useSafeAreaInsets();
+  const { width } = useWindowDimensions();
 
-    const [course, setCourse] = useState<CourseDetail | null>(null);
-    const [loading, setLoading] = useState(true);
-    const [refreshing, setRefreshing] = useState(false);
-    const [error, setError] = useState<string | null>(null);
+  const [course, setCourse] = useState<CourseDetail | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-         // ✅ LOGIQUE DE PROGRESSION COMPLÈTE
-    const calculateChapterLocks = (courseData: CourseDetail): { chapters: Chapter[]; isFinalLocked: boolean } => {
-        if (!courseData.chapters) {
-            return { chapters: [], isFinalLocked: true };
-        }
+  // مستويات الوصول للدورة (Freemium): 'FULL' | 'FREE_TRIAL' | 'PAYWALL' | 'LOCKED' | null
+  const [accessLevel, setAccessLevel] = useState<string | null>(null);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
 
-        const chapters = courseData.chapters;
-        const isPretestDone = courseData.isPretestDone || false;
-
-        // 🔒 RÈGLE 1 & 2 : Verrouillage des chapitres
-        const processedChapters = chapters.map((chapter, index) => {
-            // Chapitre 1 = prétest obligatoire
-            if (index === 0) {
-                const hasPretest = courseData.hasPretest !== undefined ? courseData.hasPretest : !!courseData.pretest;
-                return {
-                    ...chapter,
-                    isLocked: hasPretest ? !isPretestDone : false,
-                };
-            }
-
-            // Chapitre N = 75% au quiz du chapitre N-1
-            const previousChapter = chapters[index - 1];
-            const hasPrevQuiz = !!previousChapter?.quiz;
-            const prevQuizScore = previousChapter?.quizScore || 0;
-            const prevQuizCompleted = previousChapter?.quizCompleted || false;
-            
-            // Si pas de quiz, on considère que le chapitre est "passé" par défaut (ou on pourrait vérifier 'lu')
-            const isPreviousChapterPassed = hasPrevQuiz ? (prevQuizCompleted && prevQuizScore >= 75) : true;
-
-            return {
-                ...chapter,
-                isLocked: !isPreviousChapterPassed,
-            };
-        });
-
-        // 🔒 RÈGLE 3 : Test sommatif = débloqué UNIQUEMENT si le dernier chapitre est réussi (75%)
-        const lastChapter = processedChapters[processedChapters.length - 1];
-        const hasLastChapterQuiz = !!lastChapter?.quiz;
-        const isLastChapterPassed = hasLastChapterQuiz ? (lastChapter?.quizCompleted && (lastChapter?.quizScore || 0) >= 75) : true;
-        const isFinalLocked = !isLastChapterPassed;
-
-        return {
-            chapters: processedChapters,
-            isFinalLocked: isFinalLocked,
-        };
-    };
-
-const fetchCourseDetails = async () => {
-    try {
-        setError(null);
-        const res = await fetch(API_ENDPOINTS.courseDetail(id as string), {
-            headers: { Authorization: `Bearer ${token}` },
-        });
-        if (!res.ok) throw new Error(`Erreur ${res.status}`);
-        const data = await res.json();
-
-        console.log('🔍 ═══ COURSE DATA REÇUES ═══');
-        console.log('📦 Données brutes:', JSON.stringify(data, null, 2));
-        console.log('📦 data.isPretestDone:', data.isPretestDone);
-        console.log('📦 data.pretest:', data.pretest);
-        console.log('📦 data.pretestDone:', data.pretestDone);
-
-        // ✅ AJOUT : Vérifier si le prétest a été complété
-        if (data.pretest && (data.pretest.completed === true || data.pretest.passed === true)) {
-            console.log('✅ PRÉTEST RECONNU (completed/passed)');
-            data.isPretestDone = true;
-        }
-        // Si le backend renvoie un champ different
-        if (data.pretestDone === undefined && data.pretest?.score !== undefined) {
-            console.log('✅ PRÉTEST RECONNU (score exists)');
-            data.isPretestDone = true;
-        }
-
-        // ✅ VÉRIFICATION FORCEE VIA L'API RESULTATS PRETEST (Evite les problemes de cache ou d'API non deployée)
-        if (data.pretest && data.pretest.id && !data.isPretestDone) {
-            try {
-                const resultRes = await fetch(`${API_URL}/api/pretest/${data.pretest.id}/result?courseId=${data.id}`, {
-                    headers: { 
-                        Authorization: `Bearer ${token}`,
-                        'Cache-Control': 'no-cache, no-store, must-revalidate',
-                        'Pragma': 'no-cache'
-                    }
-                });
-                if (resultRes.ok) {
-                    const resultData = await resultRes.json();
-                    if (resultData && resultData.id) {
-                        console.log('✅ PRETEST RESULT FOUND VIA API DIRECT FETCH');
-                        data.isPretestDone = true;
-                    }
-                }
-            } catch (err) {
-                console.log("Erreur lors de la verification du pretest:", err);
-            }
-        }
-
-        // ✅ RECUPERATION DES SCORES DES QUIZ FORMATIFS POUR CHAQUE CHAPITRE
-        if (data.chapters && data.chapters.length > 0) {
-            const quizPromises = data.chapters.map(async (chapter: any) => {
-                if (chapter.quiz && chapter.quiz.id) {
-                    try {
-                        const quizRes = await fetch(`${API_URL}/api/student/quiz?quizId=${chapter.quiz.id}`, {
-                            headers: { 
-                                Authorization: `Bearer ${token}`,
-                                'Cache-Control': 'no-cache, no-store, must-revalidate',
-                                'Pragma': 'no-cache'
-                            }
-                        });
-                        if (quizRes.ok) {
-                            const quizData = await quizRes.json();
-                            chapter.quizScore = quizData.bestScore || 0;
-                            chapter.quizCompleted = quizData.dejaReussi || false;
-                            console.log(`✅ Chapitre ${chapter.id} - Quiz Score: ${chapter.quizScore}, Reussi: ${chapter.quizCompleted}`);
-                        }
-                    } catch (err) {
-                        console.log("Erreur fetch quiz result pour chapitre", chapter.id, err);
-                    }
-                }
-                return chapter;
-            });
-            await Promise.all(quizPromises);
-        }
-
-        console.log('📦 FINAL isPretestDone:', data.isPretestDone);
-        console.log('📦 FINAL pretest:', data.pretest);
-
-        const { chapters: processedChapters, isFinalLocked } = calculateChapterLocks(data);
-        
-        console.log('🔓 Chapitres après traitement:');
-        processedChapters.forEach((ch, idx) => {
-            console.log(`  Chapitre ${idx + 1}: locked=${ch.isLocked}`);
-        });
-
-        setCourse({
-            ...data,
-            chapters: processedChapters,
-            isFinalQuizLocked: isFinalLocked,
-        });
-    } catch (err) {
-        console.error('Fetch course details error:', err);
-        setError('Erreur lors du chargement du cours');
-    } finally {
-        setLoading(false);
-        setRefreshing(false);
+  // ── حساب القيود والشروط للفصول والاختبار الختامي ──
+  const calculateChapterLocks = (
+    courseData: CourseDetail,
+    currentAccessLevel: string | null
+  ): { chapters: Chapter[]; isFinalLocked: boolean } => {
+    if (!courseData.chapters) {
+      return { chapters: [], isFinalLocked: true };
     }
-};
 
-    useEffect(() => {
-        fetchCourseDetails();
-    }, [id, token]);
+    const chapters = courseData.chapters;
+    const isPretestDone = courseData.isPretestDone || false;
 
-    // ✅ REFETCH À CHAQUE RETOUR DE LA PAGE (après pretest, etc)
-    useFocusEffect(
-        useCallback(() => {
-            console.log('═════════════════════════════════════════');
-            console.log('🔄 FOCUS EFFECT TRIGGERED - Refetching course data...');
-            console.log('course id:', id);
-            console.log('token exists:', !!token);
-            fetchCourseDetails();
-        }, [id, token])
-    );
+    // 1. Accès complet (مسجل + دفع كامل)
+    const isFull = currentAccessLevel === 'FULL' || currentAccessLevel === null;
+    // 2. تجربة مجانية (الفصل الأول فقط متاح)
+    const isFreeTrial = currentAccessLevel === 'FREE_TRIAL';
+    // 3. جدار الدفع بعد إكمال الفصل الأول في الوضع المجاني
+    const isPaywall = currentAccessLevel === 'PAYWALL';
 
-    const handleRefresh = () => {
-        setRefreshing(true);
-        fetchCourseDetails();
-    };
+    const processedChapters: Chapter[] = [];
+    for (let index = 0; index < chapters.length; index++) {
+      const chapter = chapters[index];
 
-    const handleChapterPress = (chapter: Chapter) => {
-        if (chapter.isLocked) {
-            return;
-        }
-        router.push({
-            pathname: '/chapter/[id]',
-            params: { id: chapter.id },
+      // ─── الفصل الأول ───
+      if (index === 0) {
+        const hasPretest = courseData.hasPretest !== undefined ? courseData.hasPretest : !!courseData.pretest;
+        // إذا كان هناك اختبار مكتسبات قبلية، يُقفل الفصل 1 حتى يجتازه التلميذ
+        processedChapters.push({
+          ...chapter,
+          isLocked: hasPretest && !isPaywall ? !isPretestDone : false,
+          requiresPayment: false,
         });
-    };
+        continue;
+      }
 
-    const handlePretestPress = () => {
-        if (course?.id) {
-            router.push({
-                pathname: '/pretest/[id]',
-                params: { id: course.id },
-            });
+      // ─── الفصول من 2 فما فوق ───
+      // قاعدة الفريميوم: في حالة التجربة المجانية أو جدار الدفع، الفصول 2+ مقفلة وتتطلب اشتراكاً
+      if (isFreeTrial || isPaywall) {
+        processedChapters.push({
+          ...chapter,
+          isLocked: true,
+          requiresPayment: true,
+        });
+        continue;
+      }
+
+      // في حالة الوصول الكامل: الفتح التتابعي المشروط بنجاح اختبار الفصل السابق (علامة >= 75%)
+      const prevOriginal = chapters[index - 1];
+      const prevProcessed = processedChapters[index - 1];
+      const hasPrevQuiz = !!prevOriginal?.quiz;
+      const prevQuizScore = prevOriginal?.quizScore || 0;
+      const prevQuizCompleted = prevOriginal?.quizCompleted || false;
+      const isPrevQuizPassed = hasPrevQuiz ? (prevQuizCompleted && prevQuizScore >= 75) : true;
+
+      const isLocked = prevProcessed.isLocked || !isPrevQuizPassed;
+
+      processedChapters.push({
+        ...chapter,
+        isLocked,
+        requiresPayment: false,
+      });
+    }
+
+    // ─── الاختبار الختامي الشامل (Test Sommatif) ───
+    // يُفتح حصراً إذا كان الوصول كاملاً، وآخر فصل مفتوح، وتم اجتياز اختباره التكويني بنجاح (>= 75%)
+    const lastChapter = processedChapters[processedChapters.length - 1];
+    const hasLastQuiz = !!lastChapter?.quiz;
+    const isLastPassed = hasLastQuiz ? (lastChapter?.quizCompleted && (lastChapter?.quizScore || 0) >= 75) : true;
+    const isFinalLocked = isFreeTrial || isPaywall || !!lastChapter?.isLocked || !isLastPassed;
+
+    return {
+      chapters: processedChapters,
+      isFinalLocked,
+    };
+  };
+
+  const fetchCourseDetails = async () => {
+    if (!token) return;
+    try {
+      setError(null);
+      const res = await fetch(API_ENDPOINTS.courseDetail(id as string), {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!res.ok) throw new Error(`خطأ ${res.status}`);
+      const data: CourseDetail = await res.json();
+
+      // 1. التحقق من إكمال اختبار المكتسبات القبلية
+      if (data.pretest && (data.pretest.completed === true || data.pretest.passed === true)) {
+        data.isPretestDone = true;
+      }
+      if (data.pretest && data.pretest.id && !data.isPretestDone) {
+        try {
+          const resResult = await fetch(`${API_URL}/api/pretest/${data.pretest.id}/result?courseId=${data.id}`, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          if (resResult.ok) {
+            const resultData = await resResult.json();
+            if (resultData && resultData.id) {
+              data.isPretestDone = true;
+            }
+          }
+        } catch {}
+      }
+
+      // 2. استرجاع نتائج الاختبارات التكوينية لكل الفصول
+      if (data.chapters && data.chapters.length > 0) {
+        const quizPromises = data.chapters.map(async (chapter: any) => {
+          if (chapter.quiz && chapter.quiz.id) {
+            try {
+              const qRes = await fetch(`${API_URL}/api/student/quiz?quizId=${chapter.quiz.id}`, {
+                headers: { Authorization: `Bearer ${token}` },
+              });
+              if (qRes.ok) {
+                const qData = await qRes.json();
+                chapter.quizScore = qData.bestScore || (qData.score !== undefined ? qData.score : 0);
+                chapter.quizCompleted = qData.dejaReussi || (chapter.quizScore >= 75);
+              }
+            } catch {}
+          }
+          return chapter;
+        });
+        await Promise.all(quizPromises);
+      }
+
+      // 3. التحقق من صلاحية الوصول (Freemium Access-Check)
+      let level: string = 'FULL';
+      try {
+        const accessRes = await fetch(API_ENDPOINTS.accessCheck(id as string), {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (accessRes.ok) {
+          const accessData = await accessRes.json();
+          level = accessData.accessLevel || 'FULL';
+          setAccessLevel(level);
+
+          if (accessData.coursePrix !== undefined) {
+            data.prix = accessData.coursePrix;
+          }
+
+          if (level === 'LOCKED') {
+            Alert.alert(
+              'دورة تتطلب اشتراكاً 🔒',
+              'هذه الدورة تتطلب اشتراكاً مسبقاً. يمكنك التسجيل فيها وتأكيد الدفع عبر الكتالوج.',
+              [{ text: 'حسناً', onPress: () => router.back() }]
+            );
+            return;
+          }
+
+          if (level === 'PAYWALL') {
+            setShowPaymentModal(true);
+          }
         }
-    };
+      } catch {}
 
-    const handleFinalQuizPress = () => {
-        if (course?.quizFinal && !course.isFinalQuizLocked) {
-            router.push({
-                pathname: '/quiz/[id]',
-                params: { id: course.quizFinal.id },
-            });
-        }
-    };
+      // 4. تطبيق القيود وتحديث الحالة
+      const { chapters: finalChapters, isFinalLocked } = calculateChapterLocks(data, level);
 
-    const courseTitle = course?.title || course?.titre || 'Cours';
-    const totalChapters = course?.chapters?.length || 0;
-    const unlockedChapters = course?.chapters?.filter(c => c.isLocked === false || c.isLocked === undefined).length || 0;
-    const progressPercent = totalChapters > 0 ? Math.round((unlockedChapters / totalChapters) * 100) : 0;
+      setCourse({
+        ...data,
+        chapters: finalChapters,
+        isFinalQuizLocked: isFinalLocked,
+      });
+    } catch (err: any) {
+      console.error('Course details fetch error:', err);
+      setError('تعذر تحميل محتوى الدورة، يرجى إعادة المحاولة.');
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
 
-    const hasPretest = course?.hasPretest !== undefined ? course.hasPretest : !!course?.pretest;
-    const isPretestDone = course?.isPretestDone || false;
+  useEffect(() => {
+    setLoading(true);
+    fetchCourseDetails();
+  }, [id, token]);
 
+  // تحديث تلقائي عند الرجوع للصفحة (مثلاً بعد إكمال الاختبار التكويني أو اختبار المكتسبات)
+  useFocusEffect(
+    useCallback(() => {
+      fetchCourseDetails();
+    }, [id, token])
+  );
+
+  const onRefresh = () => {
+    setRefreshing(true);
+    fetchCourseDetails();
+  };
+
+  const handleChapterPress = (chapter: Chapter, index: number) => {
+    if (chapter.requiresPayment) {
+      setShowPaymentModal(true);
+      return;
+    }
+    if (chapter.isLocked) {
+      if (index === 0 && course?.hasPretest && !course?.isPretestDone) {
+        Alert.alert(
+          'تنبيه بيداغوجي 🎯',
+          'يجب اجتياز اختبار المكتسبات القبلية أولاً لفتح دروس هذا الفصل.',
+          [
+            { text: 'إلغاء', style: 'cancel' },
+            {
+              text: 'بدء الاختبار القبلي',
+              onPress: () => router.push({ pathname: '/pretest/[id]', params: { id: String(course.id) } }),
+            },
+          ]
+        );
+      } else {
+        Alert.alert(
+          'الفصل مغلق 🔒',
+          'يرجى اجتياز اختبار الفصل السابق بنسبة نجاح 75% على الأقل لفتح هذا الفصل.'
+        );
+      }
+      return;
+    }
+    router.push({ pathname: '/chapter/[id]', params: { id: String(chapter.id) } });
+  };
+
+  if (loading) {
+    return <LoadingScreen message="جاري إعداد محتوى الدورة التعليمية..." />;
+  }
+
+  if (error || !course) {
     return (
-        <ThemedView style={styles.container}>
-            <ScrollView
-                style={styles.scrollView}
-                contentContainerStyle={[
-                    styles.contentContainer,
-                    { paddingBottom: insets.bottom + BottomTabInset + Spacing.three },
-                ]}
-                refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={C.primary} />}
-            >
-                {loading ? (
-                    <View style={styles.loadingContainer}>
-                        <ActivityIndicator size="large" color={C.primary} />
-                        <ThemedText style={styles.loadingText}>Chargement du cours...</ThemedText>
-                    </View>
-                ) : error ? (
-                    <View style={styles.errorContainer}>
-                        <ThemedText style={styles.errorIcon}>⚠️</ThemedText>
-                        <ThemedText style={styles.errorText}>{error}</ThemedText>
-                        <Pressable style={styles.retryButton} onPress={fetchCourseDetails}>
-                            <ThemedText style={styles.retryButtonText}>Réessayer</ThemedText>
-                        </Pressable>
-                    </View>
-                ) : course ? (
-                    <>
-                        {/* HEADER */}
-                        <View style={styles.headerCard}>
-                            <View style={styles.headerGradient}>
-                                <ThemedText style={styles.headerEmoji}>📚</ThemedText>
-                                <ThemedText style={styles.courseTitle}>{courseTitle}</ThemedText>
-                                {course.description ? (
-                                    <ThemedText style={styles.courseDescription}>{course.description}</ThemedText>
-                                ) : null}
-                            </View>
-
-                            {(course.matiere || course.niveau || course.annee) && (
-                                <View style={styles.metaRow}>
-                                    {course.matiere && (
-                                        <View style={styles.metaTag}>
-                                            <ThemedText style={styles.metaTagText}>📖 {course.matiere}</ThemedText>
-                                        </View>
-                                    )}
-                                    {course.niveau && (
-                                        <View style={[styles.metaTag, { backgroundColor: '#EFF6FF' }]}>
-                                            <ThemedText style={[styles.metaTagText, { color: C.accent }]}>🎓 {course.niveau}</ThemedText>
-                                        </View>
-                                    )}
-                                    {course.annee && (
-                                        <View style={[styles.metaTag, { backgroundColor: C.secondaryLight }]}>
-                                            <ThemedText style={[styles.metaTagText, { color: C.secondary }]}>📅 {course.annee}</ThemedText>
-                                        </View>
-                                    )}
-                                </View>
-                            )}
-
-                            <View style={styles.progressSection}>
-                                <View style={styles.progressHeader}>
-                                    <ThemedText style={styles.progressLabel}>Progression</ThemedText>
-                                    <ThemedText style={styles.progressPercent}>{progressPercent}%</ThemedText>
-                                </View>
-                                <View style={styles.progressBarBg}>
-                                    <View style={[styles.progressBarFill, { width: `${Math.min(progressPercent, 100)}%` }]} />
-                                </View>
-                                <ThemedText style={styles.progressSubtext}>
-                                    {unlockedChapters} / {totalChapters} chapitres débloqués
-                                </ThemedText>
-                            </View>
-                        </View>
-
-                        {/* PRETEST */}
-                        {hasPretest && (
-                            <View style={styles.pretestCard}>
-                                <View style={styles.pretestHeader}>
-                                    <View style={styles.pretestIcon}>
-                                        <ThemedText style={styles.pretestIconText}>
-                                            {isPretestDone ? '✅' : '🎯'}
-                                        </ThemedText>
-                                    </View>
-                                    <View style={{ flex: 1 }}>
-                                        <ThemedText style={styles.pretestTitle}>Prétest d'évaluation</ThemedText>
-                                        <ThemedText style={styles.pretestSubtitle}>
-                                            {isPretestDone
-                                                ? '✅ Complété — Accès aux chapitres débloqué'
-                                                : '🔒 Obligatoire avant d\'accéder aux chapitres'}
-                                        </ThemedText>
-                                    </View>
-                                </View>
-                                {!isPretestDone && (
-                                    <Pressable
-                                        style={({ pressed }) => [styles.pretestButton, pressed && { opacity: 0.85 }]}
-                                        onPress={handlePretestPress}
-                                    >
-                                        <ThemedText style={styles.pretestButtonText}>🚀 Démarrer le prétest</ThemedText>
-                                    </Pressable>
-                                )}
-                            </View>
-                        )}
-
-                        {/* CHAPITRES */}
-                        <View style={styles.sectionHeader}>
-                            <ThemedText style={styles.sectionTitle}>📋 Parcours d'apprentissage</ThemedText>
-                            <ThemedText style={styles.sectionSubtitle}>
-                                {!isPretestDone
-                                    ? '🔒 Complétez le prétest pour débloquer les chapitres'
-                                    : 'Réussissez chaque quiz formatif (75%) pour débloquer la suite'}
-                            </ThemedText>
-                        </View>
-
-                        {course.chapters && course.chapters.length > 0 ? (
-                            <View style={styles.timeline}>
-                                {course.chapters.map((chapter, index) => {
-                                    const chapterTitle = chapter.titre || chapter.title || `Chapitre ${index + 1}`;
-                                    const isLocked = chapter.isLocked;
-                                    const isLast = index === course.chapters!.length - 1;
-
-                                    let statusColor = C.primary;
-                                    let statusIcon = '📖';
-                                    let statusLabel = 'Disponible';
-
-                                    if (isLocked) {
-                                        statusColor = C.gray300;
-                                        statusIcon = '🔒';
-
-                                        if (index === 0) {
-                                            statusLabel = '🔒 Complétez le prétest';
-                                        } else {
-                                            const prevChapter = course.chapters![index - 1];
-                                            statusLabel = `🔒 Réussissez le quiz du ${prevChapter.titre || prevChapter.title || `chapitre ${index}`} (75%)`;
-                                        }
-                                    } else if (chapter.quiz) {
-                                        statusIcon = '📝';
-                                        statusLabel = '📝 Quiz formatif à passer';
-                                    }
-
-                                    return (
-                                        <View key={chapter.id}>
-                                            <Pressable
-                                                onPress={() => handleChapterPress(chapter)}
-                                                disabled={isLocked}
-                                                style={({ pressed }) => [
-                                                    styles.timelineItem,
-                                                    isLocked && styles.timelineItemLocked,
-                                                    pressed && !isLocked && { transform: [{ scale: 0.98 }] },
-                                                ]}
-                                            >
-                                                <View style={styles.timelineLeft}>
-                                                    <View style={[
-                                                        styles.timelineDot,
-                                                        { backgroundColor: statusColor },
-                                                    ]}>
-                                                        <ThemedText style={styles.timelineDotText}>{index + 1}</ThemedText>
-                                                    </View>
-                                                    {!isLast && (
-                                                        <View style={[
-                                                            styles.timelineLine,
-                                                            { backgroundColor: isLocked ? C.gray200 : C.primaryLight },
-                                                        ]} />
-                                                    )}
-                                                </View>
-
-                                                <View style={[
-                                                    styles.chapterCard,
-                                                    isLocked && styles.chapterCardLocked,
-                                                ]}>
-                                                    <View style={styles.chapterCardTop}>
-                                                        <ThemedText style={styles.chapterIcon}>{statusIcon}</ThemedText>
-                                                        <View style={{ flex: 1 }}>
-                                                            <ThemedText style={[
-                                                                styles.chapterTitle,
-                                                                isLocked && styles.chapterTitleLocked,
-                                                            ]}>
-                                                                {chapterTitle}
-                                                            </ThemedText>
-                                                            <ThemedText style={[
-                                                                styles.chapterStatus,
-                                                                { color: isLocked ? C.gray400 : C.primary },
-                                                            ]}>
-                                                                {statusLabel}
-                                                            </ThemedText>
-                                                        </View>
-                                                        {!isLocked && (
-                                                            <View style={styles.chapterArrowBox}>
-                                                                <ThemedText style={styles.chapterArrow}>→</ThemedText>
-                                                            </View>
-                                                        )}
-                                                    </View>
-                                                    {chapter.objectifs && !isLocked && (
-                                                        <ThemedText style={styles.chapterObjectifs} numberOfLines={2}>
-                                                            🎯 {chapter.objectifs}
-                                                        </ThemedText>
-                                                    )}
-                                                </View>
-                                            </Pressable>
-                                        </View>
-                                    );
-                                })}
-
-{/* ═══ QUIZ FINAL (SOMMATIF) ═══ */}
-{course.quizFinal && (
-    <Pressable
-        onPress={handleFinalQuizPress}
-        disabled={course.isFinalQuizLocked}
-        style={({ pressed }) => [
-            styles.timelineItem,
-            course.isFinalQuizLocked && styles.timelineItemLocked,
-            pressed && !course.isFinalQuizLocked && { transform: [{ scale: 0.98 }] },
-        ]}
-    >
-        <View style={styles.timelineLeft}>
-            <View style={[
-                styles.timelineDot,
-                styles.finalDot,
-                { backgroundColor: course.isFinalQuizLocked ? C.gray300 : C.danger }, // 👈 ROUGE
-            ]}>
-                <ThemedText style={styles.timelineDotText}>🏆</ThemedText>
-            </View>
-        </View>
-
-        <View style={[
-            styles.chapterCard,
-            styles.finalCard,
-            course.isFinalQuizLocked && styles.chapterCardLocked,
-        ]}>
-            <View style={styles.chapterCardTop}>
-                <ThemedText style={styles.chapterIcon}>
-                    {course.isFinalQuizLocked ? '🔒' : '🏆'}
-                </ThemedText>
-                <View style={{ flex: 1 }}>
-                    <ThemedText style={[
-                        styles.chapterTitle,
-                        { 
-                            color: course.isFinalQuizLocked ? C.gray400 : C.danger, // 👈 ROUGE
-                            fontWeight: course.isFinalQuizLocked ? '600' : '800',   // 👈 GRAS
-                        },
-                    ]}>
-                        🔥 TEST  FINAL
-                    </ThemedText>
-                    <ThemedText style={[
-                        styles.chapterStatus,
-                        { color: course.isFinalQuizLocked ? C.gray400 : C.danger }, // 👈 ROUGE
-                    ]}>
-                        {course.isFinalQuizLocked
-                            ? '🔒 Réussissez le dernier chapitre (75%)'
-                            : '✅ Disponible — Évaluez vos connaissances'}
-                    </ThemedText>
-                </View>
-                {!course.isFinalQuizLocked && (
-                    <View style={[styles.chapterArrowBox, { backgroundColor: '#FEE2E2' }]}> {/* 👈 FOND ROUGE CLAIR */}
-                        <ThemedText style={[styles.chapterArrow, { color: C.danger }]}>→</ThemedText>
-                    </View>
-                )}
-            </View>
-        </View>
-    </Pressable>
-)}
-                            </View>
-                        ) : (
-                            <View style={styles.emptyBox}>
-                                <ThemedText style={styles.emptyIcon}>📭</ThemedText>
-                                <ThemedText style={styles.emptyText}>Aucun chapitre disponible</ThemedText>
-                            </View>
-                        )}
-                    </>
-                ) : null}
-            </ScrollView>
-        </ThemedView>
+      <ThemedView style={[styles.container, styles.center]}>
+        <ThemedText style={{ fontSize: 40, marginBottom: 12 }}>⚠️</ThemedText>
+        <ThemedText style={styles.errorTitle}>{error || 'الدورة غير متوفرة'}</ThemedText>
+        <Pressable style={styles.retryBtn} onPress={fetchCourseDetails}>
+          <ThemedText style={styles.retryBtnTxt}>إعادة المحاولة</ThemedText>
+        </Pressable>
+      </ThemedView>
     );
+  }
+
+  const courseTitle = course.title || course.titre || 'الدورة التعليمية';
+  const stylesSubject = getMatiereStyles(course.matiere || courseTitle);
+  const icon = getSubjectIcon(course.matiere || courseTitle);
+  const chapters = course.chapters || [];
+
+  return (
+    <ThemedView style={styles.container}>
+      <Stack.Screen
+        options={{
+          title: courseTitle,
+          headerBackTitle: 'الرجوع',
+          headerTitleAlign: 'center',
+          headerTintColor: '#059669',
+        }}
+      />
+      <ScrollView
+        contentContainerStyle={[
+          styles.content,
+          {
+            paddingTop: Spacing.three,
+            paddingBottom: insets.bottom + BottomTabInset + Spacing.six,
+          },
+        ]}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={C.primary} />}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* بطاقة الرأس والبانر */}
+        <View style={[styles.banner, { backgroundColor: stylesSubject.background, borderColor: stylesSubject.border }]}>
+          <View style={[styles.iconCircle, { backgroundColor: stylesSubject.color }]}>
+            <ThemedText style={styles.iconText}>{icon}</ThemedText>
+          </View>
+          <ThemedText style={styles.courseHeaderTitle}>{courseTitle}</ThemedText>
+
+          {/* وسوم المنهاج الجزائري */}
+          <View style={styles.tagsRow}>
+            {course.matiere ? (
+              <View style={[styles.tag, { backgroundColor: stylesSubject.background }]}>
+                <ThemedText style={[styles.tagText, { color: stylesSubject.color }]}>
+                  {getMatiereLabel(course.matiere)}
+                </ThemedText>
+              </View>
+            ) : null}
+            {course.annee ? (
+              <View style={[styles.tag, styles.tagClasse]}>
+                <ThemedText style={styles.tagClasseText}>{getClasseLabel(course.annee)}</ThemedText>
+              </View>
+            ) : null}
+            {course.niveau ? (
+              <View style={[styles.tag, styles.tagNiveau]}>
+                <ThemedText style={styles.tagNiveauText}>{getNiveauLabel(course.niveau)}</ThemedText>
+              </View>
+            ) : null}
+          </View>
+        </View>
+
+        {/* ── اختبار المكتسبات القبلية (Pretest) ── */}
+        {course.hasPretest ? (
+          <View style={styles.pretestCard}>
+            <View style={styles.pretestHeader}>
+              <ThemedText style={styles.pretestIcon}>🎯</ThemedText>
+              <View style={{ flex: 1, alignItems: 'flex-end' }}>
+                <ThemedText style={styles.pretestTitle}>اختبار تشخيص المكتسبات القبلية</ThemedText>
+                <ThemedText style={styles.pretestDesc}>
+                  {course.isPretestDone
+                    ? '✓ أحسنت ! تم اجتياز الاختبار التشخيصي بنجاح.'
+                    : 'يجب إجراء هذا الاختبار التشخيصي القصير لتحديد مستواك وفتح الفصل الأول.'}
+                </ThemedText>
+              </View>
+            </View>
+            <Pressable
+              style={[
+                styles.pretestBtn,
+                course.isPretestDone && { backgroundColor: '#059669' },
+              ]}
+              onPress={() => router.push({ pathname: '/pretest/[id]', params: { id: String(course.id) } })}
+            >
+              <ThemedText style={styles.pretestBtnTxt}>
+                {course.isPretestDone ? 'مراجعة نتيجة الاختبار التشخيصي' : '🚀 بدء الاختبار التشخيصي'}
+              </ThemedText>
+            </Pressable>
+          </View>
+        ) : null}
+
+        {/* ── الأهداف والوصف البيداغوجي ── */}
+        {course.objectifs || course.description ? (
+          <View style={styles.infoCard}>
+            <ThemedText style={styles.sectionTitle}>🎯 الأهداف والمحتوى</ThemedText>
+            {course.objectifs ? (
+              <RenderHTML
+                contentWidth={width - 48}
+                source={{ html: `<div style="direction: rtl; text-align: right; font-size: 14px; line-height: 22px; color: #374151;">${course.objectifs}</div>` }}
+              />
+            ) : (
+              <ThemedText style={styles.descText}>{course.description}</ThemedText>
+            )}
+          </View>
+        ) : null}
+
+        {/* ── قائمة الفصول والدروس بالفتح التتابعي ── */}
+        <View style={styles.section}>
+          <View style={styles.sectionTitleRow}>
+            <ThemedText style={styles.chaptersCount}>({chapters.length} فصول)</ThemedText>
+            <ThemedText style={styles.sectionTitle}>📖 منهاج وفصول الدورة</ThemedText>
+          </View>
+
+          {chapters.length === 0 ? (
+            <View style={styles.emptyCard}>
+              <ThemedText style={styles.emptyText}>لم تتم إضافة فصول لهذه الدورة بعد.</ThemedText>
+            </View>
+          ) : (
+            chapters.map((chapter, idx) => {
+              const chTitle = chapter.title || chapter.titre || `الفصل ${idx + 1}`;
+              const isLocked = chapter.isLocked;
+              const reqPay = chapter.requiresPayment;
+
+              return (
+                <Pressable
+                  key={chapter.id}
+                  style={({ pressed }) => [
+                    styles.chapterItem,
+                    isLocked && styles.chapterItemLocked,
+                    reqPay && styles.chapterItemPaywall,
+                    pressed && { opacity: 0.85 },
+                  ]}
+                  onPress={() => handleChapterPress(chapter, idx)}
+                >
+                  <View style={styles.chapterAction}>
+                    {reqPay ? (
+                      <View style={styles.payBadge}>
+                        <ThemedText style={styles.payBadgeText}>🔒 يحتاج اشتراك</ThemedText>
+                      </View>
+                    ) : isLocked ? (
+                      <ThemedText style={{ fontSize: 18 }}>🔒</ThemedText>
+                    ) : chapter.quizCompleted ? (
+                      <View style={styles.completedBadge}>
+                        <ThemedText style={styles.completedBadgeText}>
+                          ✓ {chapter.quizScore !== undefined ? `${chapter.quizScore}%` : 'ناجح'}
+                        </ThemedText>
+                      </View>
+                    ) : (
+                      <ThemedText style={styles.openArrow}>←</ThemedText>
+                    )}
+                  </View>
+
+                  <View style={styles.chapterInfo}>
+                    <ThemedText style={styles.chapterTitle} numberOfLines={2}>
+                      {idx + 1}. {chTitle}
+                    </ThemedText>
+                    {chapter.quiz ? (
+                      <ThemedText style={styles.quizTag}>
+                        📝 اختبار تكويني (يشترط 75% لفتح الفصل الموالي)
+                      </ThemedText>
+                    ) : null}
+                  </View>
+                </Pressable>
+              );
+            })
+          )}
+        </View>
+
+        {/* ── الاختبار النهائي الشامل (Test Sommatif) ── */}
+        {course.quizFinal ? (
+          <View style={styles.finalQuizCard}>
+            <View style={styles.finalQuizHeader}>
+              <ThemedText style={{ fontSize: 32 }}>🏆</ThemedText>
+              <View style={{ flex: 1, alignItems: 'flex-end' }}>
+                <ThemedText style={styles.finalQuizTitle}>الاختبار الختامي الشامل (Test Sommatif)</ThemedText>
+                <ThemedText style={styles.finalQuizDesc}>
+                  تقييم نهائي يشمل كامل البرنامج للحصول على شهادة التفوق في المنهاج الجزائري.
+                </ThemedText>
+              </View>
+            </View>
+            <Pressable
+              style={[
+                styles.finalQuizBtn,
+                course.isFinalQuizLocked && { opacity: 0.5, backgroundColor: '#9CA3AF' },
+              ]}
+              disabled={course.isFinalQuizLocked}
+              onPress={() => {
+                if (course.quizFinal?.id) {
+                  router.push({ pathname: '/quiz/[id]', params: { id: String(course.quizFinal.id) } });
+                }
+              }}
+            >
+              <ThemedText style={styles.finalQuizBtnTxt}>
+                {course.isFinalQuizLocked ? '🔒 يُفتح بعد إكمال كافة الفصول بنجاح (75%)' : 'بدء الاختبار النهائي 🏆'}
+              </ThemedText>
+            </Pressable>
+          </View>
+        ) : null}
+
+        {/* Modal الدفع والتسجيل الجزائري */}
+        {showPaymentModal ? (
+          <PaymentModal
+            visible={showPaymentModal}
+            course={course}
+            token={token}
+            onClose={() => setShowPaymentModal(false)}
+            onEnrollmentSuccess={() => {
+              fetchCourseDetails();
+            }}
+          />
+        ) : null}
+      </ScrollView>
+    </ThemedView>
+  );
 }
 
-// ✅ STYLES COMPLETS (inchangés)
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: C.gray50 },
-    scrollView: { flex: 1 },
-    contentContainer: { paddingHorizontal: 16, paddingTop: 16 },
-
-    loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingVertical: 80 },
-    loadingText: { marginTop: 12, color: C.gray500, fontSize: 14 },
-
-    errorContainer: {
-        backgroundColor: '#FEF2F2', borderRadius: 16, padding: 24,
-        alignItems: 'center', marginTop: 40, borderWidth: 1, borderColor: '#FECACA',
-    },
-    errorIcon: { fontSize: 40, marginBottom: 12 },
-    errorText: { color: C.danger, fontWeight: '600', marginBottom: 16, textAlign: 'center', fontSize: 15 },
-    retryButton: {
-        backgroundColor: C.danger, paddingHorizontal: 24, paddingVertical: 10, borderRadius: 10,
-    },
-    retryButtonText: { color: 'white', fontWeight: '700', fontSize: 14 },
-
-    headerCard: {
-        backgroundColor: 'white', borderRadius: 20, overflow: 'hidden',
-        marginBottom: 16, shadowColor: '#000', shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.08, shadowRadius: 12, elevation: 4,
-    },
-    headerGradient: {
-        backgroundColor: '#F0FDF4', paddingHorizontal: 20, paddingTop: 24, paddingBottom: 20,
-        borderBottomWidth: 1, borderBottomColor: '#BBF7D0',
-    },
-    headerEmoji: { fontSize: 32, marginBottom: 8 },
-    courseTitle: { fontSize: 22, fontWeight: '800', color: C.gray900, lineHeight: 28, marginBottom: 6 },
-    courseDescription: { fontSize: 14, color: C.gray500, lineHeight: 20 },
-
-    metaRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, paddingHorizontal: 20, paddingTop: 16 },
-    metaTag: {
-        backgroundColor: C.primaryLight, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20,
-    },
-    metaTagText: { color: C.primary, fontWeight: '700', fontSize: 12 },
-
-    progressSection: { paddingHorizontal: 20, paddingTop: 16, paddingBottom: 20 },
-    progressHeader: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 },
-    progressLabel: { fontWeight: '700', color: C.gray700, fontSize: 13 },
-    progressPercent: { fontWeight: '800', color: C.primary, fontSize: 14 },
-    progressBarBg: { height: 10, backgroundColor: C.gray100, borderRadius: 5, overflow: 'hidden' },
-    progressBarFill: { height: '100%', backgroundColor: C.primary, borderRadius: 5 },
-    progressSubtext: { fontSize: 12, color: C.gray400, marginTop: 6 },
-
-    pretestCard: {
-        backgroundColor: 'white', borderRadius: 16, padding: 20, marginBottom: 20,
-        borderWidth: 2, borderColor: C.secondary,
-        shadowColor: C.secondary, shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1, shadowRadius: 8, elevation: 3,
-    },
-    pretestHeader: { flexDirection: 'row', alignItems: 'center', gap: 14, marginBottom: 14 },
-    pretestIcon: {
-        width: 48, height: 48, borderRadius: 14, backgroundColor: C.secondaryLight,
-        alignItems: 'center', justifyContent: 'center',
-    },
-    pretestIconText: { fontSize: 24 },
-    pretestTitle: { fontSize: 16, fontWeight: '800', color: C.gray900 },
-    pretestSubtitle: { fontSize: 13, color: C.gray500, marginTop: 2 },
-    pretestButton: {
-        backgroundColor: C.secondary, borderRadius: 12, paddingVertical: 14, alignItems: 'center',
-    },
-    pretestButtonText: { color: 'white', fontWeight: '800', fontSize: 15 },
-
-    sectionHeader: { marginBottom: 16 },
-    sectionTitle: { fontSize: 18, fontWeight: '800', color: C.gray900, marginBottom: 4 },
-    sectionSubtitle: { fontSize: 13, color: C.gray500 },
-
-    timeline: { paddingLeft: 4 },
-    timelineItem: { flexDirection: 'row', marginBottom: 4 },
-    timelineItemLocked: {},
-    timelineLeft: { width: 44, alignItems: 'center' },
-    timelineDot: {
-        width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center',
-        zIndex: 1,
-    },
-    finalDot: { width: 40, height: 40, borderRadius: 20 },
-    timelineDotText: { color: 'white', fontWeight: '800', fontSize: 14 },
-    timelineLine: { width: 3, flex: 1, marginVertical: 2, borderRadius: 2 },
-
-    chapterCard: {
-        flex: 1, backgroundColor: 'white', borderRadius: 14, padding: 16, marginLeft: 10,
-        marginBottom: 8, borderWidth: 1, borderColor: C.gray200,
-        shadowColor: '#000', shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.04, shadowRadius: 6, elevation: 2,
-    },
-    chapterCardLocked: {
-        backgroundColor: C.gray50, borderColor: C.gray200, opacity: 0.7,
-    },
-    finalCard: { borderColor: C.secondary, borderWidth: 2 },
-    chapterCardTop: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-    chapterIcon: { fontSize: 24 },
-    chapterTitle: { fontSize: 15, fontWeight: '700', color: C.gray800, marginBottom: 2 },
-    chapterTitleLocked: { color: C.gray400 },
-    chapterStatus: { fontSize: 12, fontWeight: '600' },
-    chapterObjectifs: { fontSize: 12, color: C.gray500, marginTop: 8, lineHeight: 18 },
-    chapterArrowBox: {
-        width: 32, height: 32, borderRadius: 10, backgroundColor: C.primaryLight,
-        alignItems: 'center', justifyContent: 'center',
-    },
-    chapterArrow: { color: C.primary, fontWeight: '800', fontSize: 16 },
-
-    emptyBox: { alignItems: 'center', paddingVertical: 40 },
-    emptyIcon: { fontSize: 40, marginBottom: 8 },
-    emptyText: { color: C.gray500, fontSize: 15 },
+  container: { flex: 1, backgroundColor: C.bg },
+  center: { justifyContent: 'center', alignItems: 'center', padding: 20 },
+  content: { paddingHorizontal: 16 },
+  banner: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    padding: 20,
+    alignItems: 'center',
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  iconCircle: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    elevation: 3,
+  },
+  iconText: {
+    fontSize: 32,
+  },
+  courseHeaderTitle: {
+    fontSize: 20,
+    fontWeight: '900',
+    color: '#111827',
+    textAlign: 'center',
+    marginBottom: 10,
+    lineHeight: 28,
+  },
+  tagsRow: {
+    flexDirection: 'row-reverse',
+    flexWrap: 'wrap',
+    gap: 8,
+    justifyContent: 'center',
+  },
+  tag: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  tagText: {
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  tagClasse: {
+    backgroundColor: '#F3F4F6',
+  },
+  tagClasseText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#374151',
+  },
+  tagNiveau: {
+    backgroundColor: '#EFF6FF',
+    borderColor: '#BFDBFE',
+  },
+  tagNiveauText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#1E40AF',
+  },
+  pretestCard: {
+    backgroundColor: '#EFF6FF',
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#BFDBFE',
+  },
+  pretestHeader: {
+    flexDirection: 'row-reverse',
+    alignItems: 'center',
+    gap: 12,
+    marginBottom: 12,
+  },
+  pretestIcon: {
+    fontSize: 32,
+  },
+  pretestTitle: {
+    fontSize: 15,
+    fontWeight: '800',
+    color: '#1E40AF',
+    textAlign: 'right',
+  },
+  pretestDesc: {
+    fontSize: 12,
+    color: '#3B82F6',
+    textAlign: 'right',
+    marginTop: 2,
+    lineHeight: 18,
+  },
+  pretestBtn: {
+    backgroundColor: '#2563EB',
+    paddingVertical: 10,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  pretestBtnTxt: {
+    color: '#FFFFFF',
+    fontWeight: '800',
+    fontSize: 13,
+  },
+  infoCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: '900',
+    color: '#1F2937',
+    textAlign: 'right',
+    marginBottom: 8,
+  },
+  descText: {
+    fontSize: 13,
+    color: '#4B5563',
+    lineHeight: 22,
+    textAlign: 'right',
+  },
+  section: {
+    marginBottom: 20,
+  },
+  sectionTitleRow: {
+    flexDirection: 'row-reverse',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  chaptersCount: {
+    fontSize: 12,
+    color: '#6B7280',
+    fontWeight: '600',
+  },
+  emptyCard: {
+    padding: 24,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 14,
+    alignItems: 'center',
+  },
+  emptyText: {
+    color: '#6B7280',
+    fontSize: 13,
+  },
+  chapterItem: {
+    flexDirection: 'row-reverse',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 14,
+    padding: 16,
+    marginBottom: 10,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  chapterItemLocked: {
+    backgroundColor: '#F9FAFB',
+    borderColor: '#F3F4F6',
+  },
+  chapterItemPaywall: {
+    backgroundColor: '#FFFBEB',
+    borderColor: '#FDE68A',
+  },
+  chapterInfo: {
+    flex: 1,
+    alignItems: 'flex-end',
+    marginLeft: 10,
+  },
+  chapterTitle: {
+    fontSize: 15,
+    fontWeight: '800',
+    color: '#1F2937',
+    textAlign: 'right',
+  },
+  quizTag: {
+    fontSize: 11,
+    color: '#059669',
+    fontWeight: '700',
+    marginTop: 4,
+  },
+  chapterAction: {
+    alignItems: 'center',
+  },
+  payBadge: {
+    backgroundColor: '#FEF3C7',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+  },
+  payBadgeText: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: '#D97706',
+  },
+  completedBadge: {
+    backgroundColor: '#ECFDF5',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+  },
+  completedBadgeText: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: '#059669',
+  },
+  openArrow: {
+    fontSize: 16,
+    color: '#9CA3AF',
+    fontWeight: '800',
+  },
+  finalQuizCard: {
+    backgroundColor: '#FEF3C7',
+    borderRadius: 16,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#FDE68A',
+    marginBottom: 20,
+  },
+  finalQuizHeader: {
+    flexDirection: 'row-reverse',
+    alignItems: 'center',
+    gap: 12,
+    marginBottom: 12,
+  },
+  finalQuizTitle: {
+    fontSize: 16,
+    fontWeight: '900',
+    color: '#92400E',
+    textAlign: 'right',
+  },
+  finalQuizDesc: {
+    fontSize: 12,
+    color: '#B45309',
+    textAlign: 'right',
+    lineHeight: 18,
+    marginTop: 2,
+  },
+  finalQuizBtn: {
+    backgroundColor: '#D97706',
+    paddingVertical: 12,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  finalQuizBtnTxt: {
+    color: '#FFFFFF',
+    fontWeight: '800',
+    fontSize: 14,
+  },
+  errorTitle: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: '#DC2626',
+    textAlign: 'center',
+    marginBottom: 16,
+  },
+  retryBtn: {
+    backgroundColor: '#059669',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 10,
+  },
+  retryBtnTxt: {
+    color: '#FFFFFF',
+    fontWeight: '800',
+  },
 });

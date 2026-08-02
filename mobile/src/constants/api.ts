@@ -1,29 +1,19 @@
 // src/constants/api.ts
 import { Platform } from 'react-native';
 
-// ── Configuration API ──
-// Web (navigateur)  → localhost car même machine
-// Native (Expo Go)  → URL Vercel (évite les soucis de réseau local / tunnel)
-// Production        → URL Vercel
-const DEV_PORT = '3000';
+export const DZACADEMY_PROD_URL = 'https://dz-academy-6k34.vercel.app';
 
-const API_URL_MAP = {
-  web: `http://localhost:${DEV_PORT}`,
-  native: 'https://cb-academy-dz.vercel.app',
-  production: 'https://cb-academy-dz.vercel.app',
-};
-
-// En dev, utiliser Vercel pour le web et natif par défaut pour éviter les erreurs si le serveur local n'est pas lancé
-const IS_DEV = __DEV__;
-export const API_URL = API_URL_MAP.native; // Force l'API en ligne (Vercel) pour tous les environnements
+// Sur le Web, utiliser des URLs relatives '' pour passer par le proxy Metro (évite les blocages CORS du navigateur)
+// Sur Mobile (Android / iOS), appeler directement l'URL Vercel de DZ Academy
+export const API_URL = process.env.EXPO_PUBLIC_API_URL || (Platform.OS === 'web' ? '' : DZACADEMY_PROD_URL);
 
 export const API_ENDPOINTS = {
-  // ── Auth ──────────────────────────────────────────────
+  // ── المصادقة والحساب (Auth) ──────────────────────────────────
   login:    `${API_URL}/api/auth/login`,
   register: `${API_URL}/api/auth/register`,
   me:       `${API_URL}/api/auth/me`,
 
-  // ── Catalogue public (filtres: niveau, annee, matiere) ──
+  // ── دليل الدورات العمومي (Catalogue) ─────────────────────────
   cataloguePublic: (params?: { niveau?: string; annee?: string; matiere?: string }) => {
     const q = new URLSearchParams();
     if (params?.niveau)  q.append('niveau',  params.niveau);
@@ -33,41 +23,41 @@ export const API_ENDPOINTS = {
     return `${API_URL}/api/courses/public${qs ? `?${qs}` : ''}`;
   },
 
-  // ── Mes cours (enrollments) ────────────────────────────
+  // ── دورات الطالب المسجلة ─────────────────────────────────────
   studentCourses: `${API_URL}/api/student/courses`,
 
-  // ── Détail cours (chapitres, pretest, quizFinal…) ──────
+  // ── تفاصيل الدورة (الفصول، اختبار المكتسبات القبلية، الاختبار النهائي) ──
   courseDetail: (courseId: string | number) =>
     `${API_URL}/api/courses/${courseId}`,
   courseDetails: (courseId: string | number) =>
     `${API_URL}/api/courses/${courseId}`,
 
-  // ── Chapitre (contenu + quiz formatif) ────────────────
+  // ── تفاصيل الفصل (المحتوى والوسائط والاختبار التكويني) ────────
   chapterDetail: (chapterId: string | number) =>
     `${API_URL}/api/chapters/${chapterId}`,
   chapterDetails: (chapterId: string | number) =>
     `${API_URL}/api/chapters/${chapterId}`,
 
-  // ── Progression chapitre ──────────────────────────────
+  // ── تقدم الطالب في الفصول ────────────────────────────────────
   studentProgress: `${API_URL}/api/student/progress`,
 
-  // ── Quiz (formatif ET sommatif) ───────────────────────
-  quizGet:    (quizId: string | number) =>
+  // ── الاختبارات والتقييمات (التكوينية والختامية) ───────────────
+  quizGet: (quizId: string | number) =>
     `${API_URL}/api/student/quiz?quizId=${quizId}`,
   quizSubmit: `${API_URL}/api/student/quiz`,
 
-  // ── Pretest ───────────────────────────────────────────
-  pretestGet:    (courseId: string | number) =>
+  // ── اختبار المكتسبات القبلية (Pretest) ────────────────────────
+  pretestGet: (courseId: string | number) =>
     `${API_URL}/api/pretest/${courseId}`,
   pretestSubmit: (courseId: string | number) =>
     `${API_URL}/api/student/submit-pretest?courseId=${courseId}`,
 
-  // ── Paiement & Inscription ────────────────────────────
-  accessCheck:   (courseId: string | number) =>
+  // ── التسجيل في الدورة ورفع وصل الدفع ─────────────────────────
+  accessCheck: (courseId: string | number) =>
     `${API_URL}/api/student/access-check?courseId=${courseId}`,
   enrollCourse:  `${API_URL}/api/student/courses`,
   uploadPreuve:  `${API_URL}/api/student/upload-preuve`,
 
-  // ── Badges & Gamification ─────────────────────────────
+  // ── الأوسمة والشارات ─────────────────────────────────────────
   studentBadges: `${API_URL}/api/student/badges`,
 };

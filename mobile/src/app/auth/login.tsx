@@ -1,3 +1,4 @@
+// src/app/auth/login.tsx
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { useAuth } from '@/context/auth-context';
@@ -17,9 +18,9 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const Colors = {
-  green: '#7FBF3F',      // Vert CBA
-  orange: '#F97316',     // Orange vif
-  gold: '#DAA520',       // Or/Doré
+  green: '#059669',
+  orange: '#F97316',
+  gold: '#D97706',
   darkText: '#1F2937',
   lightText: '#6B7280',
   border: '#E5E7EB',
@@ -39,17 +40,17 @@ export default function LoginScreen() {
     setLocalError('');
 
     if (!email.trim()) {
-      setLocalError('Email requis');
+      setLocalError('يرجى إدخال البريد الإلكتروني');
       return;
     }
     if (!password.trim()) {
-      setLocalError('Mot de passe requis');
+      setLocalError('يرجى إدخال كلمة المرور');
       return;
     }
 
     const success = await login(email, password);
     if (!success) {
-      setLocalError(error || 'Erreur de connexion');
+      setLocalError(error || 'فشل تسجيل الدخول، تحقق من البيانات');
     }
   };
 
@@ -57,7 +58,7 @@ export default function LoginScreen() {
 
   return (
     <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       style={styles.container}
     >
       <View style={[styles.safeArea, { paddingTop: insets.top }]}>
@@ -65,23 +66,21 @@ export default function LoginScreen() {
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
         >
-          {/* Header blanc clean */}
           <View style={styles.headerWrapper}>
             <View style={styles.logoContainer}>
               <Image
-                source={require('@/assets/images/cba-logo.png')}
+                source={require('../../../assets/images/icon.png')}
                 style={styles.logo}
                 contentFit="contain"
               />
             </View>
 
-            <ThemedText style={styles.titleMain}>Cheikh Bouamama Academy</ThemedText>
+            <ThemedText style={styles.titleMain}>دزأكاديمي — DZ Academy</ThemedText>
             <ThemedText style={styles.subtitle}>
-              Plateforme d'apprentissage en ligne
+              منصة التعليم الرقمي للطورين المتوسط والثانوي
             </ThemedText>
           </View>
 
-          {/* Formulaire avec 3 couleurs */}
           <View style={styles.formWrapper}>
             <ThemedView style={styles.formContainer}>
               {displayError ? (
@@ -90,29 +89,26 @@ export default function LoginScreen() {
                 </View>
               ) : null}
 
-              {/* Email - Bordure verte */}
               <View style={styles.inputGroup}>
-                <ThemedText style={[styles.label, { color: Colors.green }]}>
-                  Email
-                </ThemedText>
+                <ThemedText style={[styles.label, { color: Colors.green }]}>البريد الإلكتروني</ThemedText>
                 <View style={[styles.inputBorder, { borderColor: Colors.green }]}>
                   <TextInput
                     style={styles.input}
-                    placeholder="vous@exemple.com"
+                    placeholder="etudiant@dzacademy.dz"
                     placeholderTextColor={Colors.lightText}
                     keyboardType="email-address"
                     autoCapitalize="none"
                     value={email}
                     onChangeText={setEmail}
                     editable={!loading}
+                    textAlign="right"
                   />
                 </View>
               </View>
 
-              {/* Mot de passe - Bordure verte */}
               <View style={styles.inputGroup}>
                 <ThemedText style={[styles.label, { color: Colors.green }]}>
-                  Mot de passe
+                  كلمة المرور
                 </ThemedText>
                 <View style={[styles.inputBorder, { borderColor: Colors.green }]}>
                   <TextInput
@@ -123,11 +119,11 @@ export default function LoginScreen() {
                     value={password}
                     onChangeText={setPassword}
                     editable={!loading}
+                    textAlign="right"
                   />
                 </View>
               </View>
 
-              {/* Bouton Connexion - Vert */}
               <Pressable
                 style={({ pressed }) => [
                   styles.loginButton,
@@ -142,42 +138,35 @@ export default function LoginScreen() {
                   <ActivityIndicator color={Colors.white} size="small" />
                 ) : (
                   <ThemedText style={styles.loginButtonText}>
-                    ✓ Se connecter
+                    تسجيل الدخول
                   </ThemedText>
                 )}
               </Pressable>
 
-              {/* Divider avec couleurs */}
               <View style={styles.divider}>
-                <View style={[styles.dividerLine, { backgroundColor: Colors.green }]} />
-                <ThemedText style={[styles.dividerText, { color: Colors.gold }]}>
-                  ou
-                </ThemedText>
-                <View style={[styles.dividerLine, { backgroundColor: Colors.orange }]} />
+                <View style={[styles.dividerLine, { backgroundColor: '#E5E7EB' }]} />
+                <ThemedText style={[styles.dividerText, { color: Colors.gold }]}>أو</ThemedText>
+                <View style={[styles.dividerLine, { backgroundColor: '#E5E7EB' }]} />
               </View>
 
-              {/* Bouton Créer compte - Orange */}
               <Pressable
                 style={({ pressed }) => [
                   styles.registerButton,
-                  { borderColor: Colors.orange, borderWidth: 2 },
+                  { borderColor: Colors.orange, borderWidth: 1.5 },
                   pressed && styles.registerButtonPressed,
                 ]}
                 onPress={() => router.push('/auth/register')}
               >
                 <ThemedText style={[styles.registerButtonText, { color: Colors.orange }]}>
-                  + Créer un compte
+                  + إنشاء حساب تلميذ جديد
                 </ThemedText>
               </Pressable>
-
-
             </ThemedView>
           </View>
 
-          {/* Footer */}
           <View style={styles.footer}>
             <ThemedText style={styles.footerText}>
-              CB Academy © 2026
+              منصة دزأكاديمي التعليمية © 2026
             </ThemedText>
           </View>
         </ScrollView>
@@ -187,162 +176,45 @@ export default function LoginScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Colors.white,
-  },
-  safeArea: {
-    flex: 1,
-  },
-  scrollContent: {
-    flexGrow: 1,
-    paddingBottom: 20,
-  },
+  container: { flex: 1, backgroundColor: Colors.white },
+  safeArea: { flex: 1 },
+  scrollContent: { flexGrow: 1, paddingBottom: 20 },
   headerWrapper: {
-    paddingVertical: 40,
-    paddingHorizontal: 20,
-    alignItems: 'center',
-    backgroundColor: Colors.white,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
+    paddingVertical: 36, paddingHorizontal: 20, alignItems: 'center',
+    backgroundColor: Colors.white, borderBottomWidth: 1, borderBottomColor: Colors.border,
   },
-  logoContainer: {
-    marginBottom: 20,
-  },
-  logo: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-  },
-  titleMain: {
-    fontSize: 22,
-    fontWeight: '800',
-    color: Colors.darkText,
-    textAlign: 'center',
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: 13,
-    color: Colors.lightText,
-    textAlign: 'center',
-    fontWeight: '500',
-  },
-  formWrapper: {
-    paddingHorizontal: 16,
-    marginVertical: 24,
-  },
+  logoContainer: { marginBottom: 16 },
+  logo: { width: 100, height: 100, borderRadius: 50 },
+  titleMain: { fontSize: 22, fontWeight: '900', color: Colors.darkText, textAlign: 'center', marginBottom: 6 },
+  subtitle: { fontSize: 13, color: Colors.lightText, textAlign: 'center', fontWeight: '500' },
+  formWrapper: { paddingHorizontal: 16, marginVertical: 20 },
   formContainer: {
-    backgroundColor: Colors.white,
-    borderRadius: 16,
-    padding: 24,
-    gap: 20,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.06,
-    shadowRadius: 12,
-    elevation: 3,
+    backgroundColor: Colors.white, borderRadius: 16, padding: 22, gap: 18,
+    borderWidth: 1, borderColor: Colors.border,
+    shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.06, shadowRadius: 12, elevation: 3,
   },
   errorContainer: {
-    backgroundColor: '#FEF2F2',
-    borderLeftWidth: 4,
-    borderLeftColor: Colors.danger,
-    paddingVertical: 12,
-    paddingHorizontal: 12,
-    borderRadius: 8,
+    backgroundColor: '#FEF2F2', borderRightWidth: 4, borderRightColor: Colors.danger,
+    paddingVertical: 12, paddingHorizontal: 12, borderRadius: 8,
   },
-  errorText: {
-    color: Colors.danger,
-    fontWeight: '600',
-    fontSize: 14,
-  },
-  inputGroup: {
-    gap: 8,
-  },
-  label: {
-    fontWeight: '700',
-    fontSize: 14,
-  },
-  inputBorder: {
-    borderWidth: 2,
-    borderRadius: 10,
-    overflow: 'hidden',
-  },
-  input: {
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    fontSize: 16,
-    color: Colors.darkText,
-    backgroundColor: Colors.white,
-  },
+  errorText: { color: Colors.danger, fontWeight: '700', fontSize: 13, textAlign: 'right' },
+  inputGroup: { gap: 6 },
+  label: { fontWeight: '700', fontSize: 13, textAlign: 'right' },
+  inputBorder: { borderWidth: 1.5, borderRadius: 10, overflow: 'hidden' },
+  input: { paddingHorizontal: 14, paddingVertical: 12, fontSize: 15, color: Colors.darkText, backgroundColor: Colors.white },
   loginButton: {
-    borderRadius: 10,
-    paddingVertical: 14,
-    alignItems: 'center',
-    marginTop: 8,
-    shadowColor: Colors.green,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25,
-    shadowRadius: 8,
-    elevation: 3,
+    borderRadius: 10, paddingVertical: 14, alignItems: 'center', marginTop: 6,
+    shadowColor: Colors.green, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.25, shadowRadius: 8, elevation: 3,
   },
-  loginButtonPressed: {
-    opacity: 0.85,
-  },
-  loginButtonDisabled: {
-    opacity: 0.6,
-  },
-  loginButtonText: {
-    color: Colors.white,
-    fontWeight: '800',
-    fontSize: 16,
-  },
-  divider: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    marginVertical: 4,
-  },
-  dividerLine: {
-    flex: 1,
-    height: 2,
-  },
-  dividerText: {
-    fontSize: 13,
-    fontWeight: '700',
-  },
-  registerButton: {
-    borderRadius: 10,
-    paddingVertical: 12,
-    alignItems: 'center',
-    backgroundColor: Colors.white,
-  },
-  registerButtonPressed: {
-    backgroundColor: Colors.lightBg,
-  },
-  registerButtonText: {
-    fontWeight: '800',
-    fontSize: 16,
-  },
-  infoContainer: {
-    borderLeftWidth: 4,
-    padding: 12,
-    borderRadius: 8,
-    marginTop: 8,
-  },
-  infoText: {
-    textAlign: 'center',
-    fontSize: 13,
-    fontWeight: '600',
-  },
-  footer: {
-    alignItems: 'center',
-    paddingVertical: 12,
-    backgroundColor: Colors.white,
-  },
-  footerText: {
-    color: Colors.lightText,
-    fontSize: 12,
-  },
+  loginButtonPressed: { opacity: 0.85 },
+  loginButtonDisabled: { opacity: 0.6 },
+  loginButtonText: { color: Colors.white, fontWeight: '800', fontSize: 16 },
+  divider: { flexDirection: 'row', alignItems: 'center', gap: 12, marginVertical: 4 },
+  dividerLine: { flex: 1, height: 1 },
+  dividerText: { fontSize: 13, fontWeight: '700' },
+  registerButton: { borderRadius: 10, paddingVertical: 12, alignItems: 'center', backgroundColor: Colors.white },
+  registerButtonPressed: { backgroundColor: Colors.lightBg },
+  registerButtonText: { fontWeight: '800', fontSize: 15 },
+  footer: { alignItems: 'center', paddingVertical: 12, backgroundColor: Colors.white },
+  footerText: { color: Colors.lightText, fontSize: 12 },
 });

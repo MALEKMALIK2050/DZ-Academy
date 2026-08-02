@@ -1,72 +1,75 @@
-import { ActivityIndicator, View } from 'react-native';
-import { DarkTheme, DefaultTheme, ThemeProvider, Stack } from 'expo-router';
-import { useColorScheme } from 'react-native';
+import { LoadingScreen } from '@/components/loading-screen';
 import { AuthProvider, useAuth } from '@/context/auth-context';
+import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
+import { useColorScheme, I18nManager } from 'react-native';
+
+// Force RTL
+if (!I18nManager.isRTL) {
+  I18nManager.allowRTL(true);
+  I18nManager.forceRTL(true);
+}
 
 function NavigationLayout() {
   const { loading, token } = useAuth();
 
   if (loading) {
-    return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-        <ActivityIndicator size="large" color="#16A34A" />
-      </View>
-    );
+    return <LoadingScreen />;
   }
 
-  // Si pas de token → afficher écrans Auth (Login + Register)
   if (!token) {
     return (
-      <Stack>
+      <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="auth/login" options={{ headerShown: false }} />
         <Stack.Screen
           name="auth/register"
           options={{
             headerShown: true,
             title: '',
-            headerBackTitle: 'Retour',
+            headerBackTitle: 'رجوع',
           }}
         />
       </Stack>
     );
   }
 
-  // Si token existe → Navigation complète (Tabs + dynamiques)
   return (
-    <Stack>
+    <Stack screenOptions={{
+      headerShown: false,
+      headerTintColor: '#2563EB',
+      headerTitleAlign: 'center',
+      headerStyle: { backgroundColor: '#FAFBFC' },
+      contentStyle: { backgroundColor: '#FAFBFC' },
+      headerShadowVisible: false,
+      headerTitleStyle: { fontSize: 18, fontWeight: '800', color: '#1F2937' },
+    }}>
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-      <Stack.Screen name="index" options={{ headerShown: false }} />
       <Stack.Screen
         name="course/[id]"
         options={{
           headerShown: true,
-          title: 'Détails du Cours',
-          headerBackTitle: 'Retour',
+          title: 'البرنامج',
+          headerBackTitle: 'رجوع',
         }}
       />
       <Stack.Screen
         name="pretest/[id]"
         options={{
           headerShown: true,
-          title: 'Prétest',
-          headerBackTitle: 'Retour',
+          title: 'اختبار المستوى',
+          headerBackTitle: 'رجوع',
         }}
       />
       <Stack.Screen
         name="chapter/[id]"
         options={{
           headerShown: true,
-          title: 'Contenu du Chapitre',
-          headerBackTitle: 'Retour',
+          title: 'الدرس',
+          headerBackTitle: 'رجوع',
         }}
       />
       <Stack.Screen
         name="quiz/[id]"
-        options={{
-          headerShown: true,
-          title: 'Quiz',
-          headerBackTitle: 'Retour',
-        }}
+        options={{ headerShown: false }}
       />
     </Stack>
   );

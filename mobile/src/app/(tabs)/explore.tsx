@@ -1,51 +1,49 @@
-import React, { useState, useEffect } from 'react';
+// src/app/(tabs)/explore.tsx
+import React, { useState, useEffect, useCallback } from 'react';
 import {
-  StyleSheet, ScrollView, View, Pressable,
-  ActivityIndicator, RefreshControl, TextInput, Modal,
+  StyleSheet,
+  ScrollView,
+  View,
+  Pressable,
+  RefreshControl,
+  TextInput,
+  Modal,
+  ActivityIndicator,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
+import { CourseCard } from '@/components/course-card';
+import { PaymentModal } from '@/components/payment-modal';
 import { useAuth } from '@/context/auth-context';
 import { API_ENDPOINTS } from '@/constants/api';
 import { BottomTabInset, Spacing } from '@/constants/theme';
+import {
+  NIVEAUX,
+  ANNEES_COLLEGE,
+  ANNEES_LYCEE,
+  MATIERES_OPTIONS,
+  getMatiereLabel,
+  getClasseLabel,
+  getNiveauLabel,
+} from '@/constants/algerian-education';
 
-const Colors = {
-  primary: '#16A34A',
+const C = {
+  primary: '#059669',
   secondary: '#F97316',
-  accent: '#208AEF',
+  dark: '#111827',
+  gray: '#6B7280',
   lightGray: '#F3F4F6',
-  darkGray: '#6B7280',
+  border: '#E5E7EB',
+  white: '#FFFFFF',
+  bg: '#FAF8F5',
 };
 
-// ── Constants ─────────────────────────────────────────
-const NIVEAUX = [
-  { value: '', label: 'Tous les niveaux' },
-  { value: 'college', label: '🏫 Collège' },
-  { value: 'lycee',   label: '🎓 Lycée' },
-];
-const ANNEES_COLLEGE = ['6ème', '5ème', '4ème', '3ème'];
-const ANNEES_LYCEE   = ['1ère AS', '2ème AS', 'Terminale'];
-const MATIERES = [
-  { value: '',                    label: 'Toutes les matières' },
-  { value: 'math',                label: '📐 Mathématiques' },
-  { value: 'physique',            label: '⚗️ Physique & Chimie' },
-  { value: 'svt',                 label: '🌿 SVT' },
-  { value: 'informatique',        label: '💻 Informatique' },
-  { value: 'histoire',            label: '🌍 Histoire & Géo' },
-  { value: 'francais',            label: '📖 Français' },
-  { value: 'anglais',             label: '🇬🇧 Anglais' },
-  { value: 'arabe',               label: '📜 Langue Arabe' },
-  { value: 'philosophie',         label: '🤔 Philosophie' },
-  { value: 'education_islamique', label: '🕌 Éducation Islamique' },
-  { value: 'allemand',            label: '🇩🇪 Allemand' },
-  { value: 'italien',             label: '🇮🇹 Italien' },
-];
-
-interface Course {
+interface CourseItem {
   id: number;
-  title: string;
+  title?: string;
+  titre?: string;
   description?: string;
   matiere?: string;
   niveau?: string;
@@ -54,48 +52,43 @@ interface Course {
   chapters?: { id: number }[];
   teachers?: { id: number; nom: string; prenom: string }[];
   enrollments?: { id: number; statut: string; typePaiement: string }[];
-  cooldownLocked?: boolean;
-  lockedUntil?: string;
-}
-interface EnrollmentItem {
-  id: number; statut: string; typePaiement: string;
-  progression?: number; completed?: boolean; course: Course;
 }
 
-// ── Subject style helper ──
-function getSubjectStyle(mat?: string) {
-  const m = mat?.toLowerCase() || '';
-  if (m.includes('math') || m === 'math') return { primary: '#3182CE', secondary: '#2B6CB0', bg: '#EBF8FF', icon: '📐' };
-  if (m.includes('physique') || m === 'physique') return { primary: '#805AD5', secondary: '#6B46C1', bg: '#FAF5FF', icon: '⚛️' };
-  if (m.includes('svt') || m === 'svt') return { primary: '#38A169', secondary: '#2F855A', bg: '#F0FFF4', icon: '🧬' };
-  if (m.includes('info') || m.includes('tech') || m === 'informatique') return { primary: '#00B5D8', secondary: '#0097A7', bg: '#E6FFFA', icon: '💻' };
-  if (m.includes('fran') || m === 'francais') return { primary: '#DD6B20', secondary: '#C05621', bg: '#FFFAF0', icon: '📚' };
-  if (m.includes('anglais') || m === 'anglais') return { primary: '#E53E3E', secondary: '#C53030', bg: '#FFF5F5', icon: '🌍' };
-  if (m.includes('arabe') || m === 'arabe') return { primary: '#059669', secondary: '#047857', bg: '#ECFDF5', icon: '📖' };
-  if (m.includes('histoire') || m === 'histoire') return { primary: '#D69E2E', secondary: '#B7791F', bg: '#FFFFF0', icon: '🏺' };
-  if (m.includes('philo') || m === 'philosophie') return { primary: '#4A5568', secondary: '#2D3748', bg: '#F7FAFC', icon: '💭' };
-  if (m.includes('islam') || m === 'education_islamique') return { primary: '#059669', secondary: '#047857', bg: '#ECFDF5', icon: '🕌' };
-  return { primary: '#4A5568', secondary: '#2D3748', bg: '#F7FAFC', icon: '✨' };
-}
-
-// ── PickerModal ─────────────────────────────────────────
-function PickerModal({ visible, title, options, selected, onSelect, onClose }: {
-  visible: boolean; title: string;
+function PickerModal({
+  visible,
+  title,
+  options,
+  selected,
+  onSelect,
+  onClose,
+}: {
+  visible: boolean;
+  title: string;
   options: { value: string; label: string }[];
-  selected: string; onSelect: (v: string) => void; onClose: () => void;
+  selected: string;
+  onSelect: (v: string) => void;
+  onClose: () => void;
 }) {
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
       <Pressable style={pk.overlay} onPress={onClose} />
       <View style={pk.sheet}>
         <View style={pk.header}>
+          <Pressable onPress={onClose}>
+            <ThemedText style={pk.close}>✕</ThemedText>
+          </Pressable>
           <ThemedText style={pk.title}>{title}</ThemedText>
-          <Pressable onPress={onClose}><ThemedText style={pk.close}>✕</ThemedText></Pressable>
         </View>
-        <ScrollView>
-          {options.map(opt => (
-            <Pressable key={opt.value} style={[pk.option, selected === opt.value && pk.optionSelected]}
-              onPress={() => { onSelect(opt.value); onClose(); }}>
+        <ScrollView style={{ maxHeight: 320 }}>
+          {options.map((opt) => (
+            <Pressable
+              key={opt.value}
+              style={[pk.option, selected === opt.value && pk.optionSelected]}
+              onPress={() => {
+                onSelect(opt.value);
+                onClose();
+              }}
+            >
               <ThemedText style={[pk.optionText, selected === opt.value && pk.optionTextSelected]}>
                 {opt.label}
               </ThemedText>
@@ -108,325 +101,512 @@ function PickerModal({ visible, title, options, selected, onSelect, onClose }: {
   );
 }
 
-// ── Main Screen ─────────────────────────────────────────
-export default function CatalogueScreen() {
+export default function ExploreScreen() {
   const { token } = useAuth();
   const insets = useSafeAreaInsets();
-  const [courses, setCourses] = useState<Course[]>([]);
-  const [enrollments, setEnrollments] = useState<EnrollmentItem[]>([]);
+
+  const [courses, setCourses] = useState<CourseItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // فلاتر البحث
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedNiveau, setSelectedNiveau] = useState('');
+  const [selectedAnnee, setSelectedAnnee] = useState('');
+  const [selectedMatiere, setSelectedMatiere] = useState('');
 
-  const [niveau, setNiveau] = useState('');
-  const [annee, setAnnee] = useState('');
-  const [matiere, setMatiere] = useState('');
-  const [showNiveauPicker, setShowNiveauPicker]   = useState(false);
-  const [showAnneePicker, setShowAnneePicker]     = useState(false);
-  const [showMatierePicker, setShowMatierePicker] = useState(false);
+  // Modals الاختيار
+  const [showNiveauModal, setShowNiveauModal] = useState(false);
+  const [showAnneeModal, setShowAnneeModal] = useState(false);
+  const [showMatiereModal, setShowMatiereModal] = useState(false);
 
-  // Pour le paiement
-  const [selectedCourseForPayment, setSelectedCourseForPayment] = useState<number | null>(null);
+  // Modal الدفع والتسجيل السريع
+  const [payCourse, setPayCourse] = useState<CourseItem | null>(null);
 
-  const anneesDisponibles = niveau === 'college' ? ANNEES_COLLEGE : niveau === 'lycee' ? ANNEES_LYCEE : [...ANNEES_COLLEGE, ...ANNEES_LYCEE];
-  const anneeOptions = [{ value: '', label: 'Toutes les années' }, ...anneesDisponibles.map(a => ({ value: a, label: a }))];
+  // خيارات السنوات بناءً على الطور المختار
+  const anneeOptions = [
+    { value: '', label: 'جميع السنوات الدراسية' },
+    ...(selectedNiveau === 'college'
+      ? ANNEES_COLLEGE.map((a) => ({ value: a.value, label: a.label }))
+      : selectedNiveau === 'lycee'
+      ? ANNEES_LYCEE.map((a) => ({ value: a.value, label: a.label }))
+      : [...ANNEES_COLLEGE, ...ANNEES_LYCEE].map((a) => ({ value: a.value, label: a.label }))),
+  ];
 
-  const fetchCourses = async (niv = niveau, ann = annee, mat = matiere) => {
+  const fetchCourses = useCallback(async () => {
     try {
       setError(null);
-      if (token) {
-        const params = new URLSearchParams();
-        if (niv) params.append('niveau', niv);
-        if (ann) params.append('annee', ann);
-        if (mat) params.append('matiere', mat);
-        const qs = params.toString();
-        const url = `${API_ENDPOINTS.studentCourses}${qs ? `?${qs}` : ''}`;
-        const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
-        if (!res.ok) throw new Error(`Erreur ${res.status}`);
-        const data = await res.json();
-        setCourses(Array.isArray(data.catalogue) ? data.catalogue : []);
-        setEnrollments(Array.isArray(data.enrollments) ? data.enrollments : []);
-      } else {
-        const res = await fetch(API_ENDPOINTS.cataloguePublic({ niveau: niv || undefined, annee: ann || undefined, matiere: mat || undefined }));
-        if (!res.ok) throw new Error(`Erreur ${res.status}`);
-        const data = await res.json();
-        setCourses(Array.isArray(data) ? data : []);
-        setEnrollments([]);
-      }
-    } catch {
-      setError('Erreur lors du chargement du catalogue');
+      const url = API_ENDPOINTS.cataloguePublic({
+        niveau: selectedNiveau || undefined,
+        annee: selectedAnnee || undefined,
+        matiere: selectedMatiere || undefined,
+      });
+
+      const res = await fetch(url, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+
+      if (!res.ok) throw new Error(`خطأ ${res.status}`);
+      const data = await res.json();
+      setCourses(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error('fetchCourses error:', err);
+      setError('تعذر تحميل كتالوج الدورات التعليمية');
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
+  }, [selectedNiveau, selectedAnnee, selectedMatiere, token]);
+
+  useEffect(() => {
+    setLoading(true);
+    fetchCourses();
+  }, [fetchCourses]);
+
+  const onRefresh = () => {
+    setRefreshing(true);
+    fetchCourses();
   };
 
-  useEffect(() => { fetchCourses(); }, [token]);
-
-  const applyFilter = (niv: string, ann: string, mat: string) => {
-    setLoading(true); fetchCourses(niv, ann, mat);
-  };
-
-  const handleNiveauSelect = (val: string) => {
-    setNiveau(val); setAnnee(''); applyFilter(val, '', matiere);
-  };
-  const handleAnneeSelect = (val: string) => {
-    setAnnee(val); applyFilter(niveau, val, matiere);
-  };
-  const handleMatiereSelect = (val: string) => {
-    setMatiere(val); applyFilter(niveau, annee, val);
-  };
-  const resetFilters = () => {
-    setNiveau(''); setAnnee(''); setMatiere(''); setSearchQuery('');
-    setLoading(true); fetchCourses('', '', '');
-  };
-
-  const requestEnrollment = async (courseId: number, typePaiement: string) => {
-    try {
-      const res = await fetch(API_ENDPOINTS.studentCourses, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ courseId, typePaiement }),
-      });
-      if (!res.ok) { const d = await res.json(); throw new Error(d.error); }
-      fetchCourses();
-      Alert.alert("Succès", "Votre demande d'inscription a été envoyée !");
-    } catch (e: any) { setError(e.message || "Erreur lors de l'inscription"); }
-  };
-
-  const getEnrollmentStatus = (courseId: number) => {
-    const enrol = enrollments.find(e => e.course?.id === courseId);
-    if (enrol) return enrol.statut;
-    const course = courses.find(c => c.id === courseId);
-    return course?.enrollments?.[0]?.statut || null;
-  };
-
-  const filteredCourses = courses.filter(c => {
-    if (!searchQuery) return true;
-    const q = searchQuery.toLowerCase();
-    return (c.title || '').toLowerCase().includes(q) || (c.description || '').toLowerCase().includes(q);
+  // تصفية البحث النصي محلياً
+  const filteredCourses = courses.filter((c) => {
+    const q = searchQuery.toLowerCase().trim();
+    if (!q) return true;
+    const t = (c.title || c.titre || '').toLowerCase();
+    const d = (c.description || '').toLowerCase();
+    const m = (c.matiere || '').toLowerCase();
+    return t.includes(q) || d.includes(q) || m.includes(q);
   });
 
-  const isFirstCourseOfSubject = (courseId: number, matiere?: string, annee?: string) => {
-    if (!matiere || !annee) return false;
-    const subjectCourses = courses.filter(c => c.matiere === matiere && c.annee === annee);
-    if (subjectCourses.length === 0) return false;
-    const minId = Math.min(...subjectCourses.map(c => c.id));
-    return courseId === minId;
-  };
-
-  const hasFilters = !!(niveau || annee || matiere);
-
   return (
-    <ThemedView style={s.container}>
+    <ThemedView style={styles.container}>
       <ScrollView
-        style={s.scrollView}
-        contentContainerStyle={[s.content, { paddingTop: insets.top + Spacing.three, paddingBottom: insets.bottom + BottomTabInset + Spacing.three }]}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); fetchCourses(); }} />}
+        contentContainerStyle={[
+          styles.content,
+          {
+            paddingTop: insets.top + Spacing.three,
+            paddingBottom: insets.bottom + BottomTabInset + Spacing.six,
+          },
+        ]}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={C.primary} />}
+        showsVerticalScrollIndicator={false}
       >
-        <View style={s.header}>
-          <ThemedText type="title">Catalogue</ThemedText>
-          <ThemedText type="small" style={s.subtitle}>{courses.length} cours disponibles</ThemedText>
+        {/* الرأس والترحيب */}
+        <View style={styles.header}>
+          <ThemedText style={styles.title}>دليل الدورات التعليمية 🔍</ThemedText>
+          <ThemedText style={styles.sub}>
+            دورات متوافقة 100% مع المنهاج الجزائري للتعليم المتوسط والثانوي
+          </ThemedText>
         </View>
 
-        {/* Filtres */}
-        <View style={s.filtersRow}>
-          <Pressable style={[s.filterBtn, niveau ? s.filterBtnActive : null]} onPress={() => setShowNiveauPicker(true)}>
-            <ThemedText style={[s.filterBtnTxt, niveau ? s.filterBtnTxtActive : null]} numberOfLines={1}>
-              {niveau ? (niveau === 'college' ? '🏫 المتوسط' : '🎓 الثانوي') : '🏫 المستوى ▾'}
-            </ThemedText>
-          </Pressable>
-          
-          {!!niveau && (
-            <Pressable style={[s.filterBtn, annee ? s.filterBtnActive : null]} onPress={() => setShowAnneePicker(true)}>
-              <ThemedText style={[s.filterBtnTxt, annee ? s.filterBtnTxtActive : null]} numberOfLines={1}>
-                {annee ? `📅 ${anneeOptions.find(a => a.value === annee)?.label || annee}` : '📅 القسم ▾'}
-              </ThemedText>
+        {/* حقل البحث */}
+        <View style={styles.searchBox}>
+          <ThemedText style={styles.searchIcon}>🔎</ThemedText>
+          <TextInput
+            style={styles.searchInput}
+            placeholder="ابحث عن درس، مادة، أستاذ..."
+            placeholderTextColor="#9CA3AF"
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            textAlign="right"
+          />
+          {searchQuery ? (
+            <Pressable onPress={() => setSearchQuery('')}>
+              <ThemedText style={styles.clearSearch}>✕</ThemedText>
             </Pressable>
-          )}
-
-          {!!annee && (
-            <Pressable style={[s.filterBtn, matiere ? s.filterBtnActive : null]} onPress={() => setShowMatierePicker(true)}>
-              <ThemedText style={[s.filterBtnTxt, matiere ? s.filterBtnTxtActive : null]} numberOfLines={1}>
-                {matiere ? `📘 ${MATIERES.find(m => m.value === matiere)?.label.replace(/^[^\s]+\s/, '') || matiere}` : '📘 المادة ▾'}
-              </ThemedText>
-            </Pressable>
-          )}
+          ) : null}
         </View>
 
-        {hasFilters && (
-          <Pressable style={s.resetBtn} onPress={resetFilters}>
-            <ThemedText style={s.resetBtnTxt}>✕ Réinitialiser les filtres</ThemedText>
-          </Pressable>
-        )}
+        {/* فلاتر المنهاج الجزائري */}
+        <View style={styles.filtersWrapper}>
+          <ThemedText style={styles.filtersTitle}>تصفية حسب المنهاج الجزائري :</ThemedText>
+          <View style={styles.filterBtnsRow}>
+            {/* فلتر الطور */}
+            <Pressable
+              style={[styles.filterPill, selectedNiveau && styles.filterPillActive]}
+              onPress={() => setShowNiveauModal(true)}
+            >
+              <ThemedText style={[styles.filterPillTxt, selectedNiveau && styles.filterPillTxtActive]}>
+                {selectedNiveau ? getNiveauLabel(selectedNiveau) : '🏫 الطور'}
+              </ThemedText>
+            </Pressable>
 
-        <PickerModal visible={showNiveauPicker} title="Choisir un niveau" options={NIVEAUX} selected={niveau} onSelect={handleNiveauSelect} onClose={() => setShowNiveauPicker(false)} />
-        <PickerModal visible={showAnneePicker} title="Choisir une année" options={anneeOptions} selected={annee} onSelect={handleAnneeSelect} onClose={() => setShowAnneePicker(false)} />
-        <PickerModal visible={showMatierePicker} title="Choisir une matière" options={MATIERES} selected={matiere} onSelect={handleMatiereSelect} onClose={() => setShowMatierePicker(false)} />
+            {/* فلتر السنة */}
+            <Pressable
+              style={[styles.filterPill, selectedAnnee && styles.filterPillActive]}
+              onPress={() => setShowAnneeModal(true)}
+            >
+              <ThemedText style={[styles.filterPillTxt, selectedAnnee && styles.filterPillTxtActive]}>
+                {selectedAnnee ? getClasseLabel(selectedAnnee) : '📅 السنة'}
+              </ThemedText>
+            </Pressable>
 
-        <PickerModal 
-          visible={selectedCourseForPayment !== null} 
-          title="Type d'inscription" 
-          options={[
-            { value: 'COURS_SEUL', label: 'Ce cours uniquement (Mensuel)' },
-            { value: 'PARCOURS_COMPLET', label: 'Parcours complet (Annuel)' }
-          ]} 
-          selected="" 
-          onSelect={(val) => {
-            if (selectedCourseForPayment !== null) {
-              requestEnrollment(selectedCourseForPayment, val);
-            }
-          }} 
-          onClose={() => setSelectedCourseForPayment(null)} 
-        />
+            {/* فلتر المادة */}
+            <Pressable
+              style={[styles.filterPill, selectedMatiere && styles.filterPillActive]}
+              onPress={() => setShowMatiereModal(true)}
+            >
+              <ThemedText style={[styles.filterPillTxt, selectedMatiere && styles.filterPillTxtActive]}>
+                {selectedMatiere ? getMatiereLabel(selectedMatiere) : '📚 المادة'}
+              </ThemedText>
+            </Pressable>
 
-        {error && <View style={s.errorBox}><ThemedText style={s.errorTxt}>{error}</ThemedText></View>}
+            {/* زر إعادة الضبط */}
+            {(selectedNiveau || selectedAnnee || selectedMatiere) ? (
+              <Pressable
+                style={styles.resetFilterBtn}
+                onPress={() => {
+                  setSelectedNiveau('');
+                  setSelectedAnnee('');
+                  setSelectedMatiere('');
+                }}
+              >
+                <ThemedText style={styles.resetFilterTxt}>إلغاء الكل ✕</ThemedText>
+              </Pressable>
+            ) : null}
+          </View>
+        </View>
 
+        {/* نتائج البحث وقائمة الدورات */}
         {loading ? (
-          <View style={s.center}><ActivityIndicator size="large" color={Colors.primary} /><ThemedText type="small" style={{ marginTop: 8, color: '#6B7280' }}>Chargement...</ThemedText></View>
+          <View style={{ paddingVertical: 40 }}>
+            <ActivityIndicator size="large" color={C.primary} />
+          </View>
+        ) : error ? (
+          <View style={styles.errorBox}>
+            <ThemedText style={styles.errorText}>⚠️ {error}</ThemedText>
+          </View>
         ) : filteredCourses.length === 0 ? (
-          <View style={s.center}>
-            <ThemedText type="subtitle" style={{ color: '#374151', marginBottom: 12 }}>
-              {hasFilters ? '🔎 Aucun cours trouvé' : '📚 Aucun cours disponible'}
+          <View style={styles.emptyBox}>
+            <ThemedText style={styles.emptyIcon}>🔍</ThemedText>
+            <ThemedText style={styles.emptyTitle}>لا توجد نتائج مطابقة</ThemedText>
+            <ThemedText style={styles.emptySub}>
+              جرب تغيير معايير البحث أو اختيار طور وسنة دراسية أخرى.
             </ThemedText>
-            {hasFilters && <Pressable style={s.resetBtn} onPress={resetFilters}><ThemedText style={s.resetBtnTxt}>Effacer les filtres</ThemedText></Pressable>}
           </View>
         ) : (
-          <View style={s.list}>
-            {filteredCourses.map(course => {
-              const status = getEnrollmentStatus(course.id);
-              const isEnrolled = status === 'PAYE' || status === 'GRATUIT';
-              const isPending  = status === 'EN_ATTENTE';
-              const chapCount  = course.chapters?.length ?? 0;
-              const teacher    = course.teachers?.[0];
-              
-              const subjectStyle = getSubjectStyle(course.matiere);
-              const color = subjectStyle.primary;
-              const bgColor = subjectStyle.bg;
-              const icon = subjectStyle.icon;
+          <View style={styles.coursesList}>
+            <ThemedText style={styles.resultsCount}>
+              عدد الدورات المتوفرة: {filteredCourses.length}
+            </ThemedText>
+            {filteredCourses.map((course) => {
+              const myEnrollment = course.enrollments && course.enrollments.length > 0 ? course.enrollments[0] : null;
+              const isEnrolled = myEnrollment && (myEnrollment.statut === 'PAYE' || myEnrollment.statut === 'GRATUIT');
+              const isPending = myEnrollment && myEnrollment.statut === 'EN_ATTENTE';
 
               return (
-                <Pressable key={course.id}
-                  style={({ pressed }) => [s.card, pressed && { opacity: 0.85 }]}
-                  onPress={() => {
-                    if (course.cooldownLocked && course.lockedUntil) {
-                      const date = new Date(course.lockedUntil).toLocaleDateString('fr-FR');
-                      Alert.alert(
-                        "Cours verrouillé 🔒",
-                        `Veuillez patienter 5 jours après la fin de votre cours précédent de ${course.matiere}.\n\nCe cours sera disponible le ${date}.`
-                      );
-                      return;
-                    }
-                    if (isEnrolled) {
-                      router.push({ pathname: '/course/[id]', params: { id: course.id } });
-                    } else if (!isPending) {
-                      if (isFirstCourseOfSubject(course.id, course.matiere, course.annee)) {
-                        router.push({ pathname: '/course/[id]', params: { id: course.id } });
-                      } else {
-                        setSelectedCourseForPayment(course.id);
-                      }
-                    }
-                  }}
-                >
-                  <View style={[s.cardContent, { borderColor: '#E2E8F0', borderWidth: 1 }]}>
-                    <View style={[s.banner, { backgroundColor: bgColor }]}>
-                      <ThemedText style={[s.bannerIcon, { fontSize: 48 }]}>{icon}</ThemedText>
-                      {(course.niveau || course.annee) && (
-                        <View style={[s.bannerBadge, { backgroundColor: color }]}>
-                          <ThemedText style={[s.bannerBadgeTxt, { color: 'white' }]}>
-                            {course.niveau === 'college' ? 'المتوسط' : course.niveau === 'lycee' ? 'الثانوي' : course.niveau}
-                            {course.annee ? ` • ${course.annee}` : ''}
-                          </ThemedText>
-                        </View>
-                      )}
+                <View key={course.id} style={styles.cardContainer}>
+                  {/* شارة حالة التسجيل للتلميذ */}
+                  {isEnrolled && (
+                    <View style={styles.enrolledBadge}>
+                      <ThemedText style={styles.enrolledBadgeText}>✓ مسجل في دورتك</ThemedText>
                     </View>
-                    <View style={s.info}>
-                      <ThemedText type="subtitle" style={[s.cardTitle, { color: '#1E293B', fontSize: 18 }]} numberOfLines={2}>{course.title}</ThemedText>
-                      <View style={s.tags}>
-                        {course.matiere && <View style={[s.tag, { backgroundColor: bgColor }]}><ThemedText style={[s.tagTxt, { color: color }]}>📘 {MATIERES.find(m => m.value === course.matiere)?.label || course.matiere}</ThemedText></View>}
-                        {chapCount > 0 && <View style={s.tag}><ThemedText style={s.tagTxt}>📖 {chapCount} فصل</ThemedText></View>}
-                      </View>
-                      {teacher && <ThemedText type="small" style={s.teacher}>👨‍🏫 {teacher.prenom} {teacher.nom}</ThemedText>}
+                  )}
+                  {isPending && (
+                    <View style={styles.pendingBadge}>
+                      <ThemedText style={styles.pendingBadgeText}>⏳ قيد التحقق من الدفع</ThemedText>
                     </View>
-                    <View style={[
-                      s.accessBtn, 
-                      course.cooldownLocked && s.accessBtnLocked,
-                      isPending && !course.cooldownLocked && s.accessBtnPending, 
-                      isEnrolled && !course.cooldownLocked && s.accessBtnEnrolled,
-                      !isEnrolled && !isPending && !course.cooldownLocked && isFirstCourseOfSubject(course.id, course.matiere, course.annee) && { backgroundColor: '#F97316' },
-                      !isEnrolled && !isPending && !course.cooldownLocked && !isFirstCourseOfSubject(course.id, course.matiere, course.annee) && { backgroundColor: color }
-                    ]}>
-                      <ThemedText style={s.accessBtnTxt}>
-                        {course.cooldownLocked ? '🔒 دورة مقفلة' : isEnrolled ? '📖 الدخول إلى الدورة' : isPending ? '⏳ قيد الانتظار' : isFirstCourseOfSubject(course.id, course.matiere, course.annee) ? '🚀 حاول مجانا' : "📝 طلب الوصول"}
-                      </ThemedText>
-                    </View>
-                  </View>
-                </Pressable>
+                  )}
+
+                  <CourseCard
+                    id={course.id}
+                    titre={course.title || course.titre}
+                    description={course.description}
+                    chaptersCount={course.chapters?.length || 0}
+                    niveau={course.niveau}
+                    annee={course.annee}
+                    matiere={course.matiere}
+                    teachers={course.teachers}
+                    onPress={() => {
+                      router.push({ pathname: '/course/[id]', params: { id: String(course.id) } });
+                    }}
+                  />
+                </View>
               );
             })}
           </View>
         )}
 
-        {!loading && courses.length > 0 && (
-          <View style={{ alignItems: 'center', paddingVertical: Spacing.three }}>
-            <ThemedText type="small" style={{ color: '#9CA3AF' }}>{filteredCourses.length} cours affichés</ThemedText>
-          </View>
-        )}
+        {/* Modals الفلاتر */}
+        <PickerModal
+          visible={showNiveauModal}
+          title="اختر الطور التعليمي"
+          options={[
+            { value: '', label: 'جميع الأطوار' },
+            ...NIVEAUX.map((n) => ({ value: n.value, label: `${n.icon} ${n.label}` })),
+          ]}
+          selected={selectedNiveau}
+          onSelect={(v) => {
+            setSelectedNiveau(v);
+            setSelectedAnnee('');
+          }}
+          onClose={() => setShowNiveauModal(false)}
+        />
+
+        <PickerModal
+          visible={showAnneeModal}
+          title="اختر السنة الدراسية"
+          options={anneeOptions}
+          selected={selectedAnnee}
+          onSelect={setSelectedAnnee}
+          onClose={() => setShowAnneeModal(false)}
+        />
+
+        <PickerModal
+          visible={showMatiereModal}
+          title="اختر المادة التعليمية"
+          options={MATIERES_OPTIONS}
+          selected={selectedMatiere}
+          onSelect={setSelectedMatiere}
+          onClose={() => setShowMatiereModal(false)}
+        />
+
+        {/* Modal الدفع */}
+        {payCourse ? (
+          <PaymentModal
+            visible={!!payCourse}
+            course={payCourse}
+            token={token}
+            onClose={() => setPayCourse(null)}
+            onEnrollmentSuccess={() => {
+              fetchCourses();
+            }}
+          />
+        ) : null}
       </ScrollView>
     </ThemedView>
   );
 }
 
-const s = StyleSheet.create({
-  container: { flex: 1 },
-  scrollView: { flex: 1 },
-  content: { paddingHorizontal: Spacing.four },
-  header: { marginBottom: Spacing.three },
-  subtitle: { color: '#6B7280', marginTop: 4 },
-  searchBar: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'white', borderRadius: 10, paddingHorizontal: Spacing.three, borderWidth: 1, borderColor: '#E5E7EB', marginBottom: Spacing.three },
-  searchInput: { flex: 1, paddingVertical: 12, fontSize: 15, color: '#1F2937' },
-  searchIcon: { fontSize: 18 },
-  filtersRow: { flexDirection: 'row', gap: Spacing.two, marginBottom: Spacing.two },
-  filterBtn: { flex: 1, backgroundColor: 'white', borderWidth: 1.5, borderColor: '#D1D5DB', borderRadius: 8, paddingVertical: 8, paddingHorizontal: 6, alignItems: 'center' },
-  filterBtnActive: { borderColor: Colors.primary, backgroundColor: '#F0FDF4' },
-  filterBtnTxt: { fontSize: 12, color: '#374151', fontWeight: '600' },
-  filterBtnTxtActive: { color: Colors.primary },
-  resetBtn: { alignSelf: 'center', marginBottom: Spacing.three, paddingVertical: 6, paddingHorizontal: 14, borderRadius: 20, backgroundColor: '#FEE2E2' },
-  resetBtnTxt: { color: '#DC2626', fontWeight: '600', fontSize: 12 },
-  errorBox: { backgroundColor: '#FEE2E2', borderLeftWidth: 4, borderLeftColor: '#DC2626', padding: Spacing.three, borderRadius: 8, marginBottom: Spacing.four },
-  errorTxt: { color: '#DC2626', fontWeight: '500' },
-  center: { alignItems: 'center', justifyContent: 'center', paddingVertical: Spacing.six },
-  list: { gap: Spacing.three, marginBottom: Spacing.four },
-  card: { borderRadius: 12, overflow: 'hidden' },
-  cardContent: { backgroundColor: 'white', borderRadius: 12, overflow: 'hidden', borderWidth: 1, borderColor: '#E5E7EB' },
-  banner: { height: 90, alignItems: 'center', justifyContent: 'center' },
-  bannerIcon: { fontSize: 42 },
-  bannerBadge: { position: 'absolute', bottom: 6, left: 10, backgroundColor: 'rgba(0,0,0,0.35)', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 10 },
-  bannerBadgeTxt: { color: 'white', fontSize: 11, fontWeight: '600' },
-  info: { padding: Spacing.three, gap: Spacing.two },
-  cardTitle: { fontWeight: '600', color: '#1F2937' },
-  cardDesc: { color: '#6B7280' },
-  tags: { flexDirection: 'row', flexWrap: 'wrap', gap: 4 },
-  tag: { backgroundColor: '#F3F4F6', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 10 },
-  tagTxt: { fontSize: 11, color: '#374151', fontWeight: '500' },
-  teacher: { color: '#6B7280', marginTop: 2 },
-  accessBtn: { backgroundColor: Colors.primary, paddingVertical: 12, alignItems: 'center' },
-  accessBtnPending: { backgroundColor: '#D97706' },
-  accessBtnEnrolled: { backgroundColor: '#2563EB' },
-  accessBtnLocked: { backgroundColor: '#9CA3AF' },
-  accessBtnTxt: { color: 'white', fontWeight: '700', fontSize: 14 },
+const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: C.bg },
+  content: { paddingHorizontal: 16 },
+  header: {
+    marginVertical: 14,
+    alignItems: 'flex-end',
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: '900',
+    color: '#111827',
+    textAlign: 'right',
+  },
+  sub: {
+    fontSize: 13,
+    color: '#6B7280',
+    textAlign: 'right',
+    marginTop: 4,
+  },
+  searchBox: {
+    flexDirection: 'row-reverse',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    borderRadius: 14,
+    paddingHorizontal: 14,
+    marginBottom: 14,
+  },
+  searchIcon: {
+    fontSize: 16,
+    marginLeft: 8,
+  },
+  searchInput: {
+    flex: 1,
+    paddingVertical: 10,
+    fontSize: 14,
+    color: '#111827',
+  },
+  clearSearch: {
+    fontSize: 16,
+    color: '#9CA3AF',
+    padding: 4,
+  },
+  filtersWrapper: {
+    marginBottom: 16,
+    alignItems: 'flex-end',
+  },
+  filtersTitle: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#4B5563',
+    marginBottom: 8,
+    textAlign: 'right',
+  },
+  filterBtnsRow: {
+    flexDirection: 'row-reverse',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  filterPill: {
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 10,
+  },
+  filterPillActive: {
+    backgroundColor: '#ECFDF5',
+    borderColor: '#059669',
+  },
+  filterPillTxt: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#374151',
+  },
+  filterPillTxtActive: {
+    color: '#059669',
+    fontWeight: '800',
+  },
+  resetFilterBtn: {
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    borderRadius: 10,
+    backgroundColor: '#FEE2E2',
+  },
+  resetFilterTxt: {
+    fontSize: 12,
+    color: '#DC2626',
+    fontWeight: '700',
+  },
+  resultsCount: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#6B7280',
+    textAlign: 'right',
+    marginBottom: 10,
+  },
+  coursesList: {
+    marginTop: 6,
+  },
+  cardContainer: {
+    position: 'relative',
+  },
+  enrolledBadge: {
+    position: 'absolute',
+    top: 10,
+    left: 10,
+    backgroundColor: '#059669',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 8,
+    zIndex: 10,
+  },
+  enrolledBadgeText: {
+    color: '#FFFFFF',
+    fontSize: 11,
+    fontWeight: '800',
+  },
+  pendingBadge: {
+    position: 'absolute',
+    top: 10,
+    left: 10,
+    backgroundColor: '#D97706',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 8,
+    zIndex: 10,
+  },
+  pendingBadgeText: {
+    color: '#FFFFFF',
+    fontSize: 11,
+    fontWeight: '800',
+  },
+  emptyBox: {
+    paddingVertical: 40,
+    alignItems: 'center',
+  },
+  emptyIcon: {
+    fontSize: 48,
+    marginBottom: 10,
+  },
+  emptyTitle: {
+    fontSize: 17,
+    fontWeight: '800',
+    color: '#1F2937',
+    marginBottom: 4,
+  },
+  emptySub: {
+    fontSize: 13,
+    color: '#6B7280',
+    textAlign: 'center',
+    lineHeight: 18,
+  },
+  errorBox: {
+    backgroundColor: '#FEF2F2',
+    padding: 12,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#FECACA',
+    marginVertical: 16,
+  },
+  errorText: {
+    color: '#DC2626',
+    fontSize: 13,
+    textAlign: 'right',
+    fontWeight: '700',
+  },
 });
 
 const pk = StyleSheet.create({
-  overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)' },
-  sheet: { backgroundColor: 'white', borderTopLeftRadius: 20, borderTopRightRadius: 20, maxHeight: '70%', paddingBottom: 30 },
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: Spacing.four, borderBottomWidth: 1, borderBottomColor: '#E5E7EB' },
-  title: { fontWeight: '700', fontSize: 16, color: '#1F2937' },
-  close: { fontSize: 18, color: '#6B7280' },
-  option: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 14, paddingHorizontal: Spacing.four, borderBottomWidth: 1, borderBottomColor: '#F3F4F6' },
-  optionSelected: { backgroundColor: '#F0FDF4' },
-  optionText: { fontSize: 15, color: '#374151' },
-  optionTextSelected: { color: Colors.primary, fontWeight: '700' },
-  checkmark: { color: Colors.primary, fontWeight: '700', fontSize: 16 },
+  overlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+  },
+  sheet: {
+    backgroundColor: '#FFFFFF',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    maxHeight: '80%',
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    paddingBottom: 20,
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F3F4F6',
+  },
+  title: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: '#111827',
+  },
+  close: {
+    fontSize: 18,
+    color: '#9CA3AF',
+    padding: 4,
+  },
+  option: {
+    flexDirection: 'row-reverse',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F3F4F6',
+  },
+  optionSelected: {
+    backgroundColor: '#ECFDF5',
+  },
+  optionText: {
+    fontSize: 14,
+    color: '#374151',
+  },
+  optionTextSelected: {
+    color: '#059669',
+    fontWeight: '800',
+  },
+  checkmark: {
+    color: '#059669',
+    fontSize: 16,
+    fontWeight: '900',
+  },
 });

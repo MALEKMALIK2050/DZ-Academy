@@ -1,26 +1,30 @@
+// src/components/course-card.tsx
 import React from 'react';
-import { StyleSheet, Pressable } from 'react-native';
+import { StyleSheet, Pressable, View } from 'react-native';
 import { router } from 'expo-router';
 import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
 import { Spacing } from '@/constants/theme';
-
-const Colors = {
-  primary: '#16A34A',
-  secondary: '#F97316',
-  accent: '#208AEF',
-  lightGray: '#F3F4F6',
-};
+import {
+  getMatiereStyles,
+  getSubjectIcon,
+  getMatiereLabel,
+  getClasseLabel,
+  getNiveauLabel,
+} from '@/constants/algerian-education';
 
 interface CourseCardProps {
   id: string | number;
-  titre: string;
-  description: string;
+  titre?: string;
+  title?: string;
+  description?: string;
   progress?: number;
   chaptersCount?: number;
   rating?: number;
   enseignant?: string;
+  teachers?: { id?: number; nom?: string; prenom?: string }[];
   niveau?: string;
+  annee?: string;
+  matiere?: string;
   etudiants?: number;
   onPress?: (courseId: string | number) => void;
   style?: any;
@@ -29,38 +33,36 @@ interface CourseCardProps {
 export const CourseCard: React.FC<CourseCardProps> = ({
   id,
   titre,
+  title,
   description,
   progress,
   chaptersCount,
   rating,
   enseignant,
+  teachers,
   niveau,
-  etudiants,
+  annee,
+  matiere,
   onPress,
   style,
 }) => {
+  const displayTitle = titre || title || 'دورة تعليمية';
+  const stylesSubject = getMatiereStyles(matiere || displayTitle);
+  const icon = getSubjectIcon(matiere || displayTitle);
+  const matiereLabel = getMatiereLabel(matiere);
+  const niveauLabel = getNiveauLabel(niveau);
+  const classeLabel = getClasseLabel(annee);
+
+  const teacherName =
+    enseignant ||
+    (teachers && teachers.length > 0 ? `${teachers[0].prenom || ''} ${teachers[0].nom || ''}`.trim() : '');
+
   const handlePress = () => {
     if (onPress) {
       onPress(id);
     } else {
-      router.push({
-        pathname: '/course/[id]',
-        params: { id },
-      });
+      router.push({ pathname: '/course/[id]', params: { id: String(id) } });
     }
-  };
-
-  // Déterminer la couleur basée sur l'ID
-  const getColor = () => {
-    if (id % 3 === 0) return Colors.primary;
-    if (id % 3 === 1) return Colors.secondary;
-    return Colors.accent;
-  };
-
-  const getIcon = () => {
-    if (id % 3 === 0) return '🌱';
-    if (id % 3 === 1) return '🔥';
-    return '⚡';
   };
 
   return (
@@ -72,172 +74,234 @@ export const CourseCard: React.FC<CourseCardProps> = ({
         style,
       ]}
     >
-      <ThemedView style={styles.cardContent}>
-        {/* Bannière */}
-        <ThemedView style={[styles.banner, { backgroundColor: getColor() }]}>
-          <ThemedText style={styles.bannerIcon}>{getIcon()}</ThemedText>
-        </ThemedView>
+      <View style={styles.cardContent}>
+        {/* شريط المادة العلوي المميز */}
+        <View style={[styles.banner, { backgroundColor: stylesSubject.background }]}>
+          <ThemedText style={[styles.bannerSymbol, { color: stylesSubject.color }]}>
+            {icon}
+          </ThemedText>
+          <View style={[styles.iconBadge, { backgroundColor: stylesSubject.color }]}>
+            <ThemedText style={styles.badgeText}>{icon}</ThemedText>
+          </View>
+        </View>
 
-        {/* Infos */}
-        <ThemedView style={styles.info}>
+        {/* جسم البطاقة */}
+        <View style={styles.info}>
+          {/* تصنيف المادة والمستوى */}
+          <View style={styles.tagsRow}>
+            {matiereLabel ? (
+              <View style={[styles.tag, { backgroundColor: stylesSubject.background, borderColor: stylesSubject.border }]}>
+                <ThemedText style={[styles.tagText, { color: stylesSubject.color }]}>
+                  {matiereLabel}
+                </ThemedText>
+              </View>
+            ) : null}
+            {classeLabel ? (
+              <View style={[styles.tag, styles.tagClasse]}>
+                <ThemedText style={styles.tagClasseText}>{classeLabel}</ThemedText>
+              </View>
+            ) : null}
+          </View>
+
+          {/* عنوان الدورة */}
           <ThemedText type="subtitle" style={styles.title} numberOfLines={2}>
-            {titre}
+            {displayTitle}
           </ThemedText>
 
-          <ThemedText type="small" style={styles.description} numberOfLines={2}>
-            {description}
-          </ThemedText>
-
-          {/* Métadonnées */}
-          <ThemedView style={styles.metadata}>
-            {niveau && (
-              <ThemedText type="small" style={styles.metaItem}>
-                📊 {niveau}
-              </ThemedText>
-            )}
-            {chaptersCount && (
-              <ThemedText type="small" style={styles.metaItem}>
-                📖 {chaptersCount}
-              </ThemedText>
-            )}
-            {etudiants && (
-              <ThemedText type="small" style={styles.metaItem}>
-                👥 {etudiants}
-              </ThemedText>
-            )}
-          </ThemedView>
-
-          {/* Rating */}
-          {rating && (
-            <ThemedView style={styles.rating}>
-              <ThemedText style={styles.stars}>
-                {'⭐'.repeat(Math.floor(rating))}
-              </ThemedText>
-              <ThemedText type="small">{rating}/5</ThemedText>
-            </ThemedView>
-          )}
-
-          {/* Enseignant */}
-          {enseignant && (
+          {/* اسم الأستاذ */}
+          {teacherName ? (
             <ThemedText type="small" style={styles.enseignant}>
-              👨‍🏫 {enseignant}
+              👨‍🏫 الأستاذ: {teacherName}
             </ThemedText>
-          )}
+          ) : null}
 
-          {/* Progression */}
-          {progress !== undefined && (
-            <ThemedView style={styles.progressSection}>
-              <ThemedView style={styles.progressBar}>
-                <ThemedView
-                  style={[
-                    styles.progressFill,
-                    {
-                      width: `${Math.min(progress, 100)}%`,
-                      backgroundColor: getColor(),
-                    },
-                  ]}
-                />
-              </ThemedView>
-              <ThemedText type="small" style={styles.progressText}>
-                {Math.round(progress)}%
+          {/* البيانات الإضافية */}
+          <View style={styles.metadata}>
+            {niveauLabel ? (
+              <ThemedText type="small" style={styles.metaItem}>
+                🏛️ {niveauLabel}
               </ThemedText>
-            </ThemedView>
-          )}
-        </ThemedView>
+            ) : null}
+            {chaptersCount !== undefined ? (
+              <ThemedText type="small" style={styles.metaItem}>
+                📖 {chaptersCount} فصول
+              </ThemedText>
+            ) : null}
+            {rating ? (
+              <ThemedText type="small" style={styles.metaItem}>
+                ⭐ {rating}
+              </ThemedText>
+            ) : null}
+          </View>
 
-        {/* Bouton accès */}
-        <ThemedView style={[styles.accessBtn, { backgroundColor: getColor() }]}>
-          <ThemedText style={styles.accessBtnText}>→</ThemedText>
-        </ThemedView>
-      </ThemedView>
+          {/* شريط تقدم الطالب */}
+          {progress !== undefined && (
+            <View style={styles.progressSection}>
+              <View style={styles.progressRow}>
+                <ThemedText type="small" style={[styles.progressText, { color: stylesSubject.color }]}>
+                  {Math.round(progress)}%
+                </ThemedText>
+                <View style={styles.progressBar}>
+                  <View
+                    style={[
+                      styles.progressFill,
+                      {
+                        width: `${Math.min(progress, 100)}%`,
+                        backgroundColor: stylesSubject.color,
+                      },
+                    ]}
+                  />
+                </View>
+              </View>
+            </View>
+          )}
+        </View>
+
+        {/* زر متابعة التعلم */}
+        <View style={[styles.accessBtn, { backgroundColor: stylesSubject.color }]}>
+          <ThemedText style={styles.accessBtnText}>متابعة التعلم ←</ThemedText>
+        </View>
+      </View>
     </Pressable>
   );
 };
 
 const styles = StyleSheet.create({
   card: {
-    borderRadius: 12,
-    overflow: 'hidden',
+    borderRadius: 18,
+    marginBottom: Spacing.three,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.06,
+    shadowRadius: 10,
+    elevation: 2,
   },
   cardPressed: {
-    opacity: 0.85,
+    transform: [{ scale: 0.985 }],
+    opacity: 0.95,
   },
   cardContent: {
-    backgroundColor: 'white',
-    borderRadius: 12,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 18,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderColor: '#EAE8E4',
   },
   banner: {
-    height: 80,
-    alignItems: 'center',
+    height: 85,
+    overflow: 'hidden',
     justifyContent: 'center',
+    alignItems: 'center',
   },
-  bannerIcon: {
-    fontSize: 40,
+  bannerSymbol: {
+    position: 'absolute',
+    fontSize: 70,
+    opacity: 0.12,
+    right: 15,
+    bottom: -15,
+    fontWeight: '900',
+  },
+  iconBadge: {
+    width: 46,
+    height: 46,
+    borderRadius: 23,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.2,
+    shadowRadius: 5,
+    elevation: 3,
+  },
+  badgeText: {
+    fontSize: 22,
   },
   info: {
     padding: Spacing.three,
-    gap: Spacing.two,
-    backgroundColor: 'transparent',
+    gap: 6,
+  },
+  tagsRow: {
+    flexDirection: 'row-reverse',
+    flexWrap: 'wrap',
+    gap: 6,
+    marginBottom: 4,
+  },
+  tag: {
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
+    borderWidth: 1,
+  },
+  tagText: {
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  tagClasse: {
+    backgroundColor: '#F3F4F6',
+    borderColor: '#E5E7EB',
+  },
+  tagClasseText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#4B5563',
   },
   title: {
-    fontWeight: '600',
+    fontWeight: '800',
+    fontSize: 17,
     color: '#1F2937',
-  },
-  description: {
-    opacity: 0.6,
-    color: '#6B7280',
-  },
-  metadata: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: Spacing.one,
-    backgroundColor: 'transparent',
-  },
-  metaItem: {
-    fontSize: 12,
-    opacity: 0.7,
-  },
-  rating: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.one,
-    marginVertical: Spacing.one,
-  },
-  stars: {
-    fontSize: 12,
+    textAlign: 'right',
+    lineHeight: 24,
   },
   enseignant: {
-    opacity: 0.7,
+    color: '#6B7280',
     fontSize: 12,
+    textAlign: 'right',
+  },
+  metadata: {
+    flexDirection: 'row-reverse',
+    flexWrap: 'wrap',
+    gap: 12,
+    marginTop: 4,
+  },
+  metaItem: {
+    fontSize: 11,
+    color: '#6B7280',
+    fontWeight: '600',
   },
   progressSection: {
-    marginTop: Spacing.two,
-    gap: Spacing.one,
+    marginTop: 6,
+  },
+  progressRow: {
+    flexDirection: 'row-reverse',
+    alignItems: 'center',
+    gap: 8,
   },
   progressBar: {
-    height: 6,
-    backgroundColor: Colors.lightGray,
-    borderRadius: 3,
+    flex: 1,
+    height: 7,
+    backgroundColor: '#F3F4F6',
+    borderRadius: 4,
     overflow: 'hidden',
   },
   progressFill: {
     height: '100%',
-    borderRadius: 3,
+    borderRadius: 4,
   },
   progressText: {
     fontSize: 12,
-    opacity: 0.7,
+    fontWeight: '800',
+    minWidth: 35,
+    textAlign: 'left',
   },
   accessBtn: {
-    paddingVertical: Spacing.three,
+    paddingVertical: 12,
     alignItems: 'center',
   },
   accessBtnText: {
-    color: 'white',
-    fontWeight: '700',
-    fontSize: 16,
+    color: '#FFFFFF',
+    fontWeight: '800',
+    fontSize: 14,
   },
 });
+
+export default CourseCard;

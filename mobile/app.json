@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "DZ Academy",
+    "name": "الأكاديمية الجزائرية",
     "slug": "dz-academy",
     "version": "1.0.0",
     "updates": {
@@ -12,15 +12,28 @@
     "scheme": "dzacademy",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "icon": "./assets/images/icon.png"
+      "icon": "./assets/images/icon.png",
+      "bundleIdentifier": "com.dzacademy.mobile",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
         "backgroundColor": "#FFFFFF",
-        "foregroundImage": "./assets/images/icon.png"
+        "foregroundImage": "./assets/images/android-icon-foreground.png"
       },
       "predictiveBackGestureEnabled": false,
-      "package": "com.dzacademy.mobile"
+      "package": "com.dzacademy.mobile",
+      "versionCode": 1,
+      "permissions": [
+        "android.permission.INTERNET",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.CAMERA",
+        "android.permission.FOREGROUND_SERVICE",
+        "android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK"
+      ]
     },
     "web": {
       "output": "static",
@@ -31,11 +44,10 @@
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#10B981",
-          "android": {
-            "image": "./assets/images/splash-icon.png",
-            "imageWidth": 76
-          }
+          "image": "./assets/images/splash-icon.png",
+          "imageWidth": 200,
+          "resizeMode": "contain",
+          "backgroundColor": "#FAF8F5"
         }
       ],
       "expo-web-browser",
@@ -47,11 +59,14 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "L'application a besoin d'accéder à vos photos pour uploader la preuve de paiement.",
-          "cameraPermission": "L'application a besoin d'accéder à l'appareil photo pour photographier la preuve de paiement."
+          "photosPermission": "يحتاج التطبيق إلى الوصول إلى المعرض لرفع إيصال الدفع.",
+          "cameraPermission": "يحتاج التطبيق إلى استخدام الكاميرا لتصوير إيصال الدفع."
         }
       ],
-      "expo-document-picker"
+      "expo-document-picker",
+      "expo-font",
+      "expo-image",
+      "expo-status-bar"
     ],
     "experiments": {
       "typedRoutes": true,
@@ -60,9 +75,9 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "7eaccfec-ee53-4ea6-b21f-9c0994146950"
+        "projectId": "c96f6f6c-3952-456d-a464-79edb6a1e220"
       }
     },
-    "owner": "malekmalek2030"
+    "owner": "malekmalik2031"
   }
 }

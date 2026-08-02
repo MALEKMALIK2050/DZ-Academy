@@ -23,11 +23,6 @@ interface UseCourseReturn {
   isRefreshing: boolean;
 }
 
-/**
- * Hook personnalisé pour récupérer les cours de l'étudiant
- * @param type - 'all' pour tous les cours, 'student' pour les cours de l'étudiant
- * @returns {UseCourseReturn} courses, loading, error, refetch
- */
 export const useCourses = (type: 'all' | 'student' = 'student'): UseCourseReturn => {
   const { token } = useAuth();
   const [courses, setCourses] = useState<Course[]>([]);
@@ -37,38 +32,25 @@ export const useCourses = (type: 'all' | 'student' = 'student'): UseCourseReturn
 
   const fetchCourses = async (showLoading = true) => {
     try {
-      if (showLoading) {
-        setLoading(true);
-      } else {
-        setIsRefreshing(true);
-      }
-
+      if (showLoading) setLoading(true);
+      else setIsRefreshing(true);
       setError(null);
 
-      // Adapter l'endpoint selon le type
-      const endpoint = type === 'all' 
-        ? API_ENDPOINTS.courses 
-        : API_ENDPOINTS.courses;
+      const endpoint = type === 'all'
+        ? API_ENDPOINTS.cataloguePublic()
+        : API_ENDPOINTS.studentCourses;
 
       const response = await fetch(endpoint, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { Authorization: `Bearer ${token}` },
       });
-
-      if (!response.ok) {
-        throw new Error(`Erreur ${response.status}`);
-      }
+      if (!response.ok) throw new Error(`خطأ ${response.status}`);
 
       const data = await response.json();
-      
-      // Adapter selon la structure de réponse de votre API
-      const coursesList = data.courses || data.data || data || [];
-      
+      const coursesList = data.courses || data.enrollments || data.data || data || [];
       setCourses(Array.isArray(coursesList) ? coursesList : []);
     } catch (err) {
       console.error('Fetch courses error:', err);
-      setError(err instanceof Error ? err.message : 'Erreur lors du chargement');
+      setError(err instanceof Error ? err.message : 'خطأ أثناء التحميل');
       setCourses([]);
     } finally {
       setLoading(false);
@@ -76,30 +58,15 @@ export const useCourses = (type: 'all' | 'student' = 'student'): UseCourseReturn
     }
   };
 
-  // Récupérer au montage
   useEffect(() => {
-    if (token) {
-      fetchCourses(true);
-    }
+    if (token) fetchCourses(true);
   }, [token]);
 
-  // Fonction refetch
-  const refetch = async () => {
-    await fetchCourses(false);
-  };
+  const refetch = async () => { await fetchCourses(false); };
 
-  return {
-    courses,
-    loading,
-    error,
-    refetch,
-    isRefreshing,
-  };
+  return { courses, loading, error, refetch, isRefreshing };
 };
 
-/**
- * Hook pour récupérer les détails d'un cours spécifique
- */
 export const useCourseDetail = (courseId: string | number) => {
   const { token } = useAuth();
   const [course, setCourse] = useState<Course | null>(null);
@@ -110,47 +77,28 @@ export const useCourseDetail = (courseId: string | number) => {
     try {
       setLoading(true);
       setError(null);
-
       const endpoint = API_ENDPOINTS.courseDetails(courseId);
       const response = await fetch(endpoint, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { Authorization: `Bearer ${token}` },
       });
-
-      if (!response.ok) {
-        throw new Error(`Erreur ${response.status}`);
-      }
-
+      if (!response.ok) throw new Error(`خطأ ${response.status}`);
       const data = await response.json();
-      const courseData = data.course || data;
-      
-      setCourse(courseData);
+      setCourse(data.course || data);
     } catch (err) {
       console.error('Fetch course detail error:', err);
-      setError(err instanceof Error ? err.message : 'Erreur lors du chargement');
+      setError(err instanceof Error ? err.message : 'خطأ أثناء التحميل');
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    if (token && courseId) {
-      fetchCourseDetail();
-    }
+    if (token && courseId) fetchCourseDetail();
   }, [token, courseId]);
 
-  return {
-    course,
-    loading,
-    error,
-    refetch: fetchCourseDetail,
-  };
+  return { course, loading, error, refetch: fetchCourseDetail };
 };
 
-/**
- * Hook pour récupérer la progression de l'étudiant
- */
 export const useStudentProgress = () => {
   const { token } = useAuth();
   const [progress, setProgress] = useState<any>(null);
@@ -161,37 +109,23 @@ export const useStudentProgress = () => {
     try {
       setLoading(true);
       setError(null);
-
-      const response = await fetch(API_ENDPOINTS.progress, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+      const response = await fetch(API_ENDPOINTS.studentProgress, {
+        headers: { Authorization: `Bearer ${token}` },
       });
-
-      if (!response.ok) {
-        throw new Error(`Erreur ${response.status}`);
-      }
-
+      if (!response.ok) throw new Error(`خطأ ${response.status}`);
       const data = await response.json();
       setProgress(data);
     } catch (err) {
       console.error('Fetch progress error:', err);
-      setError(err instanceof Error ? err.message : 'Erreur lors du chargement');
+      setError(err instanceof Error ? err.message : 'خطأ أثناء التحميل');
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    if (token) {
-      fetchProgress();
-    }
+    if (token) fetchProgress();
   }, [token]);
 
-  return {
-    progress,
-    loading,
-    error,
-    refetch: fetchProgress,
-  };
+  return { progress, loading, error, refetch: fetchProgress };
 };

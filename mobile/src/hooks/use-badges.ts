@@ -46,14 +46,12 @@ export function useBadges() {
       const res = await fetch(API_ENDPOINTS.studentBadges, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      if (!res.ok) {
-        throw new Error(`HTTP ${res.status}`);
-      }
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const json = await res.json();
       setData(json);
     } catch (e: any) {
       console.error('Failed to fetch badges:', e);
-      setError(e.message || 'Erreur de chargement des badges');
+      setError(e.message || 'خطأ في تحميل الأوسمة');
     } finally {
       setLoading(false);
     }

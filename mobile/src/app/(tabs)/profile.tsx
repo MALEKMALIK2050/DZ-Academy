@@ -1,837 +1,401 @@
-import { ThemedView } from '@/components/themed-view';
-import { BottomTabInset, Spacing } from '@/constants/theme';
-import { useAuth } from '@/context/auth-context';
-import { useBadges, Badge } from '@/hooks/use-badges';
-import { Image } from 'expo-image';
-import { router, useFocusEffect } from 'expo-router';
-import React, { useState, useCallback } from 'react';
+// src/app/(tabs)/profile.tsx
+import React, { useState } from 'react';
 import {
-  ActivityIndicator,
   Alert,
-  Linking,
   Modal,
   Pressable,
   ScrollView,
   StyleSheet,
-  Text,
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { router } from 'expo-router';
+import * as Linking from 'expo-linking';
+import { ThemedText } from '@/components/themed-text';
+import { ThemedView } from '@/components/themed-view';
+import { useAuth } from '@/context/auth-context';
+import { BottomTabInset, Spacing } from '@/constants/theme';
+import { DZ_PAYMENT_CONFIG, getClasseLabel, getNiveauLabel } from '@/constants/algerian-education';
 
 const Colors = {
-  primary: '#16A34A',
+  primary: '#059669',
   secondary: '#F97316',
   danger: '#DC2626',
-  accent: '#208AEF',
+  accent: '#2563EB',
+  dark: '#111827',
+  gray: '#6B7280',
   lightGray: '#F3F4F6',
-  darkGray: '#6B7280',
-  dark: '#1F2937',
-  mediumGray: '#4B5563',
-  lightText: '#374151',
+  border: '#E5E7EB',
+  white: '#FFFFFF',
+  bg: '#FAF8F5',
 };
 
-// ── Modal d'information réutilisable ──
-function InfoModal({ visible, title, content, onClose }: {
-  visible: boolean; title: string; content: string; onClose: () => void;
+function InfoModal({
+  visible,
+  title,
+  content,
+  onClose,
+}: {
+  visible: boolean;
+  title: string;
+  content: string;
+  onClose: () => void;
 }) {
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
       <Pressable style={modalStyles.overlay} onPress={onClose} />
       <View style={modalStyles.sheet}>
         <View style={modalStyles.header}>
-          <Text style={modalStyles.title}>{title}</Text>
           <Pressable onPress={onClose} style={modalStyles.closeBtn}>
-            <Text style={modalStyles.closeTxt}>✕</Text>
+            <ThemedText style={modalStyles.closeTxt}>✕</ThemedText>
           </Pressable>
+          <ThemedText style={modalStyles.title}>{title}</ThemedText>
         </View>
-        <ScrollView style={modalStyles.body} contentContainerStyle={{ paddingBottom: 40 }}>
-          <Text style={modalStyles.content}>{content}</Text>
+        <ScrollView style={modalStyles.body} contentContainerStyle={{ paddingBottom: 30 }}>
+          <ThemedText style={modalStyles.content}>{content}</ThemedText>
         </ScrollView>
       </View>
     </Modal>
   );
 }
 
-const CGU_TEXT = `CONDITIONS GÉNÉRALES D'UTILISATION
+const CGU_TEXT = `شروط الاستخدام العامة لمنصة دزأكاديمي (DZ Academy)
 
-Article 1 - Champ d'application
-Les présentes conditions générales d'utilisation (CGU) régissent l'accès et l'utilisation de la plateforme CB ACADEMY, accessible à l'adresse cb-academy-dz.vercel.app.
+المادة 1 - نطاق التطبيق:
+تنظم هذه الشروط العامة شروط وإجراءات الاستفادة من الخدمات التعليمية ومحتويات منصة دزأكاديمي.
 
-Article 2 - Acceptation des conditions
-L'inscription sur la plateforme implique l'acceptation pleine et entière des présentes CGU. L'utilisateur déclare avoir pris connaissance des conditions générales d'utilisation, de vente et de la politique de protection des données à caractère personnel et les accepte sans réserve.
+المادة 2 - شروط التسجيل وحساب التلميذ:
+• الحساب شخصي ومخصص للتلميذ المسجل حصراً.
+• يجب تقديم معلومات حقيقية ودقيقة خاصة بالاسم واللقب والمستوى الدراسي.
+• يتحمل التلميذ وولي أمره مسؤولية الحفاظ على سرية كلمة المرور.
 
-Article 3 - Protection des données personnelles
-Conformément à la loi algérienne n°18-07 du 10 juin 2018 relative à la protection des personnes physiques dans le traitement des données à caractère personnel :
-• Les données collectées sont strictement nécessaires à la gestion des inscriptions, du suivi pédagogique et des communications.
-• L'utilisateur dispose d'un droit d'accès, de rectification et d'opposition sur ses données.
-• Les données sont conservées pour une durée maximale de 5 ans après la dernière activité.
-• Des mesures de sécurité sont mises en œuvre pour protéger les données.
+المادة 3 - حماية المعطيات الشخصية (وفقاً للقانون الجزائري رقم 18-07):
+• تلتزم منصة دزأكاديمي بحماية خصوصية بيانات التلاميذ وأولياء الأمور.
+• تُستخدم البيانات حصراً لإدارة التمدرس والمتابعة البيداغوجية والتقييمات.`;
 
-Article 4 - Propriété intellectuelle
-Les contenus mis à disposition sur la plateforme (cours, exercices, vidéos) sont protégés par le droit d'auteur. Toute reproduction ou diffusion est interdite sans autorisation.
+const PRIVACY_TEXT = `سياسة الخصوصية وحماية المعطيات
 
-Article 5 - Charte des étudiants et parents
-L'étudiant et ses parents s'engagent à :
-• Utiliser leurs identifiants de manière personnelle et confidentielle.
-• Adopter un comportement respectueux dans les espaces d'échange.
-• Ne pas tenter de contourner les mesures de sécurité.
+تلتزم منصة دزأكاديمي DZ Academy بالشفافية الكاملة في معالجة بيانات التلاميذ:
 
-Article 6 - Droit applicable
-Les présentes CGU sont régies par le droit algérien. Tout litige relève de la compétence des tribunaux d'Alger.`;
-
-const PREREQ_TEXT = `PRÉREQUIS TECHNIQUES
-
-Pour suivre les formations sur la plateforme CB ACADEMY, l'utilisateur doit disposer des équipements et logiciels suivants :
-
-1. Connexion Internet
-• Connexion internet stable avec un débit minimum recommandé de 2 Mbps en réception et 1 Mbps en émission.
-• Pour les sessions en visioconférence : débit recommandé de 5 Mbps.
-
-2. Navigateur Web récent
-• Google Chrome : version 80 ou supérieure
-• Mozilla Firefox : version 75 ou supérieure
-• Microsoft Edge : version 80 ou supérieure
-• Safari : version 13 ou supérieure
-
-3. Logiciels requis
-• Lecteur PDF : Adobe Acrobat Reader ou équivalent (gratuit)
-• Lecteur vidéo : VLC Media Player ou équivalent
-
-4. Adresse email
-• Une adresse email valide est obligatoire pour recevoir les communications de la plateforme.
-
-5. Matériel pour visioconférence (si applicable)
-• Microphone : fonctionnel pour participer aux échanges audio.
-• Webcam : recommandée pour les sessions interactives.
-
-⚠️ Important : L'utilisateur reconnaît que l'insuffisance de ses équipements techniques ne pourra en aucun cas engager la responsabilité de CB ACADEMY.`;
-
-// ── Badge card component ──
-function BadgeCard({ badge }: { badge: Badge }) {
-  return (
-    <View style={[badgeStyles.card, !badge.earned && badgeStyles.cardLocked]}>
-      <View style={[badgeStyles.iconCircle, !badge.earned && badgeStyles.iconCircleLocked]}>
-        <Text style={badgeStyles.icon}>{badge.icon}</Text>
-      </View>
-      <Text style={[badgeStyles.title, !badge.earned && badgeStyles.titleLocked]} numberOfLines={1}>
-        {badge.title}
-      </Text>
-      <Text style={[badgeStyles.desc, !badge.earned && badgeStyles.descLocked]} numberOfLines={2}>
-        {badge.description}
-      </Text>
-      <View style={[badgeStyles.pointsPill, !badge.earned && badgeStyles.pointsPillLocked]}>
-        <Text style={[badgeStyles.pointsText, !badge.earned && badgeStyles.pointsTextLocked]}>
-          {badge.earned ? `✓ ${badge.points} XP` : `🔒 ${badge.points} XP`}
-        </Text>
-      </View>
-    </View>
-  );
-}
+البيانات المجمعة:
+• الهوية الأكاديمية (الاسم، اللقب، البريد الإلكتروني).
+• المستوى الدراسي والطور (متوسط / ثانوي) والسنة الدراسية.
+• معلومات التواصل مع ولي الأمر (للمتابعة التربوية للتلاميذ القُصّر).
+• مسار التقدم في الدروس، والنتائج المحققة في الاختبارات التكوينية والنهائية.`;
 
 export default function ProfileScreen() {
-  const { user, logout, fetchStudentProfile } = useAuth();
-  const { data: badgesData, loading: badgesLoading, fetchBadges } = useBadges();
+  const { user, logout } = useAuth();
   const insets = useSafeAreaInsets();
-  const [loggingOut, setLoggingOut] = React.useState(false);
-  const [showCgu, setShowCgu] = useState(false);
-  const [showPrereq, setShowPrereq] = useState(false);
 
-  useFocusEffect(
-    useCallback(() => {
-      fetchStudentProfile();
-      fetchBadges();
-    }, [])
-  );
+  const [showCgu, setShowCgu] = useState(false);
+  const [showPrivacy, setShowPrivacy] = useState(false);
 
   const handleLogout = () => {
-    Alert.alert('Déconnexion', 'Êtes-vous sûr de vouloir vous déconnecter ?', [
-      { text: 'Annuler', onPress: () => {} },
-      {
-        text: 'Déconnecter',
-        onPress: async () => {
-          setLoggingOut(true);
-          await logout();
-          router.replace('/');
-        },
-        style: 'destructive',
-      },
-    ]);
-  };
-
-  const handleContactSupport = () => {
     Alert.alert(
-      '📞 Contacter le support',
-      'Cheikh Bouamama Academy\n\n📧 Email : contact@cb-academy-dz.com\n🌐 Site web : cb-academy-dz.vercel.app\n\nNous répondons sous 24-48h.',
+      'تسجيل الخروج',
+      'هل أنت متأكد من رغبتك في تسجيل الخروج من حسابك ؟',
       [
-        { text: 'Fermer', style: 'cancel' },
+        { text: 'إلغاء', style: 'cancel' },
         {
-          text: '📧 Envoyer un email',
-          onPress: () => Linking.openURL('mailto:contact@cb-academy-dz.com'),
+          text: 'خروج',
+          style: 'destructive',
+          onPress: async () => {
+            await logout();
+            router.replace('/auth/login');
+          },
         },
       ]
     );
   };
 
-  const handleAbout = () => {
-    Alert.alert(
-      'ℹ️ À propos',
-      'CBA Academy — Application Mobile\nVersion 1.0.0\n\nCheikh Bouamama Academy\nPlateforme d\'apprentissage en ligne\n\n© 2024 — Tous droits réservés',
-      [
-        { text: 'Fermer', style: 'cancel' },
-        {
-          text: '🌐 Visiter le site',
-          onPress: () => Linking.openURL('https://cb-academy-dz.vercel.app'),
-        },
-      ]
-    );
-  };
+  const fullName = `${user?.prenom || ''} ${user?.nom || ''}`.trim() || 'تلميذ دزأكاديمي';
+  const initial = user?.prenom ? user.prenom.charAt(0).toUpperCase() : '🎓';
+  const niveauText = getNiveauLabel(user?.niveau) || 'التعليم الجزائري';
+  const classeText = getClasseLabel(user?.classe || user?.annee) || 'السنة الدراسية';
 
   return (
-    <View style={[styles.container, { backgroundColor: '#FDFBF7' }]}>
+    <ThemedView style={styles.container}>
       <ScrollView
-        style={styles.scrollView}
         contentContainerStyle={[
-          styles.contentContainer,
+          styles.content,
           {
             paddingTop: insets.top + Spacing.three,
-            paddingBottom: insets.bottom + BottomTabInset + Spacing.three,
+            paddingBottom: insets.bottom + BottomTabInset + Spacing.six,
           },
         ]}
+        showsVerticalScrollIndicator={false}
       >
-        {/* En-tête */}
-        <ThemedView style={styles.header}>
-          <Text style={styles.headerTitle}>Mon Profil</Text>
-        </ThemedView>
+        {/* بطاقة الحساب العلوية */}
+        <View style={styles.profileCard}>
+          <View style={styles.avatar}>
+            <ThemedText style={styles.avatarText}>{initial}</ThemedText>
+          </View>
+          <ThemedText style={styles.userName}>{fullName}</ThemedText>
+          <ThemedText style={styles.userEmail}>{user?.email}</ThemedText>
 
-        {/* Carte de profil */}
-        <ThemedView style={styles.profileCard}>
-          {/* Avatar placeholder */}
-          <ThemedView style={styles.avatarContainer}>
-            {user?.photo ? (
-              <Image
-                source={{ uri: user.photo }}
-                style={styles.avatar}
-                contentFit="cover"
-              />
-            ) : (
-              <ThemedView style={styles.avatarPlaceholder}>
-                <Text style={styles.avatarInitials}>
-                  {(user?.prenom?.[0] || 'E').toUpperCase()}
-                </Text>
-              </ThemedView>
-            )}
-          </ThemedView>
+          <View style={styles.roleBadge}>
+            <ThemedText style={styles.roleBadgeText}>🎓 حساب تلميذ مفعّل</ThemedText>
+          </View>
+        </View>
 
-          {/* Infos personnelles */}
-          <Text style={styles.userName}>
-            {user?.prenom} {user?.nom}
-          </Text>
-
-          <Text style={styles.userEmail}>
-            {user?.email}
-          </Text>
-
-          {user?.niveau ? (
-            <ThemedView style={styles.levelBadge}>
-              <Text style={styles.levelText}>
-                📚 {user.niveau}
-              </Text>
-            </ThemedView>
-          ) : null}
-
-          {user?.role ? (
-            <Text style={styles.roleText}>
-              Rôle : {user.role}
-            </Text>
-          ) : null}
-        </ThemedView>
-
-        {/* ── Section Badges & XP ── */}
-        <ThemedView style={styles.section}>
-          <Text style={styles.sectionTitle}>🏆 Mes Badges & XP</Text>
-
-          {badgesLoading && !badgesData ? (
-            <View style={badgeStyles.loadingContainer}>
-              <ActivityIndicator color={Colors.primary} size="small" />
-              <Text style={badgeStyles.loadingText}>Chargement...</Text>
+        {/* ── المعلومات الأكاديمية والتمدرس ── */}
+        <View style={styles.section}>
+          <ThemedText style={styles.sectionTitle}>📚 المسار الدراسي (المنهاج الجزائري)</ThemedText>
+          <View style={styles.infoBox}>
+            <View style={styles.infoRow}>
+              <ThemedText style={styles.infoVal}>{niveauText}</ThemedText>
+              <ThemedText style={styles.infoLabel}>الطور التعليمي :</ThemedText>
             </View>
-          ) : badgesData ? (
-            <>
-              {/* XP & Level card */}
-              <View style={badgeStyles.xpCard}>
-                <View style={badgeStyles.xpHeader}>
-                  <View>
-                    <Text style={badgeStyles.rankName}>{badgesData.levelStats.rankName}</Text>
-                    <Text style={badgeStyles.levelLabel}>Niveau {badgesData.levelStats.level}</Text>
-                  </View>
-                  <View style={badgeStyles.xpPill}>
-                    <Text style={badgeStyles.xpPillText}>⚡ {badgesData.xp} XP</Text>
-                  </View>
-                </View>
-
-                {/* Progress bar */}
-                <View style={badgeStyles.progressBarBg}>
-                  <View
-                    style={[
-                      badgeStyles.progressBarFill,
-                      { width: `${Math.min(badgesData.levelStats.progressPercent, 100)}%` },
-                    ]}
-                  />
-                </View>
-                <Text style={badgeStyles.progressLabel}>
-                  {badgesData.levelStats.nextThreshold === Infinity
-                    ? 'Niveau maximum atteint ! 🎉'
-                    : `${badgesData.levelStats.nextLevelXP} XP restants pour le niveau ${badgesData.levelStats.level + 1}`}
-                </Text>
-
-                {/* Stats row */}
-                <View style={badgeStyles.statsRow}>
-                  <View style={badgeStyles.statItem}>
-                    <Text style={badgeStyles.statValue}>{badgesData.earnedBadgesCount}</Text>
-                    <Text style={badgeStyles.statLabel}>Obtenus</Text>
-                  </View>
-                  <View style={badgeStyles.statDivider} />
-                  <View style={badgeStyles.statItem}>
-                    <Text style={badgeStyles.statValue}>{badgesData.totalBadgesCount}</Text>
-                    <Text style={badgeStyles.statLabel}>Total</Text>
-                  </View>
-                  <View style={badgeStyles.statDivider} />
-                  <View style={badgeStyles.statItem}>
-                    <Text style={badgeStyles.statValue}>
-                      {badgesData.totalBadgesCount > 0
-                        ? Math.round((badgesData.earnedBadgesCount / badgesData.totalBadgesCount) * 100)
-                        : 0}%
-                    </Text>
-                    <Text style={badgeStyles.statLabel}>Complétion</Text>
-                  </View>
-                </View>
-              </View>
-
-              {/* Badges grid */}
-              <View style={badgeStyles.grid}>
-                {badgesData.badges.map((badge) => (
-                  <BadgeCard key={badge.id} badge={badge} />
-                ))}
-              </View>
-            </>
-          ) : (
-            <View style={badgeStyles.loadingContainer}>
-              <Text style={badgeStyles.loadingText}>Impossible de charger les badges</Text>
+            <View style={styles.divider} />
+            <View style={styles.infoRow}>
+              <ThemedText style={styles.infoVal}>{classeText}</ThemedText>
+              <ThemedText style={styles.infoLabel}>السنة الدراسية :</ThemedText>
             </View>
-          )}
-        </ThemedView>
+            {user?.ecole ? (
+              <>
+                <View style={styles.divider} />
+                <View style={styles.infoRow}>
+                  <ThemedText style={styles.infoVal}>{user.ecole}</ThemedText>
+                  <ThemedText style={styles.infoLabel}>المؤسسة التعليمية :</ThemedText>
+                </View>
+              </>
+            ) : null}
+            {user?.telephone ? (
+              <>
+                <View style={styles.divider} />
+                <View style={styles.infoRow}>
+                  <ThemedText style={styles.infoVal}>{user.telephone}</ThemedText>
+                  <ThemedText style={styles.infoLabel}>الهاتف :</ThemedText>
+                </View>
+              </>
+            ) : null}
+          </View>
+        </View>
 
-        {/* Sections informatives */}
-        <ThemedView style={styles.section}>
-          <Text style={styles.sectionTitle}>
-            À propos
-          </Text>
+        {/* ── المساعدة والدعم الفني ── */}
+        <View style={styles.section}>
+          <ThemedText style={styles.sectionTitle}>💬 الدعم والمساعدة</ThemedText>
+          <View style={styles.infoBox}>
+            <Pressable
+              style={styles.actionRow}
+              onPress={() => {
+                const msg = encodeURIComponent(
+                  `السلام عليكم، أنا التلميذ ${fullName} مسجل ببريد ${user?.email}، وأحتاج لمساعدة بخصوص الحساب.`
+                );
+                Linking.openURL(`https://wa.me/${DZ_PAYMENT_CONFIG.whatsapp}?text=${msg}`);
+              }}
+            >
+              <ThemedText style={styles.actionArrow}>←</ThemedText>
+              <ThemedText style={styles.actionLabel}>التواصل مع الإدارة عبر واتساب</ThemedText>
+            </Pressable>
 
-          <ThemedView style={styles.infoItem}>
-            <Text style={styles.infoLabel}>
-              👤 Nom complet
-            </Text>
-            <Text style={styles.infoValue}>
-              {user?.prenom} {user?.nom}
-            </Text>
-          </ThemedView>
+            <View style={styles.divider} />
 
-          <ThemedView style={styles.infoItem}>
-            <Text style={styles.infoLabel}>
-              📧 Email
-            </Text>
-            <Text style={styles.infoValue}>
-              {user?.email}
-            </Text>
-          </ThemedView>
+            <Pressable style={styles.actionRow} onPress={() => setShowCgu(true)}>
+              <ThemedText style={styles.actionArrow}>←</ThemedText>
+              <ThemedText style={styles.actionLabel}>شروط الاستخدام العامة</ThemedText>
+            </Pressable>
 
-          {user?.niveau ? (
-            <ThemedView style={styles.infoItem}>
-              <Text style={styles.infoLabel}>
-                📚 Niveau
-              </Text>
-              <Text style={styles.infoValue}>
-                {user.niveau}
-              </Text>
-            </ThemedView>
-          ) : null}
-        </ThemedView>
+            <View style={styles.divider} />
 
-        {/* Informations pratiques */}
-        <ThemedView style={styles.section}>
-          <Text style={styles.sectionTitle}>
-            Informations pratiques
-          </Text>
+            <Pressable style={styles.actionRow} onPress={() => setShowPrivacy(true)}>
+              <ThemedText style={styles.actionArrow}>←</ThemedText>
+              <ThemedText style={styles.actionLabel}>سياسة الخصوصية وحماية المعطيات</ThemedText>
+            </Pressable>
+          </View>
+        </View>
 
-          <Pressable
-            style={({ pressed }) => [
-              styles.settingItem,
-              pressed && styles.settingItemPressed,
-            ]}
-            onPress={handleContactSupport}
-          >
-            <Text style={styles.settingText}>📞 Contacter le support</Text>
-            <Text style={styles.arrowText}>→</Text>
-          </Pressable>
-
-          <Pressable
-            style={({ pressed }) => [
-              styles.settingItem,
-              pressed && styles.settingItemPressed,
-            ]}
-            onPress={() => setShowCgu(true)}
-          >
-            <Text style={styles.settingText}>📋 Conditions d'utilisation</Text>
-            <Text style={styles.arrowText}>→</Text>
-          </Pressable>
-
-          <Pressable
-            style={({ pressed }) => [
-              styles.settingItem,
-              pressed && styles.settingItemPressed,
-            ]}
-            onPress={() => setShowPrereq(true)}
-          >
-            <Text style={styles.settingText}>💻 Prérequis techniques</Text>
-            <Text style={styles.arrowText}>→</Text>
-          </Pressable>
-
-          <Pressable
-            style={({ pressed }) => [
-              styles.settingItem,
-              pressed && styles.settingItemPressed,
-            ]}
-            onPress={handleAbout}
-          >
-            <Text style={styles.settingText}>ℹ️ À propos de l'application</Text>
-            <Text style={styles.arrowText}>→</Text>
-          </Pressable>
-        </ThemedView>
+        {/* ── زر تسجيل الخروج ── */}
+        <Pressable style={styles.logoutBtn} onPress={handleLogout}>
+          <ThemedText style={styles.logoutBtnTxt}>🚪 تسجيل الخروج من الحساب</ThemedText>
+        </Pressable>
 
         {/* Modals */}
         <InfoModal
           visible={showCgu}
-          title="📋 Conditions d'utilisation"
+          title="شروط الاستخدام العامة"
           content={CGU_TEXT}
           onClose={() => setShowCgu(false)}
         />
+
         <InfoModal
-          visible={showPrereq}
-          title="💻 Prérequis techniques"
-          content={PREREQ_TEXT}
-          onClose={() => setShowPrereq(false)}
+          visible={showPrivacy}
+          title="سياسة الخصوصية وحماية المعطيات"
+          content={PRIVACY_TEXT}
+          onClose={() => setShowPrivacy(false)}
         />
-
-        {/* Bouton déconnexion */}
-        <Pressable
-          style={({ pressed }) => [
-            styles.logoutButton,
-            pressed && styles.logoutButtonPressed,
-            loggingOut && styles.logoutButtonDisabled,
-          ]}
-          onPress={handleLogout}
-          disabled={loggingOut}
-        >
-          {loggingOut ? (
-            <ActivityIndicator color="white" size="small" />
-          ) : (
-            <Text style={styles.logoutButtonText}>
-              🚪 Se déconnecter
-            </Text>
-          )}
-        </Pressable>
-
-        {/* Footer */}
-        <ThemedView style={styles.footer}>
-          <Text style={styles.footerText}>
-            Cheikh Bouamama Academy v1.0.0
-          </Text>
-          <Text style={styles.footerText}>
-            © 2024 - Tous droits réservés
-          </Text>
-        </ThemedView>
       </ScrollView>
-    </View>
+    </ThemedView>
   );
 }
 
-const modalStyles = StyleSheet.create({
-  overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)' },
-  sheet: {
-    backgroundColor: 'white',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    maxHeight: '75%',
-    paddingBottom: 30,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
-  },
-  title: { fontWeight: '700', fontSize: 16, color: Colors.dark },
-  closeBtn: { padding: 4 },
-  closeTxt: { fontSize: 18, color: Colors.darkGray },
-  body: { paddingHorizontal: 20, paddingTop: 16 },
-  content: { fontSize: 14, lineHeight: 22, color: Colors.lightText },
-});
-
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  scrollView: {
-    flex: 1,
-  },
-  contentContainer: {
-    paddingHorizontal: Spacing.four,
-  },
-  header: {
-    marginBottom: Spacing.six,
-    backgroundColor: 'transparent',
-  },
-  headerTitle: {
-    fontSize: 24,
-    fontWeight: '800',
-    color: Colors.dark,
-  },
+  container: { flex: 1, backgroundColor: Colors.bg },
+  content: { paddingHorizontal: 16 },
   profileCard: {
-    backgroundColor: 'white',
-    borderRadius: 12,
-    padding: Spacing.five,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    padding: 24,
     alignItems: 'center',
-    marginBottom: Spacing.six,
+    marginBottom: 20,
     borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderColor: Colors.border,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.05,
-    shadowRadius: 4,
+    shadowRadius: 10,
     elevation: 2,
-  },
-  avatarContainer: {
-    marginBottom: Spacing.four,
   },
   avatar: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    borderWidth: 3,
-    borderColor: Colors.primary,
-  },
-  avatarPlaceholder: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: Colors.primary,
-    alignItems: 'center',
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: '#ECFDF5',
     justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 12,
+    borderWidth: 3,
+    borderColor: '#A7F3D0',
   },
-  avatarInitials: {
-    fontSize: 40,
-    fontWeight: '700',
-    color: 'white',
+  avatarText: {
+    fontSize: 32,
+    fontWeight: '900',
+    color: Colors.primary,
   },
   userName: {
-    textAlign: 'center',
-    marginBottom: Spacing.one,
-    color: Colors.dark,
-    fontSize: 18,
-    fontWeight: '700',
-  },
-  userEmail: {
-    textAlign: 'center',
-    marginBottom: Spacing.two,
-    color: Colors.mediumGray,
-    fontSize: 14,
-  },
-  levelBadge: {
-    backgroundColor: '#F0FDF4',
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.one,
-    borderRadius: 20,
-    marginTop: Spacing.two,
-    borderWidth: 1,
-    borderColor: Colors.primary,
-  },
-  levelText: {
-    fontWeight: '700',
-    color: Colors.primary,
-    fontSize: 13,
-  },
-  roleText: {
-    marginTop: Spacing.two,
-    color: Colors.mediumGray,
-    textAlign: 'center',
-    fontSize: 13,
-  },
-  section: {
-    marginBottom: Spacing.six,
-    backgroundColor: 'transparent',
-  },
-  sectionTitle: {
-    marginBottom: Spacing.three,
-    color: Colors.primary,
-    fontSize: 16,
-    fontWeight: '700',
-  },
-  infoItem: {
-    backgroundColor: 'white',
-    padding: Spacing.three,
-    borderRadius: 8,
-    marginBottom: Spacing.two,
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-  },
-  infoLabel: {
-    fontWeight: '600',
-    marginBottom: Spacing.one,
-    color: Colors.dark,
-    fontSize: 13,
-  },
-  infoValue: {
-    color: Colors.mediumGray,
-    fontSize: 13,
-  },
-  settingItem: {
-    backgroundColor: 'white',
-    padding: Spacing.three,
-    borderRadius: 8,
-    marginBottom: Spacing.two,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-  },
-  settingItemPressed: {
-    backgroundColor: Colors.lightGray,
-  },
-  settingText: {
-    color: Colors.lightText,
-    fontSize: 14,
-    fontWeight: '500',
-  },
-  arrowText: {
-    color: '#9CA3AF',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  logoutButton: {
-    backgroundColor: Colors.danger,
-    borderRadius: 8,
-    paddingVertical: 14,
-    alignItems: 'center',
-    marginBottom: Spacing.six,
-  },
-  logoutButtonPressed: {
-    opacity: 0.85,
-  },
-  logoutButtonDisabled: {
-    opacity: 0.6,
-  },
-  logoutButtonText: {
-    color: 'white',
-    fontWeight: '700',
-    fontSize: 16,
-  },
-  footer: {
-    alignItems: 'center',
-    paddingVertical: Spacing.four,
-    borderTopWidth: 1,
-    borderTopColor: '#E5E7EB',
-    backgroundColor: 'transparent',
-  },
-  footerText: {
-    textAlign: 'center',
-    color: Colors.mediumGray,
-    fontSize: 12,
-    marginBottom: Spacing.one,
-    fontWeight: '500',
-  },
-});
-
-// ── Badge-specific styles ──
-const badgeStyles = StyleSheet.create({
-  loadingContainer: {
-    alignItems: 'center',
-    paddingVertical: Spacing.five,
-  },
-  loadingText: {
-    marginTop: Spacing.two,
-    color: Colors.darkGray,
-    fontSize: 13,
-  },
-  xpCard: {
-    backgroundColor: 'white',
-    borderRadius: 12,
-    padding: Spacing.four,
-    marginBottom: Spacing.four,
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  xpHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: Spacing.three,
-  },
-  rankName: {
-    fontSize: 18,
-    fontWeight: '800',
-    color: Colors.dark,
-  },
-  levelLabel: {
-    fontSize: 13,
-    color: Colors.darkGray,
-    marginTop: 2,
-  },
-  xpPill: {
-    backgroundColor: '#FFF7ED',
-    paddingHorizontal: 14,
-    paddingVertical: 6,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: '#FDBA74',
-  },
-  xpPillText: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#EA580C',
-  },
-  progressBarBg: {
-    height: 10,
-    backgroundColor: '#F3F4F6',
-    borderRadius: 5,
-    overflow: 'hidden',
-    marginBottom: Spacing.two,
-  },
-  progressBarFill: {
-    height: '100%',
-    backgroundColor: Colors.primary,
-    borderRadius: 5,
-  },
-  progressLabel: {
-    fontSize: 12,
-    color: Colors.darkGray,
-    textAlign: 'center',
-    marginBottom: Spacing.three,
-  },
-  statsRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    alignItems: 'center',
-    paddingTop: Spacing.three,
-    borderTopWidth: 1,
-    borderTopColor: '#F3F4F6',
-  },
-  statItem: {
-    alignItems: 'center',
-    flex: 1,
-  },
-  statValue: {
     fontSize: 20,
-    fontWeight: '800',
-    color: Colors.dark,
-  },
-  statLabel: {
-    fontSize: 11,
-    color: Colors.darkGray,
-    marginTop: 2,
-  },
-  statDivider: {
-    width: 1,
-    height: 30,
-    backgroundColor: '#E5E7EB',
-  },
-  grid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 12,
-  },
-  card: {
-    backgroundColor: 'white',
-    borderRadius: 12,
-    padding: 14,
-    width: '47%',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04,
-    shadowRadius: 3,
-    elevation: 1,
-  },
-  cardLocked: {
-    backgroundColor: '#FAFAFA',
-    borderColor: '#F3F4F6',
-  },
-  iconCircle: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
-    backgroundColor: '#F0FDF4',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 8,
-    borderWidth: 2,
-    borderColor: Colors.primary,
-  },
-  iconCircleLocked: {
-    backgroundColor: '#F9FAFB',
-    borderColor: '#D1D5DB',
-  },
-  icon: {
-    fontSize: 24,
-  },
-  title: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: Colors.dark,
-    textAlign: 'center',
+    fontWeight: '900',
+    color: '#111827',
     marginBottom: 4,
   },
-  titleLocked: {
-    color: '#9CA3AF',
+  userEmail: {
+    fontSize: 13,
+    color: '#6B7280',
+    marginBottom: 12,
   },
-  desc: {
-    fontSize: 11,
-    color: Colors.darkGray,
-    textAlign: 'center',
-    lineHeight: 15,
-    marginBottom: 8,
-    minHeight: 30,
-  },
-  descLocked: {
-    color: '#C0C4CC',
-  },
-  pointsPill: {
+  roleBadge: {
     backgroundColor: '#F0FDF4',
-    paddingHorizontal: 10,
-    paddingVertical: 3,
-    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 8,
     borderWidth: 1,
     borderColor: '#BBF7D0',
   },
-  pointsPillLocked: {
-    backgroundColor: '#F9FAFB',
-    borderColor: '#E5E7EB',
+  roleBadgeText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#166534',
   },
-  pointsText: {
-    fontSize: 11,
+  section: {
+    marginBottom: 20,
+  },
+  sectionTitle: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: '#374151',
+    textAlign: 'right',
+    marginBottom: 8,
+  },
+  infoBox: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    paddingHorizontal: 16,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  infoRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 14,
+  },
+  infoLabel: {
+    fontSize: 13,
+    color: '#6B7280',
     fontWeight: '600',
-    color: Colors.primary,
   },
-  pointsTextLocked: {
+  infoVal: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: '#1F2937',
+  },
+  actionRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 14,
+  },
+  actionLabel: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#1F2937',
+  },
+  actionArrow: {
+    fontSize: 15,
     color: '#9CA3AF',
+  },
+  divider: {
+    height: 1,
+    backgroundColor: '#F3F4F6',
+  },
+  logoutBtn: {
+    backgroundColor: '#FEE2E2',
+    paddingVertical: 14,
+    borderRadius: 14,
+    alignItems: 'center',
+    marginTop: 10,
+    marginBottom: 20,
+  },
+  logoutBtnTxt: {
+    fontSize: 15,
+    fontWeight: '800',
+    color: Colors.danger,
+  },
+});
+
+const modalStyles = StyleSheet.create({
+  overlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+  },
+  sheet: {
+    backgroundColor: '#FFFFFF',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    maxHeight: '80%',
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    paddingBottom: 20,
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F3F4F6',
+  },
+  title: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: '#111827',
+  },
+  closeBtn: {
+    padding: 4,
+  },
+  closeTxt: {
+    fontSize: 18,
+    color: '#9CA3AF',
+  },
+  body: {
+    padding: 16,
+  },
+  content: {
+    fontSize: 13,
+    lineHeight: 22,
+    color: '#374151',
+    textAlign: 'right',
   },
 });

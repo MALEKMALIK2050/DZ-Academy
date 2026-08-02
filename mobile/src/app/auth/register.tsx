@@ -1,25 +1,32 @@
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Image } from 'expo-image';
-import { router } from 'expo-router';
-import { useState } from 'react';
+// src/app/auth/register.tsx
+import React, { useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
   KeyboardAvoidingView,
+  Modal,
   Platform,
   Pressable,
   ScrollView,
   StyleSheet,
   TextInput,
   View,
-  Modal,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { router } from 'expo-router';
+import { ThemedText } from '@/components/themed-text';
+import { ThemedView } from '@/components/themed-view';
+import { API_ENDPOINTS } from '@/constants/api';
+import {
+  NIVEAUX,
+  ANNEES_COLLEGE,
+  ANNEES_LYCEE,
+} from '@/constants/algerian-education';
 
 const Colors = {
-  orange: '#F97316',     // Orange vif
-  green: '#7FBF3F',      // Vert CBA
+  primary: '#059669',
+  primaryDark: '#047857',
+  secondary: '#F97316',
   darkText: '#1F2937',
   lightText: '#6B7280',
   border: '#E5E7EB',
@@ -28,21 +35,29 @@ const Colors = {
   lightBg: '#F9FAFB',
 };
 
-// ── Modals ──
-function InfoModal({ visible, title, content, onClose }: {
-  visible: boolean; title: string; content: string; onClose: () => void;
+// ── نافذة منبثقة للنصوص والمعلومات (الشروط والخصوصية) ──────────────
+function InfoModal({
+  visible,
+  title,
+  content,
+  onClose,
+}: {
+  visible: boolean;
+  title: string;
+  content: string;
+  onClose: () => void;
 }) {
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
       <Pressable style={modalStyles.overlay} onPress={onClose} />
       <View style={modalStyles.sheet}>
         <View style={modalStyles.header}>
-          <ThemedText style={modalStyles.title}>{title}</ThemedText>
           <Pressable onPress={onClose} style={modalStyles.closeBtn}>
             <ThemedText style={modalStyles.closeTxt}>✕</ThemedText>
           </Pressable>
+          <ThemedText style={modalStyles.title}>{title}</ThemedText>
         </View>
-        <ScrollView style={modalStyles.body} contentContainerStyle={{ paddingBottom: 40 }}>
+        <ScrollView style={modalStyles.body} contentContainerStyle={{ paddingBottom: 30 }}>
           <ThemedText style={modalStyles.content}>{content}</ThemedText>
         </ScrollView>
       </View>
@@ -50,25 +65,42 @@ function InfoModal({ visible, title, content, onClose }: {
   );
 }
 
-function PickerModal({ visible, title, options, selected, onSelect, onClose }: {
-  visible: boolean; title: string;
+// ── نافذة اختيار منسدلة أنيقة (PickerModal) ────────────────────────
+function PickerModal({
+  visible,
+  title,
+  options,
+  selected,
+  onSelect,
+  onClose,
+}: {
+  visible: boolean;
+  title: string;
   options: { value: string; label: string }[];
-  selected: string; onSelect: (v: string) => void; onClose: () => void;
+  selected: string;
+  onSelect: (v: string) => void;
+  onClose: () => void;
 }) {
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
       <Pressable style={modalStyles.overlay} onPress={onClose} />
       <View style={modalStyles.sheet}>
         <View style={modalStyles.header}>
-          <ThemedText style={modalStyles.title}>{title}</ThemedText>
           <Pressable onPress={onClose} style={modalStyles.closeBtn}>
             <ThemedText style={modalStyles.closeTxt}>✕</ThemedText>
           </Pressable>
+          <ThemedText style={modalStyles.title}>{title}</ThemedText>
         </View>
-        <ScrollView style={{ maxHeight: 300 }}>
-          {options.map(opt => (
-            <Pressable key={opt.value} style={[pk.option, selected === opt.value && pk.optionSelected]}
-              onPress={() => { onSelect(opt.value); onClose(); }}>
+        <ScrollView style={{ maxHeight: 320 }}>
+          {options.map((opt) => (
+            <Pressable
+              key={opt.value}
+              style={[pk.option, selected === opt.value && pk.optionSelected]}
+              onPress={() => {
+                onSelect(opt.value);
+                onClose();
+              }}
+            >
               <ThemedText style={[pk.optionText, selected === opt.value && pk.optionTextSelected]}>
                 {opt.label}
               </ThemedText>
@@ -81,54 +113,35 @@ function PickerModal({ visible, title, options, selected, onSelect, onClose }: {
   );
 }
 
-const CGU_TEXT = `CONDITIONS GÉNÉRALES D'UTILISATION
+const CGU_TEXT = `شروط الاستخدام العامة لمنصة دزأكاديمي (DZ Academy)
 
-Article 1 - Champ d'application
-Les présentes conditions générales d'utilisation (CGU) régissent l'accès et l'utilisation de la plateforme CB ACADEMY.
+المادة 1 - نطاق التطبيق:
+تنظم هذه الشروط العامة شروط وإجراءات الاستفادة من الخدمات التعليمية ومحتويات منصة دزأكاديمي.
 
-Article 2 - Acceptation des conditions
-L'inscription sur la plateforme implique l'acceptation pleine et entière des présentes CGU.
+المادة 2 - شروط التسجيل وحساب التلميذ:
+• الحساب شخصي ومخصص للتلميذ المسجل حصراً.
+• يجب تقديم معلومات حقيقية ودقيقة خاصة بالاسم واللقب والمستوى الدراسي.
+• يتحمل التلميذ وولي أمره مسؤولية الحفاظ على سرية كلمة المرور.
 
-Article 3 - Protection des données personnelles
-Conformément à la loi algérienne n°18-07 du 10 juin 2018 :
-• Les données collectées sont strictement nécessaires à la gestion des inscriptions et du suivi pédagogique.
-• L'utilisateur dispose d'un droit d'accès, de rectification et d'opposition sur ses données.
-• Les données sont conservées pour une durée maximale de 5 ans après la dernière activité.`;
+المادة 3 - حماية المعطيات الشخصية (وفقاً للقانون الجزائري رقم 18-07):
+• تلتزم منصة دزأكاديمي بحماية خصوصية بيانات التلاميذ وأولياء الأمور.
+• تُستخدم البيانات حصراً لإدارة التمدرس والمتابعة البيداغوجية والتقييمات.
+• يحق للتلميذ وولي أمره طلب تصحيح أو حذف معطياته وفق القانون.`;
 
-const PRIVACY_TEXT = `POLITIQUE DE CONFIDENTIALITÉ
+const PRIVACY_TEXT = `سياسة الخصوصية وحماية المعطيات
 
-Nous collectons et traitons vos données personnelles conformément à la loi algérienne n°18-07 du 10 juin 2018.
+تلتزم منصة دزأكاديمي DZ Academy بالشفافية الكاملة في معالجة بيانات التلاميذ:
 
-Données collectées :
-• Informations d'identité (prénom, nom)
-• Informations scolaires (niveau, classe)
-• Données de contact (email, téléphone)
-• Informations du tuteur (si applicable)
+البيانات المجمعة:
+• الهوية الأكاديمية (الاسم، اللقب، البريد الإلكتروني).
+• المستوى الدراسي والطور (متوسط / ثانوي) والسنة الدراسية.
+• معلومات التواصل مع ولي الأمر (للمتابعة التربوية للتلاميذ القُصّر).
+• مسار التقدم في الدروس، والنتائج المحققة في الاختبارات التكوينية والنهائية.
 
-Utilisation :
-Les données sont utilisées exclusivement pour :
-• Gérer votre compte et votre inscription
-• Assurer le suivi pédagogique
-• Vous adresser des communications importantes
-
-Vos droits :
-Vous disposez d'un droit d'accès, de rectification et d'opposition sur vos données.
-Contactez-nous à contact@cb-academy-dz.com pour exercer vos droits.
-
-Sécurité :
-Vos données sont protégées par des mesures de sécurité appropriées.`;
-
-const niveaux = [
-  { value: '1AS', label: '1ère Année Secondaire' },
-  { value: '2AS', label: '2ème Année Secondaire' },
-  { value: '3AS', label: '3ème Année Secondaire' },
-];
-
-const classes = [
-  { value: 'A', label: 'Classe A' },
-  { value: 'B', label: 'Classe B' },
-  { value: 'C', label: 'Classe C' },
-];
+الهدف من الاستخدام:
+• تخصيص المسار التعليمي وعرض الدروس المناسبة لمنهاج التلميذ.
+• تمكين الأساتذة من تقديم الدعم والمعالجة البيداغوجية عند الحاجة.
+• إصدار كشوف النقاط وشهادات إتمام الدورات.`;
 
 interface RegisterFormData {
   prenom: string;
@@ -136,11 +149,11 @@ interface RegisterFormData {
   email: string;
   password: string;
   passwordConfirm: string;
-  niveau: string;
-  classe: string;
+  niveau: string; // 'college' | 'lycee'
+  classe: string; // 'السنة الأولى متوسط', etc.
   tuteurNom: string;
   tuteurPrenom: string;
-  telephone: string;
+  tuteurTelephone: string;
   cguAccepted: boolean;
   privacyAccepted: boolean;
 }
@@ -153,11 +166,11 @@ export default function RegisterScreen() {
     email: '',
     password: '',
     passwordConfirm: '',
-    niveau: '',
-    classe: '',
+    niveau: 'college',
+    classe: 'السنة الأولى متوسط',
     tuteurNom: '',
     tuteurPrenom: '',
-    telephone: '',
+    tuteurTelephone: '',
     cguAccepted: false,
     privacyAccepted: false,
   });
@@ -169,23 +182,46 @@ export default function RegisterScreen() {
   const [showCgu, setShowCgu] = useState(false);
   const [showPrivacy, setShowPrivacy] = useState(false);
 
-  const validateForm = (): boolean => {
-    if (!formData.prenom.trim()) { setError('Prénom requis'); return false; }
-    if (!formData.nom.trim()) { setError('Nom requis'); return false; }
-    if (!formData.email.trim()) { setError('Email requis'); return false; }
-    if (!formData.email.includes('@')) { setError('Email invalide'); return false; }
-    if (!formData.password) { setError('Mot de passe requis'); return false; }
-    if (formData.password.length < 6) { setError('Minimum 6 caractères'); return false; }
-    if (formData.password !== formData.passwordConfirm) { setError('Les mots de passe ne correspondent pas'); return false; }
-    if (!formData.niveau) { setError('Niveau requis'); return false; }
-    if (!formData.classe) { setError('Classe requise'); return false; }
-    if (!formData.cguAccepted) { setError('Veuillez accepter les conditions'); return false; }
-    if (!formData.privacyAccepted) { setError('Veuillez accepter la politique de confidentialité'); return false; }
-    return true;
-  };
+  // خيارات السنوات حسب الطور المختار
+  const currentClasseOptions =
+    formData.niveau === 'college'
+      ? ANNEES_COLLEGE.map((a) => ({ value: a.value, label: a.label }))
+      : ANNEES_LYCEE.map((a) => ({ value: a.value, label: a.label }));
 
-  const handleInputChange = (field: keyof RegisterFormData, value: any) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+  const validateForm = (): boolean => {
+    if (!formData.prenom.trim()) {
+      setError('يرجى إدخال الاسم الشخصي.');
+      return false;
+    }
+    if (!formData.nom.trim()) {
+      setError('يرجى إدخال اللقب العائلي.');
+      return false;
+    }
+    if (!formData.email.trim() || !formData.email.includes('@')) {
+      setError('يرجى إدخال بريد إلكتروني صحيح.');
+      return false;
+    }
+    if (formData.password.length < 6) {
+      setError('يجب ألا تقل كلمة المرور عن 6 أحرف.');
+      return false;
+    }
+    if (formData.password !== formData.passwordConfirm) {
+      setError('كلمتا المرور غير متطابقتين.');
+      return false;
+    }
+    if (!formData.niveau) {
+      setError('يرجى اختيار الطور التعليمي.');
+      return false;
+    }
+    if (!formData.classe) {
+      setError('يرجى اختيار السنة الدراسية.');
+      return false;
+    }
+    if (!formData.cguAccepted || !formData.privacyAccepted) {
+      setError('يجب الموافقة على شروط الاستخدام وسياسة الخصوصية.');
+      return false;
+    }
+    return true;
   };
 
   const handleRegister = async () => {
@@ -194,35 +230,46 @@ export default function RegisterScreen() {
 
     setLoading(true);
     try {
-      const res = await fetch('https://cb-academy-dz.vercel.app/api/auth/register', {
+      const payload = {
+        prenom: formData.prenom.trim(),
+        nom: formData.nom.trim(),
+        email: formData.email.trim().toLowerCase(),
+        password: formData.password,
+        role: 'STUDENT',
+        niveau: formData.niveau,
+        classe: formData.classe,
+        anneeScolaire: formData.classe,
+        tuteur: {
+          nom: formData.tuteurNom.trim(),
+          prenom: formData.tuteurPrenom.trim(),
+          telephone: formData.tuteurTelephone.trim(),
+        },
+      };
+
+      const res = await fetch(API_ENDPOINTS.register, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          prenom: formData.prenom,
-          nom: formData.nom,
-          email: formData.email,
-          password: formData.password,
-          niveau: formData.niveau,
-          classe: formData.classe,
-          tuteurNom: formData.tuteurNom,
-          tuteurPrenom: formData.tuteurPrenom,
-          telephone: formData.telephone,
-        }),
+        body: JSON.stringify(payload),
       });
 
       const data = await res.json();
 
-      if (res.ok) {
-        Alert.alert(
-          '✓ Inscription réussie',
-          'Votre compte a été créé. Veuillez vérifier votre email pour le confirmer.',
-          [{ text: 'Aller à la connexion', onPress: () => router.back() }]
-        );
-      } else {
-        setError(data.error || 'Erreur lors de l\'inscription');
+      if (!res.ok) {
+        throw new Error(data.error || 'فشل في عملية إنشاء الحساب');
       }
-    } catch (e) {
-      setError('Erreur réseau. Vérifiez votre connexion.');
+
+      Alert.alert(
+        '🎉 تم إنشاء الحساب بنجاح',
+        'تم تسجيل حسابك في منصة دزأكاديمي بنجاح. يرجى تفعيل حسابك من خلال الرابط المرسل إلى بريدك الإلكتروني ثم تسجيل الدخول.',
+        [
+          {
+            text: 'الانتقال لتسجيل الدخول',
+            onPress: () => router.replace('/auth/login'),
+          },
+        ]
+      );
+    } catch (err: any) {
+      setError(err.message || 'حدث خطأ في الشبكة، يرجى المحاولة لاحقاً.');
     } finally {
       setLoading(false);
     }
@@ -230,457 +277,495 @@ export default function RegisterScreen() {
 
   return (
     <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       style={styles.container}
     >
-      <View style={[styles.safeArea, { paddingTop: insets.top }]}>
-        <ScrollView contentContainerStyle={styles.scrollContent}>
-          {/* Header blanc clean */}
-          <View style={styles.headerWrapper}>
-            <View style={styles.logoContainer}>
-              <Image
-                source={require('@/assets/images/cba-logo.png')}
-                style={styles.logo}
-                contentFit="contain"
-              />
-            </View>
-            <ThemedText style={styles.titleMain}>Rejoignez CB Academy</ThemedText>
-            <ThemedText style={styles.subtitle}>Créez votre compte pour commencer</ThemedText>
+      <ScrollView
+        contentContainerStyle={[
+          styles.scrollContent,
+          { paddingTop: insets.top + 20, paddingBottom: insets.bottom + 40 },
+        ]}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* العنوان والترحيب */}
+        <View style={styles.header}>
+          <ThemedText style={styles.title}>إنشاء حساب تلميذ جديد 📝</ThemedText>
+          <ThemedText style={styles.subtitle}>
+            انضم إلى أكاديمية دزأكاديمي وابدأ رحلة التفوق في المنهاج الجزائري
+          </ThemedText>
+        </View>
+
+        {error ? (
+          <View style={styles.errorBox}>
+            <ThemedText style={styles.errorText}>⚠️ {error}</ThemedText>
           </View>
+        ) : null}
 
-          {/* Formulaire - Style Login */}
-          <View style={styles.formWrapper}>
-            <ThemedView style={styles.formContainer}>
-              {error ? (
-                <View style={styles.errorContainer}>
-                  <ThemedText style={styles.errorText}>⚠️ {error}</ThemedText>
-                </View>
-              ) : null}
-
-              {/* Identité */}
-              <View style={styles.inputGroup}>
-                <ThemedText style={[styles.label, { color: Colors.orange }]}>Prénom</ThemedText>
-                <View style={[styles.inputBorder, { borderColor: Colors.orange }]}>
-                  <TextInput
-                    style={styles.input}
-                    placeholder="Votre prénom"
-                    placeholderTextColor={Colors.lightText}
-                    value={formData.prenom}
-                    onChangeText={(val) => handleInputChange('prenom', val)}
-                    editable={!loading}
-                  />
-                </View>
-              </View>
-
-              <View style={styles.inputGroup}>
-                <ThemedText style={[styles.label, { color: Colors.orange }]}>Nom</ThemedText>
-                <View style={[styles.inputBorder, { borderColor: Colors.orange }]}>
-                  <TextInput
-                    style={styles.input}
-                    placeholder="Votre nom"
-                    placeholderTextColor={Colors.lightText}
-                    value={formData.nom}
-                    onChangeText={(val) => handleInputChange('nom', val)}
-                    editable={!loading}
-                  />
-                </View>
-              </View>
-
-              {/* Études */}
-              <View style={styles.dividerThin} />
-
-              <View style={styles.inputGroup}>
-                <ThemedText style={[styles.label, { color: Colors.orange }]}>Niveau</ThemedText>
-                <Pressable
-                  style={[styles.selectBtn, { borderColor: Colors.orange, borderWidth: 2 }]}
-                  onPress={() => setShowNiveauPicker(true)}
-                >
-                  <ThemedText style={formData.niveau ? styles.selectBtnTxt : styles.placeholderTxt}>
-                    {formData.niveau || 'Choisir niveau'}
-                  </ThemedText>
-                </Pressable>
-              </View>
-
-              <View style={styles.inputGroup}>
-                <ThemedText style={[styles.label, { color: Colors.orange }]}>Classe</ThemedText>
-                <Pressable
-                  style={[styles.selectBtn, { borderColor: Colors.orange, borderWidth: 2 }]}
-                  onPress={() => setShowClassePicker(true)}
-                >
-                  <ThemedText style={formData.classe ? styles.selectBtnTxt : styles.placeholderTxt}>
-                    {formData.classe || 'Choisir classe'}
-                  </ThemedText>
-                </Pressable>
-              </View>
-
-              {/* Tuteur optionnel */}
-              <View style={styles.inputGroup}>
-                <ThemedText style={[styles.label, { color: Colors.lightText }]}>Tuteur (optionnel)</ThemedText>
-                <View style={[styles.inputBorder, { borderColor: Colors.border }]}>
-                  <TextInput
-                    style={styles.input}
-                    placeholder="Prénom du tuteur"
-                    placeholderTextColor={Colors.lightText}
-                    value={formData.tuteurPrenom}
-                    onChangeText={(val) => handleInputChange('tuteurPrenom', val)}
-                    editable={!loading}
-                  />
-                </View>
-              </View>
-
-              <View style={styles.inputGroup}>
-                <View style={[styles.inputBorder, { borderColor: Colors.border }]}>
-                  <TextInput
-                    style={styles.input}
-                    placeholder="Nom du tuteur"
-                    placeholderTextColor={Colors.lightText}
-                    value={formData.tuteurNom}
-                    onChangeText={(val) => handleInputChange('tuteurNom', val)}
-                    editable={!loading}
-                  />
-                </View>
-              </View>
-
-              <View style={styles.inputGroup}>
-                <View style={[styles.inputBorder, { borderColor: Colors.border }]}>
-                  <TextInput
-                    style={styles.input}
-                    placeholder="Téléphone"
-                    placeholderTextColor={Colors.lightText}
-                    keyboardType="phone-pad"
-                    value={formData.telephone}
-                    onChangeText={(val) => handleInputChange('telephone', val)}
-                    editable={!loading}
-                  />
-                </View>
-              </View>
-
-              {/* Email & Mot de passe - ORANGE */}
-              <View style={styles.dividerThin} />
-
-              <View style={styles.inputGroup}>
-                <ThemedText style={[styles.label, { color: Colors.orange }]}>Email</ThemedText>
-                <View style={[styles.inputBorder, { borderColor: Colors.orange }]}>
-                  <TextInput
-                    style={styles.input}
-                    placeholder="vous@exemple.com"
-                    placeholderTextColor={Colors.lightText}
-                    keyboardType="email-address"
-                    autoCapitalize="none"
-                    value={formData.email}
-                    onChangeText={(val) => handleInputChange('email', val)}
-                    editable={!loading}
-                  />
-                </View>
-              </View>
-
-              <View style={styles.inputGroup}>
-                <ThemedText style={[styles.label, { color: Colors.orange }]}>Mot de passe</ThemedText>
-                <View style={[styles.inputBorder, { borderColor: Colors.orange }]}>
-                  <TextInput
-                    style={styles.input}
-                    placeholder="••••••••"
-                    placeholderTextColor={Colors.lightText}
-                    secureTextEntry
-                    value={formData.password}
-                    onChangeText={(val) => handleInputChange('password', val)}
-                    editable={!loading}
-                  />
-                </View>
-              </View>
-
-              <View style={styles.inputGroup}>
-                <ThemedText style={[styles.label, { color: Colors.orange }]}>Confirmer mot de passe</ThemedText>
-                <View style={[styles.inputBorder, { borderColor: Colors.orange }]}>
-                  <TextInput
-                    style={styles.input}
-                    placeholder="••••••••"
-                    placeholderTextColor={Colors.lightText}
-                    secureTextEntry
-                    value={formData.passwordConfirm}
-                    onChangeText={(val) => handleInputChange('passwordConfirm', val)}
-                    editable={!loading}
-                  />
-                </View>
-              </View>
-
-              {/* Acceptations */}
-              <View style={styles.acceptSection}>
-                <Pressable style={styles.checkboxRow} onPress={() => handleInputChange('cguAccepted', !formData.cguAccepted)}>
-                  <View style={[styles.checkbox, formData.cguAccepted && { backgroundColor: Colors.orange, borderColor: Colors.orange }]}>
-                    {formData.cguAccepted && <ThemedText style={styles.checkIcon}>✓</ThemedText>}
-                  </View>
-                  <View style={{ flex: 1 }}>
-                    <ThemedText style={styles.checkboxText}>
-                      J'accepte les{' '}
-                      <Pressable onPress={() => setShowCgu(true)}>
-                        <ThemedText style={[styles.linkText, { color: Colors.orange }]}>Conditions</ThemedText>
-                      </Pressable>
-                    </ThemedText>
-                  </View>
-                </Pressable>
-
-                <Pressable style={styles.checkboxRow} onPress={() => handleInputChange('privacyAccepted', !formData.privacyAccepted)}>
-                  <View style={[styles.checkbox, formData.privacyAccepted && { backgroundColor: Colors.orange, borderColor: Colors.orange }]}>
-                    {formData.privacyAccepted && <ThemedText style={styles.checkIcon}>✓</ThemedText>}
-                  </View>
-                  <View style={{ flex: 1 }}>
-                    <ThemedText style={styles.checkboxText}>
-                      J'accepte la{' '}
-                      <Pressable onPress={() => setShowPrivacy(true)}>
-                        <ThemedText style={[styles.linkText, { color: Colors.orange }]}>Politique</ThemedText>
-                      </Pressable>
-                    </ThemedText>
-                  </View>
-                </Pressable>
-              </View>
-
-              {/* Bouton - ORANGE */}
-              <Pressable
-                style={({ pressed }) => [
-                  styles.registerButton,
-                  { backgroundColor: Colors.orange },
-                  pressed && styles.registerButtonPressed,
-                  loading && styles.registerButtonDisabled,
-                ]}
-                onPress={handleRegister}
-                disabled={loading}
-              >
-                {loading ? (
-                  <ActivityIndicator color={Colors.white} size="small" />
-                ) : (
-                  <ThemedText style={styles.registerButtonText}>
-                    ✓ Créer un compte
-                  </ThemedText>
-                )}
-              </Pressable>
-
-              {/* Lien Login - VERT */}
-              <Pressable
-                style={({ pressed }) => [
-                  styles.loginLink,
-                  pressed && styles.loginLinkPressed,
-                ]}
-                onPress={() => router.back()}
-              >
-                <ThemedText style={[styles.loginLinkText, { color: Colors.green }]}>
-                  Se connecter
-                </ThemedText>
-              </Pressable>
-            </ThemedView>
+        {/* ── 1. المعلومات الشخصية ── */}
+        <ThemedText style={styles.sectionTitle}>👤 المعلومات الشخصية</ThemedText>
+        <View style={styles.row}>
+          <View style={styles.halfField}>
+            <ThemedText style={styles.label}>الاسم</ThemedText>
+            <TextInput
+              style={styles.input}
+              placeholder="محمد"
+              placeholderTextColor="#9CA3AF"
+              value={formData.prenom}
+              onChangeText={(t) => setFormData({ ...formData, prenom: t })}
+              textAlign="right"
+            />
           </View>
+          <View style={styles.halfField}>
+            <ThemedText style={styles.label}>اللقب</ThemedText>
+            <TextInput
+              style={styles.input}
+              placeholder="بن علي"
+              placeholderTextColor="#9CA3AF"
+              value={formData.nom}
+              onChangeText={(t) => setFormData({ ...formData, nom: t })}
+              textAlign="right"
+            />
+          </View>
+        </View>
 
-          {/* Modals */}
-          <PickerModal visible={showNiveauPicker} title="Choisir niveau" options={niveaux} selected={formData.niveau} onSelect={(val) => handleInputChange('niveau', val)} onClose={() => setShowNiveauPicker(false)} />
-          <PickerModal visible={showClassePicker} title="Choisir classe" options={classes} selected={formData.classe} onSelect={(val) => handleInputChange('classe', val)} onClose={() => setShowClassePicker(false)} />
-          <InfoModal visible={showCgu} title="📋 Conditions d'utilisation" content={CGU_TEXT} onClose={() => setShowCgu(false)} />
-          <InfoModal visible={showPrivacy} title="🔐 Politique de confidentialité" content={PRIVACY_TEXT} onClose={() => setShowPrivacy(false)} />
-        </ScrollView>
-      </View>
+        <View style={styles.field}>
+          <ThemedText style={styles.label}>البريد الإلكتروني</ThemedText>
+          <TextInput
+            style={styles.input}
+            placeholder="etudiant@dzacademy.dz"
+            placeholderTextColor="#9CA3AF"
+            keyboardType="email-address"
+            autoCapitalize="none"
+            value={formData.email}
+            onChangeText={(t) => setFormData({ ...formData, email: t })}
+            textAlign="right"
+          />
+        </View>
+
+        {/* ── 2. المسار الدراسي الجزائري ── */}
+        <ThemedText style={styles.sectionTitle}>📚 المسار الدراسي الجزائري</ThemedText>
+        <View style={styles.field}>
+          <ThemedText style={styles.label}>الطور التعليمي</ThemedText>
+          <Pressable style={styles.selectBtn} onPress={() => setShowNiveauPicker(true)}>
+            <ThemedText style={styles.selectArrow}>▼</ThemedText>
+            <ThemedText style={styles.selectBtnTxt}>
+              {formData.niveau === 'college' ? 'التعليم المتوسط (CEM)' : 'التعليم الثانوي (Lycée)'}
+            </ThemedText>
+          </Pressable>
+        </View>
+
+        <View style={styles.field}>
+          <ThemedText style={styles.label}>السنة الدراسية</ThemedText>
+          <Pressable style={styles.selectBtn} onPress={() => setShowClassePicker(true)}>
+            <ThemedText style={styles.selectArrow}>▼</ThemedText>
+            <ThemedText style={styles.selectBtnTxt}>{formData.classe}</ThemedText>
+          </Pressable>
+        </View>
+
+        {/* ── 3. معلومات ولي الأمر (للمتابعة) ── */}
+        <ThemedText style={styles.sectionTitle}>👨‍👧‍👦 معلومات ولي الأمر</ThemedText>
+        <View style={styles.row}>
+          <View style={styles.halfField}>
+            <ThemedText style={styles.label}>اسم الولي</ThemedText>
+            <TextInput
+              style={styles.input}
+              placeholder="أحمد"
+              placeholderTextColor="#9CA3AF"
+              value={formData.tuteurPrenom}
+              onChangeText={(t) => setFormData({ ...formData, tuteurPrenom: t })}
+              textAlign="right"
+            />
+          </View>
+          <View style={styles.halfField}>
+            <ThemedText style={styles.label}>لقب الولي</ThemedText>
+            <TextInput
+              style={styles.input}
+              placeholder="بن علي"
+              placeholderTextColor="#9CA3AF"
+              value={formData.tuteurNom}
+              onChangeText={(t) => setFormData({ ...formData, tuteurNom: t })}
+              textAlign="right"
+            />
+          </View>
+        </View>
+
+        <View style={styles.field}>
+          <ThemedText style={styles.label}>رقم هاتف الولي (للإشعارات)</ThemedText>
+          <TextInput
+            style={styles.input}
+            placeholder="0550123456"
+            placeholderTextColor="#9CA3AF"
+            keyboardType="phone-pad"
+            value={formData.tuteurTelephone}
+            onChangeText={(t) => setFormData({ ...formData, tuteurTelephone: t })}
+            textAlign="right"
+          />
+        </View>
+
+        {/* ── 4. كلمة المرور ── */}
+        <ThemedText style={styles.sectionTitle}>🔒 كلمة المرور والأمان</ThemedText>
+        <View style={styles.field}>
+          <ThemedText style={styles.label}>كلمة المرور</ThemedText>
+          <TextInput
+            style={styles.input}
+            placeholder="••••••••"
+            placeholderTextColor="#9CA3AF"
+            secureTextEntry
+            value={formData.password}
+            onChangeText={(t) => setFormData({ ...formData, password: t })}
+            textAlign="right"
+          />
+        </View>
+
+        <View style={styles.field}>
+          <ThemedText style={styles.label}>تأكيد كلمة المرور</ThemedText>
+          <TextInput
+            style={styles.input}
+            placeholder="••••••••"
+            placeholderTextColor="#9CA3AF"
+            secureTextEntry
+            value={formData.passwordConfirm}
+            onChangeText={(t) => setFormData({ ...formData, passwordConfirm: t })}
+            textAlign="right"
+          />
+        </View>
+
+        {/* ── 5. الشروط والسياسات ── */}
+        <View style={styles.policyRow}>
+          <Pressable
+            style={[styles.checkbox, formData.cguAccepted && styles.checkboxActive]}
+            onPress={() => setFormData({ ...formData, cguAccepted: !formData.cguAccepted })}
+          >
+            {formData.cguAccepted && <ThemedText style={styles.checkMark}>✓</ThemedText>}
+          </Pressable>
+          <View style={styles.policyTextWrapper}>
+            <ThemedText style={styles.policyText}>
+              أوافق على{' '}
+              <ThemedText style={styles.policyLink} onPress={() => setShowCgu(true)}>
+                شروط الاستخدام العامة
+              </ThemedText>
+            </ThemedText>
+          </View>
+        </View>
+
+        <View style={styles.policyRow}>
+          <Pressable
+            style={[styles.checkbox, formData.privacyAccepted && styles.checkboxActive]}
+            onPress={() => setFormData({ ...formData, privacyAccepted: !formData.privacyAccepted })}
+          >
+            {formData.privacyAccepted && <ThemedText style={styles.checkMark}>✓</ThemedText>}
+          </Pressable>
+          <View style={styles.policyTextWrapper}>
+            <ThemedText style={styles.policyText}>
+              أوافق على{' '}
+              <ThemedText style={styles.policyLink} onPress={() => setShowPrivacy(true)}>
+                سياسة حماية المعطيات
+              </ThemedText>
+            </ThemedText>
+          </View>
+        </View>
+
+        {/* زر إنشاء الحساب */}
+        <Pressable
+          style={[styles.submitBtn, loading && { opacity: 0.7 }]}
+          onPress={handleRegister}
+          disabled={loading}
+        >
+          {loading ? (
+            <ActivityIndicator color="#FFFFFF" />
+          ) : (
+            <ThemedText style={styles.submitBtnTxt}>🚀 إنشاء الحساب الآن</ThemedText>
+          )}
+        </Pressable>
+
+        {/* رابط الدخول لمن يملك حساباً */}
+        <View style={styles.loginLinkRow}>
+          <ThemedText style={styles.loginText}>لديك حساب بالفعل؟ </ThemedText>
+          <Pressable onPress={() => router.push('/auth/login')}>
+            <ThemedText style={styles.loginLink}>تسجيل الدخول</ThemedText>
+          </Pressable>
+        </View>
+
+        {/* Modals */}
+        <PickerModal
+          visible={showNiveauPicker}
+          title="اختر الطور التعليمي"
+          options={NIVEAUX.map((n) => ({ value: n.value, label: `${n.icon} ${n.label}` }))}
+          selected={formData.niveau}
+          onSelect={(val) => {
+            const defaultClass = val === 'college' ? 'السنة الأولى متوسط' : 'السنة الأولى ثانوي';
+            setFormData({ ...formData, niveau: val, classe: defaultClass });
+          }}
+          onClose={() => setShowNiveauPicker(false)}
+        />
+
+        <PickerModal
+          visible={showClassePicker}
+          title="اختر السنة الدراسية"
+          options={currentClasseOptions}
+          selected={formData.classe}
+          onSelect={(val) => setFormData({ ...formData, classe: val })}
+          onClose={() => setShowClassePicker(false)}
+        />
+
+        <InfoModal
+          visible={showCgu}
+          title="شروط الاستخدام العامة"
+          content={CGU_TEXT}
+          onClose={() => setShowCgu(false)}
+        />
+
+        <InfoModal
+          visible={showPrivacy}
+          title="سياسة الخصوصية"
+          content={PRIVACY_TEXT}
+          onClose={() => setShowPrivacy(false)}
+        />
+      </ScrollView>
     </KeyboardAvoidingView>
   );
 }
 
-const modalStyles = StyleSheet.create({
-  overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)' },
-  sheet: { backgroundColor: Colors.white, borderTopLeftRadius: 20, borderTopRightRadius: 20, maxHeight: '80%', paddingBottom: 30 },
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 20, borderBottomWidth: 1, borderBottomColor: Colors.border },
-  title: { fontWeight: '700', fontSize: 16, color: Colors.darkText },
-  closeBtn: { padding: 4 },
-  closeTxt: { fontSize: 18, color: Colors.lightText },
-  body: { paddingHorizontal: 20, paddingTop: 16 },
-  content: { fontSize: 14, lineHeight: 22, color: '#374151' },
-});
-
-const pk = StyleSheet.create({
-  option: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 14, paddingHorizontal: 20, borderBottomWidth: 1, borderBottomColor: Colors.border },
-  optionSelected: { backgroundColor: Colors.lightBg },
-  optionText: { fontSize: 15, color: Colors.darkText },
-  optionTextSelected: { color: Colors.orange, fontWeight: '700' },
-  checkmark: { color: Colors.orange, fontWeight: '700', fontSize: 16 },
-});
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.white,
-  },
-  safeArea: {
-    flex: 1,
+    backgroundColor: '#FAF8F5',
   },
   scrollContent: {
-    flexGrow: 1,
-    paddingBottom: 20,
-  },
-  headerWrapper: {
-    paddingVertical: 40,
     paddingHorizontal: 20,
-    alignItems: 'center',
-    backgroundColor: Colors.white,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
   },
-  logoContainer: {
+  header: {
+    alignItems: 'center',
     marginBottom: 20,
   },
-  logo: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-  },
-  titleMain: {
+  title: {
     fontSize: 22,
-    fontWeight: '800',
-    color: Colors.darkText,
+    fontWeight: '900',
+    color: '#111827',
     textAlign: 'center',
-    marginBottom: 8,
+    marginBottom: 6,
   },
   subtitle: {
     fontSize: 13,
-    color: Colors.lightText,
+    color: '#6B7280',
     textAlign: 'center',
-    fontWeight: '500',
+    lineHeight: 18,
   },
-  formWrapper: {
-    paddingHorizontal: 16,
-    marginVertical: 24,
-  },
-  formContainer: {
-    backgroundColor: Colors.white,
-    borderRadius: 16,
-    padding: 24,
-    gap: 16,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.06,
-    shadowRadius: 12,
-    elevation: 3,
-  },
-  errorContainer: {
+  errorBox: {
     backgroundColor: '#FEF2F2',
-    borderLeftWidth: 4,
-    borderLeftColor: Colors.danger,
-    paddingVertical: 12,
-    paddingHorizontal: 12,
-    borderRadius: 8,
-    marginBottom: 8,
+    padding: 12,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#FCA5A5',
+    marginBottom: 16,
   },
   errorText: {
-    color: Colors.danger,
+    color: '#DC2626',
+    fontSize: 13,
+    textAlign: 'right',
     fontWeight: '600',
-    fontSize: 14,
   },
-  inputGroup: {
-    gap: 8,
+  sectionTitle: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: '#047857',
+    textAlign: 'right',
+    marginTop: 14,
+    marginBottom: 8,
+  },
+  row: {
+    flexDirection: 'row-reverse',
+    gap: 10,
+  },
+  halfField: {
+    flex: 1,
+    marginBottom: 12,
+  },
+  field: {
+    marginBottom: 12,
   },
   label: {
+    fontSize: 12,
     fontWeight: '700',
-    fontSize: 14,
-  },
-  inputBorder: {
-    borderWidth: 2,
-    borderRadius: 10,
-    overflow: 'hidden',
+    color: '#374151',
+    textAlign: 'right',
+    marginBottom: 4,
   },
   input: {
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    fontSize: 16,
-    color: Colors.darkText,
-    backgroundColor: Colors.white,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    fontSize: 14,
+    color: '#111827',
   },
   selectBtn: {
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
     borderRadius: 10,
     paddingHorizontal: 14,
     paddingVertical: 12,
-    backgroundColor: Colors.white,
-    justifyContent: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
   selectBtnTxt: {
     fontSize: 14,
-    color: Colors.darkText,
-    fontWeight: '600',
+    fontWeight: '700',
+    color: '#1F2937',
   },
-  placeholderTxt: {
-    color: Colors.lightText,
-    fontWeight: '500',
+  selectArrow: {
+    fontSize: 11,
+    color: '#9CA3AF',
   },
-  dividerThin: {
-    height: 1,
-    backgroundColor: Colors.border,
-    marginVertical: 4,
-  },
-  acceptSection: {
-    gap: 12,
-    marginTop: 8,
-    paddingTop: 12,
-    borderTopWidth: 1,
-    borderTopColor: Colors.border,
-  },
-  checkboxRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
+  policyRow: {
+    flexDirection: 'row-reverse',
+    alignItems: 'center',
     gap: 10,
+    marginVertical: 6,
   },
   checkbox: {
-    width: 22,
-    height: 22,
-    borderRadius: 6,
+    width: 20,
+    height: 20,
+    borderRadius: 5,
     borderWidth: 2,
-    borderColor: Colors.border,
-    alignItems: 'center',
+    borderColor: '#D1D5DB',
     justifyContent: 'center',
-    backgroundColor: Colors.white,
-    marginTop: 2,
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
   },
-  checkIcon: {
-    color: Colors.white,
-    fontSize: 13,
+  checkboxActive: {
+    backgroundColor: '#059669',
+    borderColor: '#059669',
+  },
+  checkMark: {
+    color: '#FFFFFF',
+    fontSize: 12,
     fontWeight: '900',
   },
-  checkboxText: {
-    fontSize: 13,
-    color: Colors.lightText,
-    lineHeight: 18,
+  policyTextWrapper: {
+    flex: 1,
   },
-  linkText: {
+  policyText: {
+    fontSize: 12,
+    color: '#4B5563',
+    textAlign: 'right',
+  },
+  policyLink: {
+    color: '#059669',
     fontWeight: '700',
     textDecorationLine: 'underline',
   },
-  registerButton: {
-    borderRadius: 10,
+  submitBtn: {
+    backgroundColor: '#059669',
     paddingVertical: 14,
+    borderRadius: 12,
     alignItems: 'center',
-    marginTop: 12,
-    shadowColor: Colors.orange,
+    marginTop: 20,
+    shadowColor: '#059669',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.25,
     shadowRadius: 8,
     elevation: 3,
   },
-  registerButtonPressed: {
-    opacity: 0.85,
-  },
-  registerButtonDisabled: {
-    opacity: 0.6,
-  },
-  registerButtonText: {
-    color: Colors.white,
-    fontWeight: '800',
+  submitBtnTxt: {
+    color: '#FFFFFF',
     fontSize: 16,
+    fontWeight: '900',
+  },
+  loginLinkRow: {
+    flexDirection: 'row-reverse',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 16,
+    gap: 4,
+  },
+  loginText: {
+    fontSize: 13,
+    color: '#6B7280',
   },
   loginLink: {
-    paddingVertical: 12,
-    alignItems: 'center',
-    marginTop: 12,
-  },
-  loginLinkPressed: {
-    opacity: 0.7,
-  },
-  loginLinkText: {
+    fontSize: 13,
     fontWeight: '800',
+    color: '#059669',
+    textDecorationLine: 'underline',
+  },
+});
+
+const modalStyles = StyleSheet.create({
+  overlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+  },
+  sheet: {
+    backgroundColor: '#FFFFFF',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    maxHeight: '85%',
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    paddingBottom: 20,
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F3F4F6',
+  },
+  title: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: '#111827',
+  },
+  closeBtn: {
+    padding: 4,
+  },
+  closeTxt: {
+    fontSize: 18,
+    color: '#9CA3AF',
+  },
+  body: {
+    padding: 16,
+  },
+  content: {
+    fontSize: 13,
+    lineHeight: 22,
+    color: '#374151',
+    textAlign: 'right',
+  },
+});
+
+const pk = StyleSheet.create({
+  option: {
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F3F4F6',
+    flexDirection: 'row-reverse',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  optionSelected: {
+    backgroundColor: '#ECFDF5',
+  },
+  optionText: {
     fontSize: 14,
+    color: '#374151',
+  },
+  optionTextSelected: {
+    color: '#059669',
+    fontWeight: '800',
+  },
+  checkmark: {
+    color: '#059669',
+    fontSize: 16,
+    fontWeight: '900',
   },
 });

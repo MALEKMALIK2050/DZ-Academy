@@ -1,40 +1,36 @@
-import React, { useState, useEffect } from 'react';
+// src/app/quiz/[id].tsx
+import React, { useEffect, useState } from 'react';
 import {
-  StyleSheet,
-  ScrollView,
-  View,
-  Pressable,
   ActivityIndicator,
   Alert,
+  BackHandler,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  View,
 } from 'react-native';
-import { useLocalSearchParams, router } from 'expo-router';
+import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { useAuth } from '@/context/auth-context';
+import { LoadingScreen } from '@/components/loading-screen';
 import { API_ENDPOINTS } from '@/constants/api';
+import { BottomTabInset, Spacing } from '@/constants/theme';
+import { useAuth } from '@/context/auth-context';
 
 const C = {
-  primary: '#16A34A',
-  primaryDark: '#15803D',
-  primaryLight: '#DCFCE7',
+  primary: '#059669',
+  primaryDark: '#047857',
   secondary: '#F97316',
-  secondaryLight: '#FFF7ED',
-  accent: '#208AEF',
   danger: '#DC2626',
   dangerLight: '#FEF2F2',
-  success: '#22C55E',
+  success: '#16A34A',
   successLight: '#DCFCE7',
-  warning: '#EAB308',
-  gray50: '#F9FAFB',
-  gray100: '#F3F4F6',
-  gray200: '#E5E7EB',
-  gray300: '#D1D5DB',
-  gray400: '#9CA3AF',
-  gray500: '#6B7280',
-  gray700: '#374151',
-  gray800: '#1F2937',
-  gray900: '#111827',
+  gray: '#6B7280',
+  lightGray: '#F3F4F6',
+  border: '#E5E7EB',
+  white: '#FFFFFF',
+  bg: '#FAF8F5',
 };
 
 interface Question {
@@ -42,14 +38,20 @@ interface Question {
   texte: string;
   choix: string[];
   reponse?: string;
+  points?: number;
 }
 
 interface QuizDetail {
   id: string | number;
-  titre: string;
-  description: string;
+  titre?: string;
+  title?: string;
+  description?: string;
+  type?: 'FORMATIF' | 'SOMMATIF';
   questions: Question[];
   passingScore?: number;
+  durationMinutes?: number;
+  courseId?: string | number;
+  chapterId?: string | number;
 }
 
 export default function QuizScreen() {
@@ -62,39 +64,81 @@ export default function QuizScreen() {
   const [error, setError] = useState<string | null>(null);
 
   const [currentQuestion, setCurrentQuestion] = useState(0);
-  const [selectedAnswers, setSelectedAnswers] = useState<Record<string, string>>({});
+  const [selectedAnswers, setSelectedAnswers] = useState<Record<string | number, string>>({});
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [results, setResults] = useState<any>(null);
+  const [results, setResults] = useState<{
+    score: number;
+    total: number;
+    correct: number;
+    seuil: number;
+    passed: boolean;
+    message?: string;
+    corrections?: any[];
+  } | null>(null);
+
+  const [showCorrections, setShowCorrections] = useState(false);
+  const [timeLeft, setTimeLeft] = useState<number | null>(null);
+
+  // المؤقت التنازلي للاختبار
+  useEffect(() => {
+    if (timeLeft === null || timeLeft <= 0 || submitted) return;
+    const timerId = setTimeout(() => {
+      setTimeLeft(timeLeft - 1);
+    }, 1000);
+
+    if (timeLeft === 1) {
+      Alert.alert('انتهى الوقت ⏳', 'انتهى الوقت المخصص للاختبار، سيتم تسليم إجاباتك الحالية تلقائياً.', [
+        { text: 'حسناً', onPress: () => confirmSubmit() },
+      ]);
+    }
+
+    return () => clearTimeout(timerId);
+  }, [timeLeft, submitted]);
+
+  // تنسيق الوقت mm:ss
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  // حماية من الخروج غير المقصود أثناء حل الأسئلة
+  useEffect(() => {
+    const backAction = () => {
+      if (!submitted && Object.keys(selectedAnswers).length > 0) {
+        Alert.alert('تنبيه الخروج', 'هل أنت متأكد من مغادرة الاختبار؟ سيتم فقدان إجاباتك غير المؤكدة.', [
+          { text: 'البقاء في الاختبار', style: 'cancel' },
+          { text: 'مغادرة', style: 'destructive', onPress: () => router.back() },
+        ]);
+        return true;
+      }
+      return false;
+    };
+
+    const backHandler = BackHandler.addEventListener('hardwareBackPress', backAction);
+    return () => backHandler.remove();
+  }, [submitted, selectedAnswers]);
 
   const fetchQuiz = async () => {
     try {
       setError(null);
-      const endpoint = API_ENDPOINTS.quizGet(id as string);
-      const response = await fetch(endpoint, {
-        headers: { Authorization: `Bearer ${token}` },
+      const res = await fetch(API_ENDPOINTS.quizGet(id as string), {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
 
-      if (!response.ok) throw new Error(`Erreur ${response.status}`);
+      if (!res.ok) throw new Error(`خطأ ${res.status}`);
+      const data = await res.json();
+      const qz = data.quiz || data;
+      setQuiz(qz);
 
-      const data = await response.json();
-      setQuiz(data.quiz || data);
-
-      if (data.dejaReussi) {
-        setResults({
-          score: data.bestScore,
-          seuil: data.seuilReussite,
-          reussi: true,
-          message: "Vous avez déjà réussi ce quiz.",
-          nextChapterId: data.nextChapterId,
-          nextChapterTitle: data.nextChapterTitle,
-          nextChapterNumber: data.nextChapterNumber
-        });
-        setSubmitted(true);
+      // تفعيل المؤقت إذا كان للاختبار مدة محددة
+      if (qz.durationMinutes && qz.durationMinutes > 0) {
+        setTimeLeft(qz.durationMinutes * 60);
       }
-    } catch (err) {
-      console.error('Fetch quiz error:', err);
-      setError('Erreur lors du chargement du quiz');
+    } catch (err: any) {
+      console.error('fetchQuiz error:', err);
+      setError('تعذر تحميل أسئلة الاختبار حالياً.');
     } finally {
       setLoading(false);
     }
@@ -102,463 +146,588 @@ export default function QuizScreen() {
 
   useEffect(() => {
     fetchQuiz();
-  }, [id, token]);
+  }, [id]);
 
-  const question = quiz?.questions[currentQuestion];
-  const totalQuestions = quiz?.questions?.length || 0;
-
-  const handleSelectAnswer = (answer: string) => {
-    if (question) {
-      setSelectedAnswers({
-        ...selectedAnswers,
-        [question.id]: answer,
-      });
-    }
+  const handleSelectOption = (questionId: string | number, option: string) => {
+    if (submitted) return;
+    setSelectedAnswers((prev) => ({
+      ...prev,
+      [questionId]: option,
+    }));
   };
 
-  const handleNext = () => {
-    if (currentQuestion < totalQuestions - 1) {
-      setCurrentQuestion(currentQuestion + 1);
+  const handleSubmitQuiz = async () => {
+    if (!quiz || !quiz.questions) return;
+
+    const answeredCount = Object.keys(selectedAnswers).length;
+    if (answeredCount < quiz.questions.length) {
+      const missingCount = quiz.questions.length - answeredCount;
+      Alert.alert(
+        'أسئلة متبقية',
+        `لقد أجبت على ${answeredCount} من أصل ${quiz.questions.length} أسئلة. تتبقى لديك ${missingCount} أسئلة. هل تود التأكيد والإرسال؟`,
+        [
+          { text: 'مواصلة الحل', style: 'cancel' },
+          { text: 'إرسال على أية حال', onPress: confirmSubmit },
+        ]
+      );
+      return;
     }
+
+    confirmSubmit();
   };
 
-  const handlePrevious = () => {
-    if (currentQuestion > 0) {
-      setCurrentQuestion(currentQuestion - 1);
-    }
-  };
-
-  const handleSubmit = async () => {
+  const confirmSubmit = async () => {
     if (!quiz) return;
-
-    Alert.alert(
-      'Soumettre le quiz',
-      'Êtes-vous sûr ? Vous ne pourrez pas modifier vos réponses après.',
-      [
-        { text: 'Annuler', style: 'cancel' },
-        {
-          text: 'Soumettre',
-          onPress: async () => {
-            setSubmitting(true);
-            try {
-              const response = await fetch(API_ENDPOINTS.quizSubmit, {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                  Authorization: `Bearer ${token}`,
-                },
-                body: JSON.stringify({
-                  quizId: id,
-                  answers: selectedAnswers,
-                }),
-              });
-
-              if (response.ok) {
-                const data = await response.json();
-                setResults(data.results || data);
-                setSubmitted(true);
-              } else {
-                Alert.alert('Erreur', 'Erreur lors de la soumission');
-              }
-            } catch (err) {
-              console.error('Submit error:', err);
-              Alert.alert('Erreur', 'Erreur réseau');
-            } finally {
-              setSubmitting(false);
-            }
-          },
+    setSubmitting(true);
+    try {
+      const res = await fetch(API_ENDPOINTS.quizSubmit, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
         },
-      ]
-    );
+        body: JSON.stringify({
+          quizId: Number(quiz.id),
+          answers: selectedAnswers,
+        }),
+      });
+
+      const data = await res.json();
+      const seuil = data.seuil || quiz.passingScore || 75;
+
+      if (res.ok && data.success) {
+        const score = data.score !== undefined ? data.score : 0;
+        const total = data.total || quiz.questions.length;
+        const correct = data.correct !== undefined ? data.correct : Math.round((score / 100) * total);
+        const passed = data.reussi !== undefined ? data.reussi : score >= seuil;
+
+        setResults({
+          score,
+          total,
+          correct,
+          seuil,
+          passed,
+          message: data.message,
+          corrections: data.corrections || [],
+        });
+        setSubmitted(true);
+      } else {
+        // حساب محلي في حال كان الـ API يعيد هيكلاً مختلفاً
+        let correctCount = 0;
+        const total = quiz.questions.length;
+        const corrections = quiz.questions.map((q) => {
+          const userAns = selectedAnswers[q.id];
+          const isCorrect = userAns === q.reponse;
+          if (isCorrect) correctCount += 1;
+          return {
+            questionId: q.id,
+            userAns,
+            correctAns: q.reponse,
+            isCorrect,
+          };
+        });
+
+        const scorePct = Math.round((correctCount / total) * 100);
+        const passed = scorePct >= seuil;
+
+        setResults({
+          score: scorePct,
+          total,
+          correct: correctCount,
+          seuil,
+          passed,
+          corrections,
+        });
+        setSubmitted(true);
+      }
+    } catch (e: any) {
+      console.error('Quiz submit error:', e);
+      Alert.alert('خطأ', 'حدث خطأ أثناء تسجيل النتيجة، يرجى المحاولة مرة أخرى.');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   if (loading) {
+    return <LoadingScreen message="جاري إعداد ورقة أسئلة الاختبار..." />;
+  }
+
+  if (error || !quiz || !quiz.questions || quiz.questions.length === 0) {
     return (
-      <ThemedView style={styles.centerContainer}>
-        <ActivityIndicator size="large" color={C.primary} />
-        <ThemedText style={styles.loadingText}>Chargement du quiz...</ThemedText>
+      <ThemedView style={[styles.container, styles.center]}>
+        <ThemedText style={{ fontSize: 40, marginBottom: 12 }}>⚠️</ThemedText>
+        <ThemedText style={styles.errorTitle}>{error || 'لا توجد أسئلة متوفرة لهذا الاختبار.'}</ThemedText>
+        <Pressable style={styles.retryBtn} onPress={() => router.back()}>
+          <ThemedText style={styles.retryBtnTxt}>العودة للدرس</ThemedText>
+        </Pressable>
       </ThemedView>
     );
   }
 
-  if (error) {
-    return (
-      <ThemedView style={styles.centerContainer}>
-        <View style={styles.errorBox}>
-          <ThemedText style={styles.errorIcon}>⚠️</ThemedText>
-          <ThemedText style={styles.errorTxt}>{error}</ThemedText>
-          <Pressable style={styles.retryBtn} onPress={fetchQuiz}>
-            <ThemedText style={styles.retryTxt}>Réessayer</ThemedText>
-          </Pressable>
-        </View>
-      </ThemedView>
-    );
-  }
-
-  if (!quiz) return null;
-
-  // ═══ ECRAN DE RESULTAT ═══
-  if (submitted && results) {
-    const score = results.score || 0;
-    const seuil = results.seuil || 75;
-    const passed = results.reussi !== undefined ? results.reussi : score >= seuil;
-
-    return (
-      <ThemedView style={styles.container}>
-        <ScrollView contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 40 }]}>
-          
-          <View style={styles.resultHeaderCard}>
-            <View style={[styles.scoreCircle, { backgroundColor: passed ? C.success : C.danger }]}>
-              <ThemedText style={styles.scoreText}>{score}%</ThemedText>
-            </View>
-            <ThemedText style={[styles.resultTitle, { color: passed ? C.success : C.danger }]}>
-              {passed ? '✅ Quiz Réussi !' : '❌ Non réussi'}
-            </ThemedText>
-            {!passed && (
-              <ThemedText style={styles.resultMessage}>
-                {results.message || `Vous avez obtenu ${score}%. Il faut au moins ${seuil}% pour valider ce quiz.`}
-              </ThemedText>
-            )}
-          </View>
-
-          {passed && (
-            <View style={{
-              backgroundColor: 'white',
-              borderRadius: 16,
-              padding: 24,
-              alignItems: 'center',
-              borderWidth: 2,
-              borderColor: C.success,
-              marginVertical: 16,
-              shadowColor: '#000',
-              shadowOffset: { width: 0, height: 4 },
-              shadowOpacity: 0.05,
-              shadowRadius: 10,
-              elevation: 2,
-            }}>
-              <ThemedText style={{ fontSize: 34, fontWeight: '900', color: C.primaryDark, textAlign: 'center' }}>
-                Bravo !
-              </ThemedText>
-              <ThemedText style={{ fontSize: 24, marginVertical: 6, textAlign: 'center' }}>
-                🌸
-              </ThemedText>
-              <ThemedText style={{ color: C.gray700, fontSize: 14, textAlign: 'center', lineHeight: 20 }}>
-                {results.message || "Vous avez validé ce quiz formatif avec succès !"}
-              </ThemedText>
-            </View>
-          )}
-
-          {Object.keys(selectedAnswers).length > 0 && (
-            <View style={styles.reviewSection}>
-              <ThemedText style={styles.reviewTitle}>Récapitulatif des réponses</ThemedText>
-              
-              {quiz.questions.map((q, index) => {
-                const userAnswer = selectedAnswers[q.id];
-                const correctAnswer = q.reponse;
-                const isCorrect = String(userAnswer || "").trim().toLowerCase() === String(correctAnswer || "").trim().toLowerCase();
-
-                return (
-                  <View key={q.id} style={[styles.reviewCard, { borderLeftColor: isCorrect ? C.success : C.danger }]}>
-                    <View style={styles.reviewCardHeader}>
-                      <View style={[styles.reviewBadge, { backgroundColor: isCorrect ? C.successLight : C.dangerLight }]}>
-                        <ThemedText style={{ fontSize: 16 }}>{isCorrect ? '✓' : '✗'}</ThemedText>
-                      </View>
-                      <ThemedText style={styles.reviewQuestionText}>Question {index + 1}</ThemedText>
-                    </View>
-                    <ThemedText style={styles.reviewQuestionBody}>{q.texte}</ThemedText>
-                    
-                    <View style={styles.reviewAnswerBox}>
-                      <ThemedText style={styles.reviewAnswerLabel}>Votre réponse :</ThemedText>
-                      <ThemedText style={[styles.reviewAnswerValue, { color: isCorrect ? C.success : C.danger }]}>
-                        {userAnswer || 'Aucune réponse'}
-                      </ThemedText>
-                    </View>
-                    
-                    {!isCorrect && correctAnswer && (
-                      <View style={[styles.reviewAnswerBox, { backgroundColor: C.successLight, marginTop: 8 }]}>
-                        <ThemedText style={[styles.reviewAnswerLabel, { color: C.primaryDark }]}>Bonne réponse :</ThemedText>
-                        <ThemedText style={[styles.reviewAnswerValue, { color: C.primaryDark }]}>{correctAnswer}</ThemedText>
-                      </View>
-                    )}
-                  </View>
-                );
-              })}
-            </View>
-          )}
-
-          <View style={{ flexDirection: 'column', gap: 12 }}>
-            {passed && results.nextChapterId ? (
-              <Pressable 
-                style={({ pressed }) => [
-                  {
-                    backgroundColor: C.secondary, // Orange
-                    borderColor: C.primaryDark, // Green border
-                    borderWidth: 2,
-                    borderRadius: 14,
-                    paddingVertical: 16,
-                    paddingHorizontal: 20,
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    marginTop: 10,
-                    shadowColor: '#000',
-                    shadowOffset: { width: 0, height: 2 },
-                    shadowOpacity: 0.1,
-                    shadowRadius: 4,
-                    elevation: 3,
-                  },
-                  pressed && { opacity: 0.85, transform: [{ scale: 0.98 }] }
-                ]}
-                onPress={() => router.replace({ pathname: '/chapter/[id]', params: { id: results.nextChapterId } })}
-              >
-                <ThemedText style={{ color: 'white', fontSize: 13, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1.2 }}>
-                  Accéder au Chapitre Suivant :
-                </ThemedText>
-                <ThemedText style={{ color: 'white', fontSize: 15, fontWeight: '800', marginTop: 4, textAlign: 'center' }}>
-                  "{results.nextChapterTitle}" →
-                </ThemedText>
-              </Pressable>
-            ) : (
-              <Pressable 
-                style={({ pressed }) => [
-                  styles.finishButton, 
-                  (!passed || results.isReset) && { backgroundColor: C.danger },
-                  pressed && { opacity: 0.85 }
-                ]}
-                onPress={() => {
-                  const targetCourseId = quiz?.courseId || quiz?.chapter?.courseId;
-                  if (targetCourseId) {
-                    router.navigate({ pathname: '/course/[id]', params: { id: targetCourseId } });
-                  } else {
-                    router.back();
-                  }
-                }}
-              >
-                <ThemedText style={styles.finishButtonText}>
-                  {results.isReset ? 'Recommencer le chapitre' : 'Retour au cours'}
-                </ThemedText>
-              </Pressable>
-            )}
-          </View>
-
-        </ScrollView>
-      </ThemedView>
-    );
-  }
-
-  // ═══ ECRAN DE QUIZ (PAGINE) ═══
-  const progressPercent = ((currentQuestion + 1) / totalQuestions) * 100;
+  const currentQ = quiz.questions[currentQuestion];
+  const isLastQuestion = currentQuestion === quiz.questions.length - 1;
+  const isSummative = quiz.type === 'SOMMATIF';
 
   return (
     <ThemedView style={styles.container}>
-      <ScrollView contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 40 }]} showsVerticalScrollIndicator={false}>
-        
-        {/* En-tête */}
-        <View style={styles.header}>
-          <View style={styles.headerBadge}>
-            <ThemedText style={styles.headerBadgeText}>📝 Test Formatif</ThemedText>
-          </View>
-          <ThemedText style={styles.title}>{quiz.titre}</ThemedText>
-          {quiz.description ? (
-            <ThemedText style={styles.subtitle}>{quiz.description}</ThemedText>
-          ) : null}
-
-          <View style={styles.progressHeader}>
-            <ThemedText style={styles.progressText}>Question {currentQuestion + 1}</ThemedText>
-            <ThemedText style={styles.progressValues}>sur {totalQuestions}</ThemedText>
-          </View>
-          <View style={styles.progressBarBg}>
-            <View style={[styles.progressBarFill, { width: `${progressPercent}%` }]} />
-          </View>
-        </View>
-
-        {/* Question Card */}
-        {question && (
-          <View style={styles.questionCard}>
-            <ThemedText style={styles.questionBodyText}>{question.texte}</ThemedText>
-
-            <View style={styles.optionsContainer}>
-              {question.choix?.map((answer, i) => {
-                const isSelected = selectedAnswers[question.id] === answer;
-                return (
-                  <Pressable
-                    key={i}
-                    onPress={() => handleSelectAnswer(answer)}
-                    style={({ pressed }) => [
-                      styles.optionButton,
-                      isSelected && styles.optionButtonSelected,
-                      pressed && !isSelected && { backgroundColor: C.gray50 }
-                    ]}
-                  >
-                    <View style={[styles.radioCircle, isSelected && styles.radioCircleSelected]}>
-                      {isSelected && <View style={styles.radioDot} />}
-                    </View>
-                    <ThemedText style={[styles.optionText, isSelected && styles.optionTextSelected]}>
-                      {answer}
-                    </ThemedText>
-                  </Pressable>
-                );
-              })}
+      <Stack.Screen
+        options={{
+          title: quiz.titre || quiz.title || (isSummative ? 'الاختبار الختامي الشامل' : 'الاختبار التكويني'),
+          headerBackTitle: 'الرجوع',
+          headerTitleAlign: 'center',
+          headerTintColor: '#059669',
+        }}
+      />
+      <ScrollView
+        contentContainerStyle={[
+          styles.content,
+          {
+            paddingTop: Spacing.three,
+            paddingBottom: insets.bottom + BottomTabInset + Spacing.six,
+          },
+        ]}
+        showsVerticalScrollIndicator={false}
+      >
+        {submitted && results ? (
+          /* ── شاشة النتيجة والتصحيح ── */
+          <View style={styles.resultCard}>
+            <View style={[styles.scoreCircle, { backgroundColor: results.passed ? '#059669' : '#DC2626' }]}>
+              <ThemedText style={styles.scoreNumber}>{results.score}%</ThemedText>
             </View>
-          </View>
-        )}
 
-        {/* Boutons de navigation */}
-        <View style={styles.navRow}>
-          <Pressable
-            style={({ pressed }) => [
-              styles.navBtn,
-              currentQuestion === 0 && styles.navBtnDisabled,
-              pressed && currentQuestion > 0 && { backgroundColor: C.gray200 }
-            ]}
-            onPress={handlePrevious}
-            disabled={currentQuestion === 0}
-          >
-            <ThemedText style={[styles.navBtnText, currentQuestion === 0 && { color: C.gray400 }]}>
-              ← Précédent
+            <ThemedText style={[styles.resultTitle, { color: results.passed ? '#059669' : '#DC2626' }]}>
+              {results.passed
+                ? (isSummative ? '🏆 مبارك عليك ! اجتزت الاختبار النهائي بنجاح باهر' : '✅ أحسنت ! اجتزت اختبار الفصل بنجاح')
+                : '❌ لم توفق في هذه المحاولة'}
             </ThemedText>
-          </Pressable>
 
-          {currentQuestion === totalQuestions - 1 ? (
-            <Pressable
-              style={({ pressed }) => [
-                styles.submitBtn,
-                pressed && { opacity: 0.85 },
-                submitting && { opacity: 0.6 }
-              ]}
-              onPress={handleSubmit}
-              disabled={submitting}
-            >
-              {submitting ? (
-                <ActivityIndicator color="white" size="small" />
-              ) : (
-                <ThemedText style={styles.submitBtnText}>Soumettre ✓</ThemedText>
+            <ThemedText style={styles.resultScoreDetail}>
+              الإجابات الصحيحة: {results.correct} من {results.total} أسئلة
+            </ThemedText>
+
+            {!results.passed && (
+              <ThemedText style={styles.resultAdviceText}>
+                {results.message ||
+                  `تحصلت على علامة ${results.score}%. يجب تحقيق نسبة ${results.seuil}% على الأقل لفتح الفصل التالي أو استحقاق الشهادة.`}
+              </ThemedText>
+            )}
+
+            <View style={styles.resultActions}>
+              <Pressable
+                style={[styles.resultBtn, { backgroundColor: '#059669' }]}
+                onPress={() => router.back()}
+              >
+                <ThemedText style={styles.resultBtnTxt}>
+                  {results.passed ? 'متابعة الدورة التعليمية ←' : 'العودة لمراجعة محتوى الدرس'}
+                </ThemedText>
+              </Pressable>
+
+              <Pressable
+                style={[styles.resultBtn, styles.correctionBtn]}
+                onPress={() => setShowCorrections(!showCorrections)}
+              >
+                <ThemedText style={[styles.resultBtnTxt, { color: '#374151' }]}>
+                  {showCorrections ? 'إخفاء ورقة التصحيح' : 'مراجعة الإجابات والتصحيح البيداغوجي 📋'}
+                </ThemedText>
+              </Pressable>
+            </View>
+
+            {/* تفاصيل التصحيح البيداغوجي */}
+            {showCorrections ? (
+              <View style={styles.correctionsList}>
+                <ThemedText style={styles.correctionsHeader}>ورقة التصحيح التفصيلية :</ThemedText>
+                {quiz.questions.map((q, idx) => {
+                  const userAns = selectedAnswers[q.id];
+                  const isCorrect = userAns === q.reponse;
+                  return (
+                    <View
+                      key={q.id}
+                      style={[
+                        styles.correctionItem,
+                        {
+                          borderColor: isCorrect ? '#A7F3D0' : '#FECACA',
+                          backgroundColor: isCorrect ? '#F0FDF4' : '#FEF2F2',
+                        },
+                      ]}
+                    >
+                      <ThemedText style={styles.correctionQTitle}>
+                        السؤال {idx + 1}: {q.texte}
+                      </ThemedText>
+                      <ThemedText style={styles.correctionAns}>
+                        إجابتك: {userAns ? `« ${userAns} »` : 'لم تجب'} {isCorrect ? '✅' : '❌'}
+                      </ThemedText>
+                      {!isCorrect && q.reponse ? (
+                        <ThemedText style={styles.correctionRightAns}>
+                          الإجابة الصحيحة: « {q.reponse} »
+                        </ThemedText>
+                      ) : null}
+                    </View>
+                  );
+                })}
+              </View>
+            ) : null}
+          </View>
+        ) : (
+          /* ── شاشة ورقة الأسئلة والتفاعل ── */
+          <>
+            {/* شريط المؤقت والتقدم */}
+            <View style={styles.metaRow}>
+              {timeLeft !== null && (
+                <View style={styles.timerBadge}>
+                  <ThemedText style={styles.timerText}>⏳ {formatTime(timeLeft)}</ThemedText>
+                </View>
               )}
-            </Pressable>
-          ) : (
-            <Pressable
-              style={({ pressed }) => [
-                styles.navBtn,
-                styles.navBtnNext,
-                pressed && { opacity: 0.85 }
-              ]}
-              onPress={handleNext}
-            >
-              <ThemedText style={[styles.navBtnText, { color: C.primaryDark }]}>Suivant →</ThemedText>
-            </Pressable>
-          )}
-        </View>
+              <ThemedText style={styles.progressText}>
+                السؤال {currentQuestion + 1} من {quiz.questions.length}
+              </ThemedText>
+            </View>
 
+            <View style={styles.progressBar}>
+              <View
+                style={[
+                  styles.progressFill,
+                  {
+                    width: `${((currentQuestion + 1) / quiz.questions.length) * 100}%`,
+                  },
+                ]}
+              />
+            </View>
+
+            {/* بطاقة السؤال */}
+            <View style={styles.questionCard}>
+              <ThemedText style={styles.questionText}>{currentQ.texte}</ThemedText>
+
+              {/* خيارات الإجابة */}
+              <View style={styles.optionsList}>
+                {(currentQ.choix || []).map((choix, cIdx) => {
+                  const isSelected = selectedAnswers[currentQ.id] === choix;
+                  return (
+                    <Pressable
+                      key={cIdx}
+                      style={[styles.optionCard, isSelected && styles.optionCardSelected]}
+                      onPress={() => handleSelectOption(currentQ.id, choix)}
+                    >
+                      <ThemedText style={[styles.optionText, isSelected && styles.optionTextSelected]}>
+                        {choix}
+                      </ThemedText>
+                      <View style={[styles.radioCircle, isSelected && styles.radioCircleSelected]}>
+                        {isSelected && <View style={styles.radioInner} />}
+                      </View>
+                    </Pressable>
+                  );
+                })}
+              </View>
+            </View>
+
+            {/* أزرار التنقل بين الأسئلة */}
+            <View style={styles.navRow}>
+              {currentQuestion > 0 ? (
+                <Pressable
+                  style={styles.navBtn}
+                  onPress={() => setCurrentQuestion((prev) => prev - 1)}
+                >
+                  <ThemedText style={styles.navBtnTxt}>السابق ←</ThemedText>
+                </Pressable>
+              ) : (
+                <View style={{ flex: 1 }} />
+              )}
+
+              {isLastQuestion ? (
+                <Pressable
+                  style={[styles.navBtn, styles.submitBtn, submitting && { opacity: 0.7 }]}
+                  disabled={submitting}
+                  onPress={handleSubmitQuiz}
+                >
+                  {submitting ? (
+                    <ActivityIndicator color="#FFFFFF" size="small" />
+                  ) : (
+                    <ThemedText style={styles.submitBtnTxt}>تأكيد وإرسال الإجابات ✓</ThemedText>
+                  )}
+                </Pressable>
+              ) : (
+                <Pressable
+                  style={[styles.navBtn, styles.nextBtn]}
+                  onPress={() => setCurrentQuestion((prev) => prev + 1)}
+                >
+                  <ThemedText style={styles.nextBtnTxt}>→ السؤال التالي</ThemedText>
+                </Pressable>
+              )}
+            </View>
+          </>
+        )}
       </ScrollView>
     </ThemedView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: C.gray50 },
-  centerContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: C.gray50 },
-  scrollContent: { padding: 16 },
-  loadingText: { marginTop: 12, color: C.gray500, fontSize: 14 },
-
-  // Error
-  errorBox: {
-    backgroundColor: '#FEF2F2', borderRadius: 16, padding: 24,
-    alignItems: 'center', marginTop: 40, borderWidth: 1, borderColor: '#FECACA',
+  container: { flex: 1, backgroundColor: C.bg },
+  center: { justifyContent: 'center', alignItems: 'center', padding: 20 },
+  content: { paddingHorizontal: 16 },
+  metaRow: {
+    flexDirection: 'row-reverse',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
   },
-  errorIcon: { fontSize: 40, marginBottom: 12 },
-  errorTxt: { color: C.danger, fontWeight: '600', marginBottom: 16, textAlign: 'center' },
-  retryBtn: { backgroundColor: C.danger, paddingHorizontal: 24, paddingVertical: 10, borderRadius: 10 },
-  retryTxt: { color: 'white', fontWeight: '700' },
-
-  // Header
-  header: { marginBottom: 24 },
-  headerBadge: { 
-    backgroundColor: C.primaryLight, alignSelf: 'flex-start',
-    paddingHorizontal: 12, paddingVertical: 6, borderRadius: 12, marginBottom: 12 
+  timerBadge: {
+    backgroundColor: '#FEE2E2',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 8,
   },
-  headerBadgeText: { color: C.primaryDark, fontWeight: '800', fontSize: 12 },
-  title: { fontSize: 24, fontWeight: '800', color: C.gray900, marginBottom: 8 },
-  subtitle: { color: C.gray600, fontSize: 14, lineHeight: 20, marginBottom: 20 },
-
-  progressHeader: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 },
-  progressText: { fontSize: 13, fontWeight: '700', color: C.gray700 },
-  progressValues: { fontSize: 13, fontWeight: '700', color: C.primary },
-  progressBarBg: { height: 8, backgroundColor: C.gray200, borderRadius: 4, overflow: 'hidden' },
-  progressBarFill: { height: '100%', backgroundColor: C.primary, borderRadius: 4 },
-
-  // Question Card
+  timerText: {
+    color: '#DC2626',
+    fontWeight: '800',
+    fontSize: 13,
+  },
+  progressText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#6B7280',
+    textAlign: 'right',
+  },
+  progressBar: {
+    width: '100%',
+    height: 7,
+    backgroundColor: '#E5E7EB',
+    borderRadius: 4,
+    overflow: 'hidden',
+    marginBottom: 16,
+  },
+  progressFill: {
+    height: '100%',
+    backgroundColor: '#059669',
+    borderRadius: 4,
+  },
   questionCard: {
-    backgroundColor: 'white', borderRadius: 16, padding: 20, marginBottom: 24,
-    borderWidth: 1, borderColor: C.gray200,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04, shadowRadius: 4, elevation: 2,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 18,
+    padding: 20,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
+    elevation: 2,
   },
-  questionBodyText: { fontSize: 17, fontWeight: '700', color: C.gray900, lineHeight: 26, marginBottom: 20 },
-  
-  optionsContainer: { gap: 10 },
-  optionButton: {
-    flexDirection: 'row', alignItems: 'center', padding: 14,
-    borderWidth: 2, borderColor: C.gray200, borderRadius: 12,
+  questionText: {
+    fontSize: 17,
+    fontWeight: '900',
+    color: '#111827',
+    textAlign: 'right',
+    lineHeight: 26,
+    marginBottom: 20,
   },
-  optionButtonSelected: { borderColor: C.primary, backgroundColor: C.primaryLight },
+  optionsList: {
+    gap: 12,
+  },
+  optionCard: {
+    flexDirection: 'row-reverse',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#F9FAFB',
+    borderWidth: 1.5,
+    borderColor: '#E5E7EB',
+    borderRadius: 14,
+    padding: 14,
+  },
+  optionCardSelected: {
+    backgroundColor: '#ECFDF5',
+    borderColor: '#059669',
+  },
+  optionText: {
+    fontSize: 14,
+    color: '#374151',
+    flex: 1,
+    textAlign: 'right',
+    marginLeft: 12,
+    lineHeight: 20,
+  },
+  optionTextSelected: {
+    color: '#065F46',
+    fontWeight: '800',
+  },
   radioCircle: {
-    width: 22, height: 22, borderRadius: 11, borderWidth: 2, borderColor: C.gray300,
-    alignItems: 'center', justifyContent: 'center', marginRight: 12,
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    borderWidth: 2,
+    borderColor: '#D1D5DB',
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
   },
-  radioCircleSelected: { borderColor: C.primary },
-  radioDot: { width: 12, height: 12, borderRadius: 6, backgroundColor: C.primary },
-  optionText: { color: C.gray700, fontSize: 15, flex: 1 },
-  optionTextSelected: { color: C.primaryDark, fontWeight: '700' },
-
-  // Navigation Buttons
-  navRow: { flexDirection: 'row', gap: 12, marginTop: 8 },
+  radioCircleSelected: {
+    borderColor: '#059669',
+  },
+  radioInner: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: '#059669',
+  },
+  navRow: {
+    flexDirection: 'row-reverse',
+    justifyContent: 'space-between',
+    gap: 12,
+    marginBottom: 20,
+  },
   navBtn: {
-    flex: 1, paddingVertical: 14, borderRadius: 12, borderWidth: 2, borderColor: C.gray300,
-    alignItems: 'center', backgroundColor: 'white',
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 12,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    alignItems: 'center',
   },
-  navBtnDisabled: { backgroundColor: C.gray100, borderColor: C.gray200 },
-  navBtnNext: { borderColor: C.primaryLight, backgroundColor: C.primaryLight },
-  navBtnText: { fontWeight: '700', color: C.gray700, fontSize: 15 },
+  nextBtn: {
+    backgroundColor: '#059669',
+    borderColor: '#059669',
+  },
   submitBtn: {
-    flex: 1, paddingVertical: 14, borderRadius: 12, backgroundColor: C.primary,
-    alignItems: 'center', justifyContent: 'center'
+    backgroundColor: '#D97706',
+    borderColor: '#D97706',
   },
-  submitBtnText: { color: 'white', fontWeight: '800', fontSize: 16 },
-
-  // Result Header
-  resultHeaderCard: {
-    backgroundColor: 'white', borderRadius: 20, padding: 24, alignItems: 'center',
-    marginBottom: 24, borderWidth: 1, borderColor: C.gray200,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.05, shadowRadius: 8, elevation: 3,
+  navBtnTxt: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#374151',
+  },
+  nextBtnTxt: {
+    color: '#FFFFFF',
+    fontWeight: '800',
+    fontSize: 14,
+  },
+  submitBtnTxt: {
+    color: '#FFFFFF',
+    fontWeight: '800',
+    fontSize: 14,
+  },
+  resultCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    padding: 24,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.05,
+    shadowRadius: 12,
+    elevation: 3,
   },
   scoreCircle: {
-    width: 120, height: 120, borderRadius: 60, alignItems: 'center', justifyContent: 'center',
-    marginBottom: 16, shadowColor: '#000', shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2, shadowRadius: 6, elevation: 4,
+    width: 90,
+    height: 90,
+    borderRadius: 45,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 16,
   },
-  scoreText: { fontSize: 36, fontWeight: '800', color: 'white' },
-  resultTitle: { fontSize: 24, fontWeight: '800', marginBottom: 8 },
-  resultMessage: { fontSize: 14, color: C.gray600, textAlign: 'center', lineHeight: 20 },
-
-  // Reviews
-  reviewSection: { marginBottom: 24 },
-  reviewTitle: { fontSize: 18, fontWeight: '800', color: C.gray900, marginBottom: 16 },
-  reviewCard: {
-    backgroundColor: 'white', borderRadius: 14, padding: 16, marginBottom: 12,
-    borderWidth: 1, borderColor: C.gray200, borderLeftWidth: 4,
+  scoreNumber: {
+    fontSize: 26,
+    fontWeight: '900',
+    color: '#FFFFFF',
   },
-  reviewCardHeader: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 8 },
-  reviewBadge: { width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
-  reviewQuestionText: { fontSize: 14, fontWeight: '700', color: C.gray800 },
-  reviewQuestionBody: { fontSize: 15, color: C.gray900, marginBottom: 12, lineHeight: 22 },
-  reviewAnswerBox: {
-    backgroundColor: C.gray50, padding: 12, borderRadius: 8,
+  resultTitle: {
+    fontSize: 18,
+    fontWeight: '900',
+    textAlign: 'center',
+    marginBottom: 6,
   },
-  reviewAnswerLabel: { fontSize: 12, color: C.gray500, fontWeight: '600', marginBottom: 4 },
-  reviewAnswerValue: { fontSize: 14, fontWeight: '700' },
-
-  finishButton: {
-    backgroundColor: C.primary, paddingVertical: 16, borderRadius: 14, alignItems: 'center',
+  resultScoreDetail: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#4B5563',
+    marginBottom: 12,
   },
-  finishButtonText: { color: 'white', fontWeight: '800', fontSize: 16 },
+  resultAdviceText: {
+    fontSize: 13,
+    color: '#6B7280',
+    textAlign: 'center',
+    lineHeight: 20,
+    paddingHorizontal: 12,
+    marginBottom: 20,
+  },
+  resultActions: {
+    width: '100%',
+    gap: 10,
+    marginBottom: 20,
+  },
+  resultBtn: {
+    width: '100%',
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  correctionBtn: {
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#D1D5DB',
+  },
+  resultBtnTxt: {
+    color: '#FFFFFF',
+    fontWeight: '800',
+    fontSize: 14,
+  },
+  correctionsList: {
+    width: '100%',
+    borderTopWidth: 1,
+    borderTopColor: '#F3F4F6',
+    paddingTop: 16,
+  },
+  correctionsHeader: {
+    fontSize: 15,
+    fontWeight: '800',
+    color: '#1F2937',
+    textAlign: 'right',
+    marginBottom: 12,
+  },
+  correctionItem: {
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 10,
+    borderWidth: 1,
+    alignItems: 'flex-end',
+  },
+  correctionQTitle: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: '#1F2937',
+    textAlign: 'right',
+    marginBottom: 4,
+  },
+  correctionAns: {
+    fontSize: 12,
+    color: '#4B5563',
+    textAlign: 'right',
+  },
+  correctionRightAns: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: '#059669',
+    textAlign: 'right',
+    marginTop: 2,
+  },
+  errorTitle: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: '#DC2626',
+    textAlign: 'center',
+    marginBottom: 16,
+  },
+  retryBtn: {
+    backgroundColor: '#059669',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 10,
+  },
+  retryBtnTxt: {
+    color: '#FFFFFF',
+    fontWeight: '800',
+  },
 });

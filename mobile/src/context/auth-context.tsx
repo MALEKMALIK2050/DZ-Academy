@@ -1,15 +1,64 @@
+// src/context/auth-context.tsx
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { Platform } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
 import { API_ENDPOINTS } from '@/constants/api';
 
-interface User {
+// ── تخزين آمن يدعم الويب والهاتف دون أخطاء ────────────────────────
+const safeStorage = {
+  getItem: async (key: string): Promise<string | null> => {
+    if (Platform.OS === 'web') {
+      try {
+        return typeof window !== 'undefined' ? localStorage.getItem(key) : null;
+      } catch {
+        return null;
+      }
+    }
+    try {
+      return await SecureStore.getItemAsync(key);
+    } catch {
+      return null;
+    }
+  },
+  setItem: async (key: string, value: string): Promise<void> => {
+    if (Platform.OS === 'web') {
+      try {
+        if (typeof window !== 'undefined') localStorage.setItem(key, value);
+      } catch {}
+      return;
+    }
+    try {
+      await SecureStore.setItemAsync(key, value);
+    } catch {}
+  },
+  deleteItem: async (key: string): Promise<void> => {
+    if (Platform.OS === 'web') {
+      try {
+        if (typeof window !== 'undefined') localStorage.removeItem(key);
+      } catch {}
+      return;
+    }
+    try {
+      await SecureStore.deleteItemAsync(key);
+    } catch {}
+  },
+};
+
+export interface User {
   id: number;
   nom: string;
   prenom: string;
   email: string;
   role: string;
   niveau?: string;
+  classe?: string;
+  annee?: string;
   photo?: string;
+  ecole?: string;
+  telephone?: string;
+  wilaya?: string;
+  profilComplet?: boolean;
+  pourcentageCompletion?: number;
 }
 
 interface AuthContextType {
@@ -21,9 +70,8 @@ interface AuthContextType {
   logout: () => Promise<void>;
   updateUser: (updatedUser: User) => void;
   fetchStudentProfile: () => Promise<void>;
-  studentProfile?: User;
+  studentProfile?: User | null;
 }
-
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -39,15 +87,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const loadStoredSession = async () => {
     try {
-      const storedToken = await SecureStore.getItemAsync('auth_token');
+      const storedToken = await safeStorage.getItem('auth_token');
       if (storedToken) {
-        // Verify token with backend
-          console.log('Loading session from', API_ENDPOINTS.me, 'with token', storedToken);
-          const res = await fetch(API_ENDPOINTS.me, {
-            headers: {
-              'Authorization': `Bearer ${storedToken}`,
-            },
-          });
+        const res = await fetch(API_ENDPOINTS.me, {
+          headers: { Authorization: `Bearer ${storedToken}` },
+        });
 
         if (res.ok) {
           const data = await res.json();
@@ -55,9 +99,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             setToken(storedToken);
             setUser(data.user);
           } else {
-            // Only students are allowed on the mobile app
             await logout();
-            setError('Accès réservé aux étudiants.');
+            setError('تطبيق الهاتف مخصص لحسابات التلاميذ فقط.');
           }
         } else {
           await logout();
@@ -76,40 +119,38 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const res = await fetch(API_ENDPOINTS.login, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, password }),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email.trim(), password }),
       });
 
       const data = await res.json();
 
       if (!res.ok) {
-        setError(data.error || 'Erreur de connexion');
+        setError(data.error || 'خطأ في تسجيل الدخول');
         setLoading(false);
         return false;
       }
 
       if (data.success && data.user) {
         if (data.user.role !== 'STUDENT') {
-          setError('Seuls les comptes étudiants peuvent se connecter sur l\'application mobile.');
+          setError('حسابات التلاميذ فقط يمكنها تسجيل الدخول إلى تطبيق الهاتف.');
           setLoading(false);
           return false;
         }
 
-        await SecureStore.setItemAsync('auth_token', data.token);
+        await safeStorage.setItem('auth_token', data.token);
         setToken(data.token);
         setUser(data.user);
         setLoading(false);
         return true;
       }
 
-      setError('Erreur inattendue.');
+      setError('خطأ غير متوقع، يرجى المحاولة مرة أخرى.');
       setLoading(false);
       return false;
     } catch (e) {
-      console.error(e);
-      setError('Erreur réseau ou serveur.');
+      console.error('Login error:', e);
+      setError('تعذر الاتصال بالخادم، تحقق من اتصالك بالإنترنت.');
       setLoading(false);
       return false;
     }
@@ -118,21 +159,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const fetchStudentProfile = async () => {
     if (!token) return;
     try {
-      const res = await fetch(`${API_ENDPOINTS.me}`, {
+      const res = await fetch(API_ENDPOINTS.me, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.ok) {
         const data = await res.json();
-        setUser(data.user);
+        if (data.user) {
+          setUser(data.user);
+        }
       }
     } catch (e) {
-      console.error('Failed to fetch profile', e);
+      console.error('Failed to fetch student profile:', e);
     }
   };
 
   const logout = async () => {
     try {
-      await SecureStore.deleteItemAsync('auth_token');
+      await safeStorage.deleteItem('auth_token');
       setUser(null);
       setToken(null);
       setError(null);

@@ -1,17 +1,33 @@
+// src/app/(tabs)/badges.tsx
 import React, { useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, Animated, Easing, ScrollView, Dimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { ThemedText } from '@/components/themed-text';
+import { ThemedView } from '@/components/themed-view';
+import { BottomTabInset } from '@/constants/theme';
 
 const { width } = Dimensions.get('window');
 
-const AnimatedBadge = ({ title, icon, color, description }: { title: string; icon: string; color: string; description: string }) => {
+const AnimatedBadge = ({
+  title,
+  icon,
+  color,
+  description,
+  unlocked,
+}: {
+  title: string;
+  icon: string;
+  color: string;
+  description: string;
+  unlocked: boolean;
+}) => {
   const spinValue = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     Animated.loop(
       Animated.timing(spinValue, {
         toValue: 1,
-        duration: 5000,
+        duration: 6000,
         easing: Easing.linear,
         useNativeDriver: true,
       })
@@ -24,126 +40,198 @@ const AnimatedBadge = ({ title, icon, color, description }: { title: string; ico
   });
 
   return (
-    <View style={styles.badgeCard}>
-      <Animated.View style={[styles.badgeContainer, { transform: [{ rotateY: spin }], shadowColor: color }]}>
-        <View style={[styles.badgeInner, { backgroundColor: color }]}>
+    <View style={[styles.badgeCard, !unlocked && styles.badgeCardLocked]}>
+      <Animated.View
+        style={[
+          styles.badgeContainer,
+          {
+            transform: [{ rotateY: spin }],
+            shadowColor: unlocked ? color : '#9CA3AF',
+          },
+        ]}
+      >
+        <View style={[styles.badgeInner, { backgroundColor: unlocked ? color : '#9CA3AF' }]}>
           <Text style={styles.badgeIcon}>{icon}</Text>
         </View>
       </Animated.View>
-      <Text style={styles.badgeTitle}>{title}</Text>
-      <Text style={styles.badgeDesc}>{description}</Text>
+      <ThemedText style={styles.badgeTitle}>{title}</ThemedText>
+      <ThemedText style={styles.badgeDesc}>{description}</ThemedText>
+      <View style={[styles.statusPill, { backgroundColor: unlocked ? '#ECFDF5' : '#F3F4F6' }]}>
+        <ThemedText style={[styles.statusPillText, { color: unlocked ? '#059669' : '#6B7280' }]}>
+          {unlocked ? '✓ وسام مُكتسب' : '🔒 قيد الإنجاز'}
+        </ThemedText>
+      </View>
     </View>
   );
 };
 
 export default function BadgesScreen() {
   const insets = useSafeAreaInsets();
-  
-  const MOCK_BADGES = [
-    { id: 1, title: 'Premier Pas', icon: '🌱', color: '#10B981', description: 'Vous avez complété votre premier cours.' },
-    { id: 2, title: 'Étoile Montante', icon: '⭐', color: '#F59E0B', description: '5 jours consécutifs de connexion.' },
-    { id: 3, title: 'Expert', icon: '🏆', color: '#3B82F6', description: 'Plus de 10 quiz réussis avec un score parfait.' },
+
+  const BADGES = [
+    {
+      id: 1,
+      title: 'الخطوة الأولى',
+      icon: '🌱',
+      color: '#10B981',
+      description: 'أتممت أول درس تعليمي في منصة دزأكاديمي بنجاح.',
+      unlocked: true,
+    },
+    {
+      id: 2,
+      title: 'نجم المثابرة',
+      icon: '⭐',
+      color: '#F59E0B',
+      description: 'تسجيل الدخول ومتابعة المذاكرة لعدة أيام متتالية.',
+      unlocked: true,
+    },
+    {
+      id: 3,
+      title: 'بطل الاختبارات',
+      icon: '🏆',
+      color: '#3B82F6',
+      description: 'الحصول على علامة كاملة في اختبارات الفصول التكوينية.',
+      unlocked: true,
+    },
+    {
+      id: 4,
+      title: 'المتفوق في المنهاج',
+      icon: '🎖️',
+      color: '#8B5CF6',
+      description: 'إكمال جميع فصول دورة دراسية كاملة.',
+      unlocked: false,
+    },
+    {
+      id: 5,
+      title: 'فارس البكالوريا والبيام',
+      icon: '👑',
+      color: '#EC4899',
+      description: 'اجتياز الاختبارات الختامية الشاملة بنجاح باهر.',
+      unlocked: false,
+    },
   ];
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
+    <ThemedView style={[styles.container, { paddingTop: insets.top + 10 }]}>
       <View style={styles.header}>
-        <Text style={styles.title}>Mes Badges 🏅</Text>
-        <Text style={styles.subtitle}>Collectionnez-les tous en complétant des cours et des défis !</Text>
+        <ThemedText style={styles.title}>أوسمتي وإنجازاتي 🏅</ThemedText>
+        <ThemedText style={styles.subtitle}>
+          اجمع الأوسمة البيداغوجية وكن من المتفوقين في الجزائر عبر إتمام دروسك وحل التمارين !
+        </ThemedText>
       </View>
-      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        {MOCK_BADGES.map((badge) => (
-          <AnimatedBadge 
+
+      <ScrollView
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + BottomTabInset + 40 }]}
+        showsVerticalScrollIndicator={false}
+      >
+        {BADGES.map((badge) => (
+          <AnimatedBadge
             key={badge.id}
             title={badge.title}
             icon={badge.icon}
             color={badge.color}
             description={badge.description}
+            unlocked={badge.unlocked}
           />
         ))}
-        <View style={{ height: 40 }} />
       </ScrollView>
-    </View>
+    </ThemedView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FDFBF7',
+    backgroundColor: '#FAF8F5',
   },
   header: {
-    padding: 20,
-    paddingBottom: 10,
+    paddingHorizontal: 20,
+    paddingVertical: 14,
+    alignItems: 'flex-end',
   },
   title: {
-    fontSize: 28,
+    fontSize: 24,
     fontWeight: '900',
-    color: '#1F2937',
-    marginBottom: 8,
+    color: '#111827',
+    textAlign: 'right',
+    marginBottom: 6,
   },
   subtitle: {
-    fontSize: 15,
+    fontSize: 13,
     color: '#6B7280',
-    lineHeight: 22,
+    textAlign: 'right',
+    lineHeight: 20,
   },
   scrollContent: {
     padding: 20,
     alignItems: 'center',
-    gap: 30,
+    gap: 20,
   },
   badgeCard: {
     alignItems: 'center',
     width: width - 40,
-    backgroundColor: 'white',
-    padding: 30,
-    borderRadius: 24,
+    backgroundColor: '#FFFFFF',
+    padding: 24,
+    borderRadius: 20,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 10 },
+    shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.05,
-    shadowRadius: 20,
+    shadowRadius: 12,
     elevation: 3,
     borderWidth: 1,
     borderColor: '#F3F4F6',
   },
+  badgeCardLocked: {
+    opacity: 0.8,
+  },
   badgeContainer: {
-    width: 140,
-    height: 140,
-    borderRadius: 70,
+    width: 120,
+    height: 120,
+    borderRadius: 60,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 24,
-    shadowOffset: { width: 0, height: 15 },
-    shadowOpacity: 0.4,
-    shadowRadius: 25,
-    elevation: 10,
-    borderWidth: 4,
+    marginBottom: 16,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.35,
+    shadowRadius: 16,
+    elevation: 6,
+    borderWidth: 3,
     borderColor: '#FFFFFF',
   },
   badgeInner: {
-    width: 130,
-    height: 130,
-    borderRadius: 65,
+    width: 110,
+    height: 110,
+    borderRadius: 55,
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 6,
+    borderWidth: 5,
     borderColor: 'rgba(255,255,255,0.3)',
   },
   badgeIcon: {
-    fontSize: 60,
+    fontSize: 50,
   },
   badgeTitle: {
-    fontSize: 22,
-    fontWeight: '800',
+    fontSize: 19,
+    fontWeight: '900',
     color: '#1F2937',
-    marginBottom: 8,
+    marginBottom: 6,
     textAlign: 'center',
   },
   badgeDesc: {
-    fontSize: 14,
+    fontSize: 13,
     color: '#6B7280',
     textAlign: 'center',
-    lineHeight: 20,
-    paddingHorizontal: 10,
+    lineHeight: 19,
+    paddingHorizontal: 12,
+    marginBottom: 12,
+  },
+  statusPill: {
+    paddingHorizontal: 14,
+    paddingVertical: 5,
+    borderRadius: 8,
+  },
+  statusPillText: {
+    fontSize: 12,
+    fontWeight: '800',
   },
 });
