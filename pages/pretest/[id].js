@@ -23,14 +23,14 @@ export default function PretestPage() {
         const data = await res.json();
 
         if (!res.ok) {
-          setError(data.error || "Pretest introuvable");
+          setError(data.error || "الاختبار التمهيدي غير موجود");
           return;
         }
 
         setPretest(data);
         setAnswers({});
       } catch (err) {
-        setError("Erreur serveur");
+        setError("خطأ في الخادم");
       } finally {
         setLoading(false);
       }
@@ -48,7 +48,7 @@ export default function PretestPage() {
 
   const handleSubmit = async () => {
     if (Object.keys(answers).length !== pretest.questions.length) {
-      setError("Répondez à toutes les questions!");
+      setError("أجب على جميع الأسئلة!");
       return;
     }
 
@@ -69,13 +69,13 @@ export default function PretestPage() {
       const data = await res.json();
 
       if (!res.ok) {
-        setError(data.error || "Erreur soumission");
+        setError(data.error || "خطأ في الإرسال");
         return;
       }
 
       setResult(data);
     } catch (err) {
-      setError("Erreur serveur");
+      setError("خطأ في الخادم");
     }
   };
 
@@ -91,13 +91,13 @@ export default function PretestPage() {
     }
   };
 
-  if (loading) return <p>Chargement du pretest...</p>;
-  if (error && !submitted) return <p style={{ color: "red" }}>{error}</p>;
-  if (!pretest) return <p>Pretest introuvable</p>;
+  if (loading) return <p dir="rtl" lang="ar">جارٍ تحميل الاختبار التمهيدي...</p>;
+  if (error && !submitted) return <p dir="rtl" lang="ar" style={{ color: "red" }}>{error}</p>;
+  if (!pretest) return <p dir="rtl" lang="ar">الاختبار التمهيدي غير موجود</p>;
 
   if (submitted && result) {
     return (
-      <div style={{ padding: "2rem", maxWidth: "700px", margin: "0 auto" }}>
+      <div dir="rtl" lang="ar" style={{ padding: "2rem", maxWidth: "700px", margin: "0 auto" }}>
         <div style={{
           padding: "2rem",
           borderRadius: "10px",
@@ -105,7 +105,7 @@ export default function PretestPage() {
           color: "white",
           textAlign: "center",
         }}>
-          <h1>📊 Résultat: {result.score}/{result.total}</h1>
+          <h1>📊 النتيجة: {result.score}/{result.total}</h1>
           <p style={{ fontSize: "1.2rem", marginTop: "1rem" }}>
             {((result.score / result.total) * 100).toFixed(0)}%
           </p>
@@ -113,7 +113,7 @@ export default function PretestPage() {
 
           {result.feedback.suggestedCourseYear && (
             <div style={{ marginTop: "2rem", padding: "1rem", background: "rgba(0,0,0,0.2)", borderRadius: "8px" }}>
-              <p>📚 Nous vous recommandons de suivre d'abord le cours de <strong>{result.feedback.suggestedCourseYear}</strong></p>
+              <p>📚 نوصيك بمتابعة دورة <strong>{result.feedback.suggestedCourseYear}</strong> أولًا</p>
             </div>
           )}
         </div>
@@ -132,7 +132,7 @@ export default function PretestPage() {
             width: "100%",
           }}
         >
-          ✅ Continuer vers le cours
+          ✅ متابعة إلى الدورة
         </button>
       </div>
     );
@@ -143,10 +143,10 @@ export default function PretestPage() {
   const progressPercent = ((currentQuestionIndex + 1) / pretest.questions.length) * 100;
 
   return (
-    <div style={{ padding: "2rem", maxWidth: "700px", margin: "0 auto" }}>
+    <div dir="rtl" lang="ar" style={{ padding: "2rem", maxWidth: "700px", margin: "0 auto" }}>
       <div style={{ marginBottom: "2rem" }}>
         <div style={{ fontSize: "0.9rem", color: "#666", marginBottom: "0.5rem" }}>
-          Question {currentQuestionIndex + 1} / {pretest.questions.length}
+          السؤال {currentQuestionIndex + 1} / {pretest.questions.length}
         </div>
         <div style={{
           width: "100%",
@@ -175,7 +175,7 @@ export default function PretestPage() {
         <div style={{ marginTop: "1.5rem" }}>
           {currentQuestion.type === "VRAI_FAUX" ? (
             <div style={{ display: "flex", gap: "1rem" }}>
-              {["Vrai", "Faux"].map(choice => (
+              {["صحيح", "خاطئ"].map(choice => (
                 <button
                   key={choice}
                   onClick={() => handleAnswer(currentQuestion.id, choice)}
@@ -207,7 +207,7 @@ export default function PretestPage() {
                     border: "none",
                     borderRadius: "8px",
                     cursor: "pointer",
-                    textAlign: "left",
+                    textAlign: "right",
                     fontWeight: answers[currentQuestion.id] === choice ? "600" : "400",
                   }}
                 >
@@ -245,7 +245,7 @@ export default function PretestPage() {
             fontWeight: "600",
           }}
         >
-          ← Précédent
+          → السابق
         </button>
 
         {currentQuestionIndex === pretest.questions.length - 1 ? (
@@ -262,7 +262,7 @@ export default function PretestPage() {
               fontWeight: "600",
             }}
           >
-            ✅ Soumettre
+            ✅ إرسال
           </button>
         ) : (
           <button
@@ -278,7 +278,7 @@ export default function PretestPage() {
               fontWeight: "600",
             }}
           >
-            Suivant →
+            ← التالي
           </button>
         )}
       </div>

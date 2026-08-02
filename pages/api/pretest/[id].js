@@ -13,12 +13,12 @@ function getUser(req) {
 
 export default async function handler(req, res) {
   const user = getUser(req);
-  if (!user) return res.status(401).json({ error: "Non autorisé" });
+  if (!user) return res.status(401).json({ error: "غير مسموح" });
 
   const { id: courseId } = req.query;
 
   if (req.method !== "GET") {
-    return res.status(405).json({ error: "Method not allowed" });
+    return res.status(405).json({ error: "الطريقة غير مسموح بها" });
   }
 
   try {
@@ -28,7 +28,7 @@ export default async function handler(req, res) {
       include: { questions: true },
     });
 
-    if (!pretest) return res.status(404).json({ error: "Pretest introuvable" });
+    if (!pretest) return res.status(404).json({ error: "الاختبار التمهيدي غير موجود" });
 
     return res.status(200).json({
       questions: pretest.questions.map(q => ({
@@ -39,6 +39,6 @@ export default async function handler(req, res) {
     });
   } catch (error) {
     console.error("API PRETEST ERROR:", error);
-    return res.status(500).json({ error: "Erreur serveur" });
+    return res.status(500).json({ error: "خطأ في الخادم" });
   }
 }

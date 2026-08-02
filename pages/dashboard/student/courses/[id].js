@@ -53,6 +53,7 @@ export default function StudentCourse() {
   const [pretest, setPretest] = useState(null);
   const [pretestCompleted, setPretestCompleted] = useState(false);
   const [pretestFeedback, setPretestFeedback] = useState(null);
+  const [pretestResultData, setPretestResultData] = useState(null);
   const [pretestAnswers, setPretestAnswers] = useState({});
   const [pretestSubmitting, setPretestSubmitting] = useState(false);
 
@@ -109,7 +110,10 @@ export default function StudentCourse() {
         if (resultRes.ok) {
           const result = await resultRes.json();
           setPretestCompleted(!!result);
-          if (result && result.feedback) setPretestFeedback(result.feedback);
+          if (result) {
+            setPretestResultData(result);
+            if (result.feedback) setPretestFeedback(result.feedback);
+          }
         }
       }
 
@@ -160,7 +164,10 @@ export default function StudentCourse() {
       }
 
       setPretestCompleted(true);
-      if (data.data && data.data.feedback) setPretestFeedback(data.data.feedback);
+      if (data.data) {
+        setPretestResultData(data.data);
+        if (data.data.feedback) setPretestFeedback(data.data.feedback);
+      }
 
       if (course?.chapters?.length > 0) {
         setActiveChapter(course.chapters[0]);
@@ -279,8 +286,8 @@ export default function StudentCourse() {
     }
   };
 
-  if (loading) return <p style={{ padding: "2rem" }}>Chargement...</p>;
-  if (error && !course) return <p style={{ color: "red", padding: "2rem" }}>{error}</p>;
+  if (loading) return <p style={{ padding: "2rem", direction: "rtl" }}>جارٍ التحميل...</p>;
+  if (error && !course) return <p style={{ color: "red", padding: "2rem", direction: "rtl" }}>{error}</p>;
 
   const sommatifUnlocked = isSommatifUnlocked();
   const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
@@ -288,60 +295,61 @@ export default function StudentCourse() {
   // Formatage des libellés
   const getMatiereLabel = (matiere) => {
     const matieres = {
-      math: "Mathématiques",
-      physique: "Physique",
-      svt: "SVT",
-      informatique: "Informatique",
-      francais: "Français",
-      anglais: "Anglais",
-      arabe: "Arabe",
-      philosophie: "Philosophie",
-      histoire: "Histoire-Géographie"
+      math: "الرياضيات",
+      physique: "الفيزياء",
+      svt: "علوم الطبيعة والحياة",
+      informatique: "الإعلام الآلي",
+      francais: "اللغة الفرنسية",
+      anglais: "اللغة الإنجليزية",
+      arabe: "اللغة العربية",
+      philosophie: "الفلسفة",
+      histoire: "التاريخ والجغرافيا"
     };
-    return matieres[matiere] || matiere || "Matière";
+    return matieres[matiere] || matiere || "المادة";
   };
 
   return (
     <ProtectedRoute allowedRoles={["STUDENT"]}>
-      <div style={{ minHeight: "100vh", background: "#F8F9FA", fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
+      <div dir="rtl" lang="ar" style={{ minHeight: "100vh", background: "#F8F9FA", fontFamily: "'Tajawal', 'Cairo', sans-serif" }}>
 
-        {/* Header - Vert foncé */}
+        {/* Header - Vert foncé avec typographie calligraphique artistique */}
         <div style={{ 
-          background: "linear-gradient(135deg, #1B4332, #2D6A4F)",
+          background: "linear-gradient(135deg, #064E3B, #047857, #065F46)",
           color: "white", 
-          padding: isMobile ? "0.8rem 1rem" : "1rem 2rem", 
+          padding: isMobile ? "0.8rem 1rem" : "1.2rem 2rem", 
           display: "flex", 
           alignItems: "center", 
           justifyContent: "space-between",
           flexWrap: "wrap",
           gap: "0.5rem",
-          boxShadow: "0 2px 8px rgba(0,0,0,0.1)"
+          boxShadow: "0 4px 15px rgba(0,0,0,0.15)"
         }}>
           <button 
             onClick={() => router.push("/dashboard/student")} 
             style={{ 
-              background: "rgba(255,255,255,0.15)", 
-              border: "none", 
+              background: "rgba(255,255,255,0.18)", 
+              border: "1px solid rgba(255,255,255,0.3)", 
               color: "white", 
               cursor: "pointer", 
-              fontSize: isMobile ? "0.9rem" : "1rem",
-              padding: "0.5rem 1rem",
-              borderRadius: "8px",
-              fontWeight: "500",
+              fontSize: isMobile ? "0.95rem" : "1.05rem",
+              padding: "0.5rem 1.2rem",
+              borderRadius: "12px",
+              fontWeight: "700",
+              fontFamily: "'Cairo', 'Tajawal', sans-serif",
               transition: "all 0.2s ease"
             }}
-            onMouseEnter={(e) => e.target.style.background = "rgba(255,255,255,0.25)"}
-            onMouseLeave={(e) => e.target.style.background = "rgba(255,255,255,0.15)"}
+            onMouseEnter={(e) => e.target.style.background = "rgba(255,255,255,0.3)"}
+            onMouseLeave={(e) => e.target.style.background = "rgba(255,255,255,0.18)"}
           >
-            ← Retour
+            العودة ←
           </button>
           
           <div style={{ flex: 1, textAlign: "center" }}>
-            <h1 style={{ margin: 0, fontSize: isMobile ? "1rem" : "1.3rem", fontWeight: "600", color: "white", letterSpacing: "-0.3px" }}>
-              📘 COURS : {course?.title || "Chargement..."}
+            <h1 className="arabic-course-banner-title" style={{ margin: 0, fontSize: isMobile ? "1.2rem" : "1.75rem", fontFamily: "'Amiri', 'Tajawal', serif", fontWeight: "700", color: "#FFFFFF", textShadow: "0 2px 4px rgba(0,0,0,0.3)" }}>
+              📘 الدورة: {course?.title || "جارٍ التحميل..."}
             </h1>
-            <p style={{ margin: "0.2rem 0 0", fontSize: isMobile ? "0.7rem" : "0.85rem", color: "#A8D8EA", opacity: 0.9 }}>
-              {getMatiereLabel(course?.matiere)} • {course?.niveau === "college" ? "Collège" : course?.niveau === "lycee" ? "Lycée" : course?.niveau || "Niveau"} • {course?.annee || "Année"}
+            <p style={{ margin: "0.3rem 0 0", fontSize: isMobile ? "0.8rem" : "0.95rem", fontFamily: "'Reem Kufi', 'Tajawal', sans-serif", color: "#FDE68A", fontWeight: "600", letterSpacing: "0.5px" }}>
+              {getMatiereLabel(course?.matiere)} • {course?.niveau === "college" ? "المتوسط" : course?.niveau === "lycee" ? "الثانوي" : course?.niveau || "المستوى"} • {course?.annee || "السنة"}
             </p>
           </div>
 
@@ -405,7 +413,7 @@ export default function StudentCourse() {
                   fontSize: isMobile ? "1rem" : "1.1rem",
                   fontWeight: "600"
                 }}>
-                  {pretestCompleted ? "Prêt à apprendre!" : "Évalue-toi d'abord"}
+                  {pretestCompleted ? "مستعد للتعلم!" : "قيّم نفسك أولاً"}
                 </h3>
                 <p style={{
                   margin: 0,
@@ -414,8 +422,8 @@ export default function StudentCourse() {
                   lineHeight: "1.4"
                 }}>
                   {pretestCompleted
-                    ? "Tu as les bases. Explore les chapitres!"
-                    : "Le pretest t'aidera à vérifier tes connaissances."}
+                    ? "لديك الأساسيات. استكشف الفصول الآن!"
+                    : "سيساعدك تقييم المستوى الاولي في التحقق من معلوماتك."}
                 </p>
               </div>
 
@@ -435,7 +443,7 @@ export default function StudentCourse() {
                         marginBottom: "0.5rem",
                         fontWeight: "600"
                       }}>
-                        <span>📊 Progression</span>
+                        <span>📊 نسبة التقدم</span>
                         <span style={{ background: "#40916C", color: "white", padding: "0.2rem 0.5rem", borderRadius: "20px", fontSize: "0.7rem" }}>
                           {pct}%
                         </span>
@@ -470,7 +478,7 @@ export default function StudentCourse() {
                 borderLeft: "3px solid #40916C",
                 paddingLeft: "0.75rem"
               }}>
-                📖 Chapitres
+                📖 الفصول
               </h2>
 
               <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
@@ -545,7 +553,7 @@ export default function StudentCourse() {
                     borderLeft: "3px solid #40916C",
                     paddingLeft: "0.75rem"
                   }}>
-                    🏆 Examen Final
+                    🏆 الاختبار الختامي
                   </h3>
                   <div
                     onClick={handleOpenSommatif}
@@ -571,11 +579,11 @@ export default function StudentCourse() {
                     </span>
                     <div>
                       <div style={{ fontWeight: "600", fontSize: isMobile ? "0.85rem" : "0.9rem", color: activeQuiz?.id === course.quizFinal.id ? "white" : "#1B4332" }}>
-                        Test Final
+                        الاختبار النهائي
                       </div>
                       {sommatifUnlocked && quizStats[course.quizFinal.id]?.tentatives && (
                         <div style={{ fontSize: "0.6rem", color: "#40916C" }}>
-                          {quizStats[course.quizFinal.id]?.reussi ? "Réussi ✅" : `${quizStats[course.quizFinal.id].tentatives}/3`}
+                          {quizStats[course.quizFinal.id]?.reussi ? "ناجح ✅" : `${quizStats[course.quizFinal.id].tentatives}/3`}
                         </div>
                       )}
                     </div>
@@ -607,36 +615,118 @@ export default function StudentCourse() {
 
             {pretest && pretestCompleted && (
               <div style={{
-                background: "#E8F5E9",
-                borderLeft: `4px solid ${pretestFeedback?.color === 'critique' ? '#dc2626' : '#40916C'}`,
-                padding: isMobile ? "1rem" : "1.25rem",
-                borderRadius: "12px",
-                marginBottom: "1.5rem"
+                background: pretestFeedback?.level === 'critique' ? '#FEF2F2' : '#F0FDF4',
+                border: `2px solid ${pretestFeedback?.level === 'critique' ? '#FCA5A5' : '#86EFAC'}`,
+                padding: isMobile ? "1.25rem 1rem" : "1.75rem",
+                borderRadius: "16px",
+                marginBottom: "1.5rem",
+                boxShadow: "0 4px 15px rgba(0,0,0,0.04)"
               }}>
-                <h3 style={{ margin: "0 0 0.5rem", fontSize: isMobile ? "1rem" : "1.1rem", color: "#1B4332" }}>
-                  {pretestFeedback?.level === 'critique' ? '⚠️ Attention !' : '✅ Pretest complété!'}
-                </h3>
+                <div style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  flexWrap: "wrap",
+                  gap: "1rem",
+                  marginBottom: "1rem"
+                }}>
+                  <div>
+                    <h3 style={{ margin: 0, fontSize: isMobile ? "1.25rem" : "1.55rem", color: pretestFeedback?.level === 'critique' ? '#991B1B' : '#065F46', fontFamily: "'Amiri', 'Tajawal', serif", fontWeight: "700" }}>
+                      {pretestFeedback?.level === 'critique' ? '⚠️ تقييم المستوى الأولي' : '✅ تم إكمال تقييم المستوى الأولي!'}
+                    </h3>
+                    <p style={{ margin: "0.25rem 0 0", color: "#475569", fontSize: isMobile ? "0.85rem" : "0.95rem", fontFamily: "'Tajawal', sans-serif" }}>
+                      {pretestFeedback?.level === 'critique' 
+                        ? "ننصحك بمراجعة الأساسيات قبل البدء في هذه الدورة."
+                        : "يمكنك الآن الدخول إلى جميع فصول الدورة."}
+                    </p>
+                  </div>
+
+                  {/* Badge de pourcentage de réussite (conforme à ACADEMY) */}
+                  {pretestResultData && (() => {
+                    const totalQ = pretestResultData.total || pretest?.questions?.length || 0;
+                    
+                    const percentage = pretestResultData.pourcentage !== undefined 
+                      ? Math.round(pretestResultData.pourcentage) 
+                      : (pretestResultData.percentage !== undefined 
+                          ? Math.round(pretestResultData.percentage) 
+                          : (totalQ > 0 && pretestResultData.score > totalQ 
+                              ? Math.round(pretestResultData.score) 
+                              : (totalQ > 0 ? Math.round((pretestResultData.score / totalQ) * 100) : 0)));
+
+                    // Calculate correct count mathematically from percentage to prevent legacy DB score mismatch
+                    const correctQ = totalQ > 0 ? Math.round((percentage / 100) * totalQ) : 0;
+
+                    const badgeGradient = percentage < 20
+                      ? "linear-gradient(135deg, #DC2626 0%, #EF4444 100%)"
+                      : percentage <= 50
+                      ? "linear-gradient(135deg, #D97706 0%, #F59E0B 100%)"
+                      : percentage <= 90
+                      ? "linear-gradient(135deg, #059669 0%, #10B981 100%)"
+                      : "linear-gradient(135deg, #047857 0%, #065F46 100%)";
+
+                    const shadowColor = percentage < 20
+                      ? "rgba(220, 38, 38, 0.3)"
+                      : percentage <= 50
+                      ? "rgba(217, 119, 6, 0.3)"
+                      : "rgba(5, 150, 105, 0.3)";
+
+                    return (
+                      <div style={{
+                        background: badgeGradient,
+                        color: "white",
+                        padding: "0.75rem 1.4rem",
+                        borderRadius: "14px",
+                        textAlign: "center",
+                        boxShadow: `0 4px 14px ${shadowColor}`,
+                        minWidth: "130px"
+                      }}>
+                        <div style={{ fontSize: "1.85rem", fontWeight: "800", fontFamily: "'Reem Kufi', 'Cairo', sans-serif", lineHeight: 1 }}>
+                          {percentage}%
+                        </div>
+                        <div style={{ fontSize: "0.8rem", fontFamily: "'Reem Kufi', 'Tajawal', sans-serif", marginTop: "0.25rem", opacity: 0.95, fontWeight: "600" }}>
+                          {totalQ > 0 ? `(${correctQ} من ${totalQ} إجابات صحيحة)` : "نسبة التحصيل"}
+                        </div>
+                      </div>
+                    );
+                  })()}
+                </div>
+
                 {pretestFeedback && (
-                  <div style={{ marginBottom: "0.75rem", fontSize: isMobile ? "0.85rem" : "0.9rem", fontWeight: "500", color: "#2D6A4F", padding: "0.6rem", background: "white", borderRadius: "8px", border: "1px solid #74C69D" }}>
+                  <div style={{
+                    marginBottom: "1rem",
+                    fontSize: isMobile ? "1rem" : "1.15rem",
+                    fontWeight: "600",
+                    lineHeight: "1.7",
+                    color: pretestFeedback?.level === 'critique' ? '#7F1D1D' : '#064E3B',
+                    padding: "0.95rem 1.25rem",
+                    background: "white",
+                    borderRadius: "12px",
+                    border: `1px solid ${pretestFeedback?.level === 'critique' ? '#FECACA' : '#BBF7D0'}`,
+                    fontFamily: "'Amiri', 'Tajawal', serif"
+                  }}>
                     {pretestFeedback.message}
                   </div>
                 )}
-                <p style={{ color: "#4a5568", margin: "0 0 1rem", fontSize: isMobile ? "0.8rem" : "0.85rem" }}>
-                  {pretestFeedback?.level === 'critique' 
-                    ? "Nous vous conseillons de revoir les bases avant d'attaquer ce cours."
-                    : "Vous pouvez maintenant accéder aux chapitres."}
-                </p>
+
                 <button
                   onClick={() => {
                     setPretestCompleted(false);
                     setPretestAnswers({});
                     setPretestFeedback(null);
+                    setPretestResultData(null);
                   }}
-                  style={{ ...btnPrimary, padding: isMobile ? "0.4rem 0.8rem" : "0.5rem 1rem", fontSize: isMobile ? "0.8rem" : "0.85rem" }}
+                  style={{
+                    ...btnPrimary,
+                    padding: isMobile ? "0.6rem 1.2rem" : "0.7rem 1.5rem",
+                    fontSize: isMobile ? "0.9rem" : "1rem",
+                    fontFamily: "'Reem Kufi', 'Tajawal', sans-serif",
+                    fontWeight: "700",
+                    borderRadius: "12px"
+                  }}
                   onMouseEnter={(e) => e.target.style.background = "#74C69D"}
                   onMouseLeave={(e) => e.target.style.background = "#40916C"}
                 >
-                  🔄 Refaire le pretest
+                  🔄 إعادة تقييم المستوى الأولي
                 </button>
               </div>
             )}
@@ -648,7 +738,7 @@ export default function StudentCourse() {
 
                 {activeChapter.objectifs && (
                   <div style={{ background: "#E8F5E9", borderLeft: "4px solid #40916C", padding: "0.75rem 1rem", borderRadius: "8px", marginBottom: "1.5rem", fontSize: "0.85rem", color: "#1B4332" }}>
-                    🎯 <strong>Objectifs :</strong> {activeChapter.objectifs}
+                    🎯 <strong>الأهداف :</strong> {activeChapter.objectifs}
                   </div>
                 )}
 
@@ -737,7 +827,7 @@ export default function StudentCourse() {
                                   onMouseEnter={(e) => e.target.style.background = "rgba(255,255,255,0.3)"}
                                   onMouseLeave={(e) => e.target.style.background = "rgba(255,255,255,0.2)"}
                                 >
-                                  ↗️ Plein écran
+                                  ↗️ ملء الشاشة
                                 </a>
                               </div>
                               <div style={{ position: "relative", width: "100%", height: isMobile ? "400px" : "600px", background: "#f8fafc" }}>
@@ -798,8 +888,8 @@ export default function StudentCourse() {
                     <div style={{ textAlign: "center" }}>
                       <p style={{ margin: "0 0 0.5rem", fontSize: "1.5rem" }}>📚</p>
                       <p style={{ margin: "0 0 1rem", color: "#1B4332", fontWeight: "600", fontSize: isMobile ? "0.85rem" : "0.95rem", lineHeight: "1.5" }}>
-                        Avez-vous consulté tous les supports de ce chapitre ?<br/>
-                        <span style={{ fontSize: "0.8rem", color: "#6B7280", fontWeight: "400" }}>Consultez les vidéos, documents et ressources ci-dessus avant de passer au quiz.</span>
+                        هل قمت بالاطلاع على جميع مراجع هذا الفصل؟<br/>
+                        <span style={{ fontSize: "0.8rem", color: "#6B7280", fontWeight: "400" }}>يرجى مشاهدة الفيديوهات وقراءة المستندات أعلاه قبل الانتقال إلى الاختبار (Quiz).</span>
                       </p>
                       <button 
                         onClick={() => handleMarkRead(activeChapter.id)} 
@@ -818,12 +908,12 @@ export default function StudentCourse() {
                         onMouseEnter={(e) => { e.target.style.transform = "translateY(-1px)"; e.target.style.boxShadow = "0 4px 12px rgba(249, 115, 22, 0.4)"; }}
                         onMouseLeave={(e) => { e.target.style.transform = "translateY(0)"; e.target.style.boxShadow = "0 2px 8px rgba(249, 115, 22, 0.3)"; }}
                       >
-                        ✅ J'ai consulté tous les supports de ce chapitre
+                        ✅ اطلعت على جميع مراجع هذا الفصل
                       </button>
                     </div>
                   ) : (
                     <p style={{ margin: 0, color: "#40916C", fontWeight: "600", fontSize: "0.85rem" }}>
-                      ✅ Supports consultés — Quiz débloqué ci-dessous
+                      ✅ تم الاطلاع على المراجع — الاختبار متاح الآن في الأسفل
                     </p>
                   )}
                 </div>
@@ -831,7 +921,7 @@ export default function StudentCourse() {
                 {/* Quiz formatif */}
                 {activeChapter.quiz && chapterProgress[activeChapter.id]?.lu && (
                   <div style={{ background: "white", border: "1px solid #E9ECEF", padding: isMobile ? "1rem" : "1.25rem", borderRadius: "12px", boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}>
-                    <h3 style={{ margin: "0 0 0.5rem", fontSize: isMobile ? "1rem" : "1.1rem", color: "#1B4332" }}>📝 Quiz formatif</h3>
+                    <h3 style={{ margin: "0 0 0.5rem", fontSize: isMobile ? "1rem" : "1.1rem", color: "#1B4332" }}>📝 اختبار تكويني (Quiz)</h3>
 
                     {quizStats[activeChapter.quiz.id]?.reussi ? (
                       <div style={{
@@ -847,10 +937,10 @@ export default function StudentCourse() {
                       }}>
                         <div>
                           <p style={{ color: "#166534", margin: 0, fontWeight: "700", fontSize: "0.95rem" }}>
-                            🎉 Quiz réussi avec succès !
+                            🎉 تم اجتياز الاختبار بنجاح!
                           </p>
                           <p style={{ color: "#2d6a4f", margin: "0.2rem 0 0", fontSize: "0.85rem", fontWeight: "500" }}>
-                            Résultat obtenu : <strong>{quizStats[activeChapter.quiz.id].score}%</strong>
+                            النتيجة المحصلة: <strong>{quizStats[activeChapter.quiz.id].score}%</strong>
                           </p>
                         </div>
                         <span style={{ fontSize: "1.5rem" }}>🌸</span>
@@ -859,7 +949,7 @@ export default function StudentCourse() {
                       <div>
                         {quizStats[activeChapter.quiz.id]?.tentatives > 0 && (
                           <p style={{ color: "#dd6b20", fontSize: "0.8rem", margin: "0 0 0.75rem" }}>
-                            ⚠️ Score précédent : {quizStats[activeChapter.quiz.id].score}% — Tentative(s) : {quizStats[activeChapter.quiz.id].tentatives}
+                            ⚠️ نتيجتك السابقة: {quizStats[activeChapter.quiz.id].score}% — المحاولة/المحاولات: {quizStats[activeChapter.quiz.id].tentatives}
                           </p>
                         )}
                         <button
@@ -872,7 +962,7 @@ export default function StudentCourse() {
                           onMouseEnter={(e) => e.target.style.background = "#74C69D"}
                           onMouseLeave={(e) => e.target.style.background = "#40916C"}
                         >
-                          {quizStats[activeChapter.quiz.id]?.tentatives ? "🔄 Réessayer" : "📝 Passer le quiz"}
+                          {quizStats[activeChapter.quiz.id]?.tentatives ? "🔄 أعد المحاولة" : "📝 اجتياز الاختبار"}
                         </button>
                       </div>
                     )}
@@ -883,7 +973,7 @@ export default function StudentCourse() {
                   <div style={{ background: "#FFF7ED", borderLeft: "4px solid #F97316", padding: "0.75rem 1rem", borderRadius: "8px", display: "flex", alignItems: "center", gap: "0.5rem" }}>
                     <span style={{ fontSize: "1.2rem" }}>🔒</span>
                     <p style={{ margin: 0, color: "#9A3412", fontSize: "0.8rem", fontWeight: "500" }}>
-                      Consultez d'abord tous les supports puis confirmez ci-dessus pour débloquer le quiz formatif.
+                      يرجى الاطلاع على كافة المراجع أعلاه ثم تأكيد قراءتها لفتح الاختبار التكويني.
                     </p>
                   </div>
                 )}
@@ -930,28 +1020,36 @@ export default function StudentCourse() {
 
             {/* MESSAGE ACCUEIL */}
             {!activeChapter && !activeQuiz && (
-              <div style={{ textAlign: "center", padding: isMobile ? "2rem 1rem" : "3rem 2rem", color: "#718096" }}>
+              <div style={{ textAlign: "center", padding: isMobile ? "2rem 1rem" : "3.5rem 2rem", color: "#475569" }}>
                 {pretestCompleted ? (
                   <>
-                    <div style={{ fontSize: isMobile ? "3rem" : "4rem", marginBottom: "1rem" }}>📚</div>
-                    <h2 style={{ fontSize: isMobile ? "1.2rem" : "1.5rem", color: "#1B4332", fontWeight: "700", marginBottom: "0.5rem" }}>Bienvenue dans ce cours !</h2>
-                    <p style={{ color: "#6c757d", fontSize: "0.85rem" }}>Sélectionnez un chapitre dans le menu pour commencer.</p>
+                    <div style={{ fontSize: isMobile ? "3.5rem" : "4.5rem", marginBottom: "1rem", filter: "drop-shadow(0 4px 10px rgba(0,0,0,0.1))" }}>📚</div>
+                    <h2 className="arabic-welcome-heading" style={{ fontSize: isMobile ? "1.6rem" : "2.4rem", fontFamily: "'Amiri', 'Tajawal', serif", color: "#065F46", fontWeight: "700", marginBottom: "0.75rem", textShadow: "0 2px 4px rgba(0,0,0,0.05)" }}>
+                      مرحباً بك في هذه الدورة!
+                    </h2>
+                    <p style={{ color: "#475569", fontSize: isMobile ? "0.95rem" : "1.1rem", fontFamily: "'Tajawal', 'Cairo', sans-serif", fontWeight: "500" }}>
+                      اختر فصلاً من القائمة للبدء.
+                    </p>
                     {isMobile && mobileMenuOpen === false && (
                       <button
                         onClick={() => setMobileMenuOpen(true)}
-                        style={{ ...btnPrimary, marginTop: "1rem", padding: "0.5rem 1rem", fontSize: "0.85rem" }}
+                        style={{ ...btnPrimary, marginTop: "1rem", padding: "0.7rem 1.5rem", fontSize: "0.95rem", fontFamily: "'Cairo', 'Tajawal', sans-serif" }}
                         onMouseEnter={(e) => e.target.style.background = "#74C69D"}
                         onMouseLeave={(e) => e.target.style.background = "#40916C"}
                       >
-                        📖 Voir les chapitres
+                        📖 عرض الفصول
                       </button>
                     )}
                   </>
                 ) : (
                   <>
-                    <div style={{ fontSize: isMobile ? "3rem" : "4rem", marginBottom: "1rem" }}>🎯</div>
-                    <h2 style={{ fontSize: isMobile ? "1.2rem" : "1.5rem", color: "#1B4332", fontWeight: "700", marginBottom: "0.5rem" }}>Avant de commencer...</h2>
-                    <p style={{ color: "#6c757d", fontSize: "0.85rem" }}>Complétez le pretest ci-dessus pour évaluer vos connaissances !</p>
+                    <div style={{ fontSize: isMobile ? "3.5rem" : "4.5rem", marginBottom: "1rem" }}>🎯</div>
+                    <h2 className="arabic-welcome-heading" style={{ fontSize: isMobile ? "1.6rem" : "2.4rem", fontFamily: "'Amiri', 'Tajawal', serif", color: "#065F46", fontWeight: "700", marginBottom: "0.75rem" }}>
+                      قبل البدء...
+                    </h2>
+                    <p style={{ color: "#475569", fontSize: isMobile ? "0.95rem" : "1.1rem", fontFamily: "'Tajawal', 'Cairo', sans-serif", fontWeight: "500" }}>
+                      أكمل الاختبار القبلي أعلاه لتقييم معارفك!
+                    </p>
                   </>
                 )}
               </div>
@@ -971,7 +1069,7 @@ function QuizDisplay({ quiz, answers, setAnswers, result, submitting, onSubmit, 
   return (
     <div>
       <h2 style={{ marginTop: 0, fontSize: isMobile ? "1.3rem" : "1.6rem", color: "#1B4332", fontWeight: "700", marginBottom: "1rem" }}>
-        📝 {quiz.type === "SOMMATIF" ? "Test sommatif final" : "Quiz formatif"}
+        📝 {quiz.type === "SOMMATIF" ? "الاختبار الختامي النهائي" : "الاختبار التكويني"}
       </h2>
 
       {result ? (
@@ -983,13 +1081,13 @@ function QuizDisplay({ quiz, answers, setAnswers, result, submitting, onSubmit, 
 
             {result.bloque ? (
               <>
-                <h2 style={{ color: "#e53e3e", fontSize: isMobile ? "1.2rem" : "1.3rem" }}>Tentatives épuisées</h2>
+                <h2 style={{ color: "#e53e3e", fontSize: isMobile ? "1.2rem" : "1.3rem" }}>نفدت المحاولات</h2>
                 <div style={{ background: "#fff5f5", border: "1.5px solid #feb2b2", padding: "1rem", borderRadius: "8px", maxWidth: "560px", margin: "0 auto" }}>
                   <p style={{ color: "#742a2a", fontWeight: "700", fontSize: "0.9rem", marginBottom: "0.5rem" }}>
-                    ⛔ Vous avez utilisé vos 3 tentatives sans atteindre le score requis (90%).
+                    ⛔ لقد استنفدت محاولاتك الـ 3 دون الوصول إلى النتيجة المطلوبة (90%).
                   </p>
                   <p style={{ color: "#9b2c2c", fontSize: "0.8rem", fontStyle: "italic", margin: "0 0 1rem" }}>
-                    🔒 Le chapitre suivant restera verrouillé jusqu'au déblocage par votre enseignant.
+                    🔒 سيظل الفصل التالي مغلقاً حتى يقوم أستاذك بفتحه.
                   </p>
                   <RemediationRequest quiz={quiz} quizResult={result} score={result.score} />
                 </div>
@@ -999,11 +1097,10 @@ function QuizDisplay({ quiz, answers, setAnswers, result, submitting, onSubmit, 
                 <h2 style={{ color: result.reussi ? "#40916C" : "#dd6b20", fontSize: isMobile ? "2rem" : "2.5rem", margin: "0 0 0.5rem", fontWeight: "800" }}>
                   {result.score}%
                 </h2>
-                <p style={{ color: "#718096", marginBottom: "0.5rem", fontSize: "0.85rem" }}>
-                  {result.correct} / {result.total} points
-                </p>
+                  {result.correct} / {result.total} نقاط
+                
                 <p style={{ color: "#718096", marginBottom: "1.5rem", fontSize: "0.85rem" }}>
-                  Tentative {result.tentatives} / 3
+                  المحاولة {result.tentatives} / 3
                 </p>
 
                 {result.reussi && (
@@ -1033,7 +1130,7 @@ function QuizDisplay({ quiz, answers, setAnswers, result, submitting, onSubmit, 
                       letterSpacing: "-1px",
                       lineHeight: 1.1
                     }}>
-                      Bravo !
+                      أحسنت!
                     </h1>
 
                     {/* Message de réussite */}
@@ -1045,7 +1142,7 @@ function QuizDisplay({ quiz, answers, setAnswers, result, submitting, onSubmit, 
                       maxWidth: "500px",
                       lineHeight: "1.5"
                     }}>
-                      {result.message || "Vous avez validé ce quiz avec succès ! Continuez sur votre lancée."}
+                      {result.message || "لقد اجتزت هذا الاختبار بنجاح! واصل على هذا المنوال."}
                     </p>
 
                     {/* Ligne 2 : CTA Chapitre suivant utilisant l'orange et le vert */}
@@ -1078,7 +1175,7 @@ function QuizDisplay({ quiz, answers, setAnswers, result, submitting, onSubmit, 
                         }}
                       >
                         <span style={{ fontSize: isMobile ? "0.68rem" : "0.75rem", fontWeight: "600", opacity: 0.9, textTransform: "uppercase", letterSpacing: "1.2px" }}>
-                          Accéder au Chapitre Suivant :
+                          الانتقال إلى الفصل التالي:
                         </span>
                         <span style={{ fontSize: isMobile ? "0.95rem" : "1.1rem", fontWeight: "800", letterSpacing: "-0.2px" }}>
                           "{nextChapterInfo.title}" →
@@ -1098,7 +1195,7 @@ function QuizDisplay({ quiz, answers, setAnswers, result, submitting, onSubmit, 
                         fontWeight: "600",
                         maxWidth: "400px"
                       }}>
-                        🏁 Dernier chapitre complété ! Vous pouvez maintenant passer l'examen final.
+                        🏁 تم إكمال الفصل الأخير! يمكنك الآن اجتياز الاختبار النهائي.
                       </div>
                     )}
                   </div>
@@ -1117,7 +1214,7 @@ function QuizDisplay({ quiz, answers, setAnswers, result, submitting, onSubmit, 
                     onMouseEnter={(e) => e.target.style.background = "#74C69D"}
                     onMouseLeave={(e) => e.target.style.background = "#40916C"}
                   >
-                    🔄 Réessayer
+                    🔄 أعد المحاولة
                   </button>
                 )}
               </>
@@ -1144,8 +1241,8 @@ function QuizDisplay({ quiz, answers, setAnswers, result, submitting, onSubmit, 
                   color: "#1B4332"
                 }}
               >
-                <span>📝 {showCorrections ? "Masquer" : "Afficher"} les corrections</span>
-                <span style={{ fontSize: "1.2rem" }}>{showCorrections ? "▼" : "▶"}</span>
+                <span>📝 {showCorrections ? "إخفاء" : "إظهار"} التصحيح</span>
+                <span style={{ fontSize: "1.2rem" }}>{showCorrections ? "▼" : "◀"}</span>
               </button>
 
               {showCorrections && (
@@ -1175,7 +1272,7 @@ function QuizDisplay({ quiz, answers, setAnswers, result, submitting, onSubmit, 
                               fontSize: "0.7rem",
                               fontWeight: "700"
                             }}>
-                              {isCorrect ? "✅ CORRECT" : "❌ FAUX"}
+                              {isCorrect ? "✅ صحيح" : "❌ خاطئ"}
                             </span>
                           </div>
                           <h4 style={{ margin: "0.5rem 0", fontSize: isMobile ? "0.85rem" : "0.95rem", color: "#1e293b" }}>
@@ -1185,17 +1282,17 @@ function QuizDisplay({ quiz, answers, setAnswers, result, submitting, onSubmit, 
 
                         <div style={{ marginBottom: "0.8rem", padding: "0.6rem", background: "white", borderRadius: "8px", border: "1px solid #E9ECEF" }}>
                           <div style={{ fontSize: "0.75rem", color: "#718096", fontWeight: "600", marginBottom: "0.2rem" }}>
-                            Votre réponse:
+                            إجابتك:
                           </div>
                           <div style={{ fontSize: "0.85rem", color: isCorrect ? "#40916C" : "#dc2626", fontWeight: "600" }}>
-                            {detail?.repEtudiant || "❌ Aucune réponse"}
+                            {detail?.repEtudiant || "❌ لا توجد إجابة"}
                           </div>
                         </div>
 
                         {!isCorrect && (
                           <div style={{ padding: "0.6rem", background: "#E8F5E9", borderRadius: "8px", border: "1px solid #74C69D" }}>
                             <div style={{ fontSize: "0.75rem", color: "#40916C", fontWeight: "600", marginBottom: "0.2rem" }}>
-                              ✅ Bonne réponse:
+                              ✅ الإجابة الصحيحة:
                             </div>
                             <div style={{ fontSize: "0.85rem", color: "#2D6A4F", fontWeight: "600" }}>
                               {q.reponse}
@@ -1231,16 +1328,18 @@ function QuizDisplay({ quiz, answers, setAnswers, result, submitting, onSubmit, 
                 </label>
               ))}
 
-              {q.type === "VRAI_FAUX" && ["Vrai", "Faux"].map((v) => (
-                <label key={v} style={{ display: "flex", alignItems: "center", gap: "0.6rem", padding: "0.4rem 0.6rem", marginBottom: "0.3rem", cursor: "pointer", background: answers[q.id] === v ? "#E8F5E9" : "#F8F9FA", border: answers[q.id] === v ? "1px solid #40916C" : "1px solid #E9ECEF", borderRadius: "8px", fontSize: isMobile ? "0.8rem" : "0.85rem" }}>
-                  <input type="radio" name={`q-${q.id}`} value={v} checked={answers[q.id] === v} onChange={() => setAnswers({ ...answers, [q.id]: v })} />
+              {q.type === "VRAI_FAUX" && ["صحيح", "خطأ"].map((v, index) => {
+                const mapValue = index === 0 ? "Vrai" : "Faux";
+                return (
+                <label key={v} style={{ display: "flex", alignItems: "center", gap: "0.6rem", padding: "0.4rem 0.6rem", marginBottom: "0.3rem", cursor: "pointer", background: answers[q.id] === mapValue ? "#E8F5E9" : "#F8F9FA", border: answers[q.id] === mapValue ? "1px solid #40916C" : "1px solid #E9ECEF", borderRadius: "8px", fontSize: isMobile ? "0.8rem" : "0.85rem" }}>
+                  <input type="radio" name={`q-${q.id}`} value={mapValue} checked={answers[q.id] === mapValue} onChange={() => setAnswers({ ...answers, [q.id]: mapValue })} />
                   {v}
                 </label>
-              ))}
+              )})}
 
               {q.type === "OUVERTE" && (
                 <textarea 
-                  placeholder="Votre réponse..." 
+                  placeholder="إجابتك..." 
                   value={answers[q.id] || ""} 
                   onChange={(e) => setAnswers({ ...answers, [q.id]: e.target.value })} 
                   style={{ 
@@ -1273,7 +1372,7 @@ function QuizDisplay({ quiz, answers, setAnswers, result, submitting, onSubmit, 
             onMouseEnter={(e) => e.target.style.background = "#74C69D"}
             onMouseLeave={(e) => e.target.style.background = "#40916C"}
           >
-            {submitting ? "Correction en cours..." : "✅ Soumettre le quiz"}
+            {submitting ? "جاري التصحيح..." : "✅ تسليم الاختبار"}
           </button>
         </div>
       )}

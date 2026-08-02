@@ -1,9 +1,8 @@
-import { getServerSession } from "next-auth/next";
 import prisma from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 
 /**
- * POST /api/user/change-password
+ * POST /api/users/change-password?userId=X
  * Changer le mot de passe de l'utilisateur
  * Body: { oldPassword, newPassword, newPasswordConfirm }
  */

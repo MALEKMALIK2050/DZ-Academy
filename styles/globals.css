@@ -1,3 +1,147 @@
+@import url('https://fonts.googleapis.com/css2?family=Aref+Ruqaa:wght@400;700&family=Reem+Kufi:wght@600;700;800&family=Amiri:ital,wght@0,700;1,700&family=Tajawal:wght@500;700;900&display=swap');
+
+/* ═══ TYPOGRAPHIE ARABE ARTISTIQUE ET UTILITIES ═══ */
+.arabic-title-artistic {
+  font-family: 'Aref Ruqaa', 'Amiri', serif;
+  background: linear-gradient(135deg, #FFFFFF 0%, #FDE68A 45%, #F59E0B 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.4));
+  transition: transform 0.3s ease, filter 0.3s ease;
+}
+.logo-artistic-container:hover .arabic-title-artistic {
+  filter: drop-shadow(0 4px 14px rgba(245, 158, 11, 0.6));
+  transform: translateY(-1px);
+}
+.logo-artistic-container:hover .crystal-logo-frame {
+  box-shadow: 0 12px 36px 0 rgba(0, 0, 0, 0.35), inset 0 0 22px 0 rgba(255, 255, 255, 0.6), 0 0 25px rgba(251, 191, 36, 0.5);
+  transform: scale(1.03);
+  border-color: rgba(255, 255, 255, 0.7);
+}
+.arabic-subtitle-artistic {
+  font-family: 'Reem Kufi', 'Tajawal', sans-serif;
+  color: #FDE68A;
+  letter-spacing: 0.5px;
+}
+@media (max-width: 768px) {
+  .arabic-title-artistic {
+    font-size: 1.35rem !important;
+  }
+  .arabic-subtitle-artistic {
+    font-size: 0.8rem !important;
+  }
+  .crystal-logo-frame img {
+    width: 46px !important;
+    height: 46px !important;
+  }
+  .crystal-logo-frame {
+    padding: 6px !important;
+    border-radius: 14px !important;
+  }
+  .logo-artistic-container {
+    gap: 0.5rem !important;
+    padding: 2px 4px !important;
+  }
+}
+
+.footer-title-artistic {
+  font-family: 'Aref Ruqaa', 'Amiri', serif;
+  font-size: 1.75rem;
+  font-weight: 700;
+  line-height: 1.2;
+  background: linear-gradient(135deg, #FFFFFF 0%, #FDE68A 45%, #F59E0B 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.4));
+  margin: 0;
+}
+.footer-subtitle-artistic {
+  font-family: 'Reem Kufi', 'Tajawal', sans-serif;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #FDE68A;
+  letter-spacing: 0.5px;
+  margin-top: 3px;
+  white-space: nowrap;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.4));
+}
+
+.hero-title-artistic {
+  font-family: 'Aref Ruqaa', 'Amiri', serif;
+  font-size: clamp(2.4rem, 6.5vw, 4.2rem);
+  font-weight: 700;
+  line-height: 1.25;
+  background: linear-gradient(135deg, #064E3B 0%, #047857 50%, #1e3a8a 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.15));
+  margin: 0 0 1rem 0;
+}
+.hero-subtitle-artistic {
+  font-family: 'Amiri', 'Tajawal', serif;
+  font-size: clamp(1.2rem, 3vw, 1.75rem);
+  font-weight: 700;
+  color: #1E293B;
+  line-height: 1.6;
+  max-width: 850px;
+  margin: 0 auto 1.5rem;
+}
+.hero-badge-artistic {
+  font-family: 'Reem Kufi', 'Tajawal', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #FFFFFF;
+  background: linear-gradient(135deg, #065F46 0%, #047857 100%);
+  border: 1px solid #047857;
+  padding: 6px 20px;
+  border-radius: 20px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 4px 15px rgba(6, 95, 70, 0.25);
+}
+.btn-artistic-register {
+  font-family: 'Tajawal', sans-serif;
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #ffffff !important;
+  background: linear-gradient(135deg, #047857 0%, #10b981 100%);
+  padding: 0.9rem 2.5rem;
+  border-radius: 16px;
+  box-shadow: 0 10px 25px rgba(4, 120, 87, 0.35);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+.btn-artistic-register:hover {
+  transform: translateY(-3px) scale(1.03);
+  box-shadow: 0 15px 35px rgba(4, 120, 87, 0.5);
+}
+.btn-artistic-about {
+  font-family: 'Tajawal', sans-serif;
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #065F46 !important;
+  background: #FFFFFF;
+  border: 2px solid #065F46;
+  padding: 0.9rem 2.5rem;
+  border-radius: 16px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+.btn-artistic-about:hover {
+  transform: translateY(-3px) scale(1.03);
+  background: #F0FDF4;
+  box-shadow: 0 10px 25px rgba(6, 95, 70, 0.2);
+}
+
 /* ═══════════════════════════════════════════════════════════════
    DESIGN TOKENS — Cheikh Bouamama Academy
    Polices : Outfit (titres) · Inter (corps) · JetBrains Mono (code)
@@ -9,9 +153,14 @@
   --gradient: linear-gradient(135deg, #020617 0%, #065f46 45%, #22c55e 100%);
 
   /* ── Typographie ── */
-  --font-heading: 'Outfit',  'Segoe UI', sans-serif;
-  --font-body:    'Inter',   'Segoe UI', sans-serif;
+  --font-heading: 'Cairo', 'Reem Kufi', 'Aref Ruqaa', 'Outfit', 'Segoe UI', sans-serif;
+  --font-body:    'Tajawal', 'Cairo', 'Inter', 'Segoe UI', sans-serif;
   --font-mono:    'JetBrains Mono', 'Courier New', monospace;
+  --font-ruqaa:   'Aref Ruqaa', 'Amiri', serif;
+  --font-kufi:    'Reem Kufi', 'Cairo', sans-serif;
+  --font-cairo:   'Cairo', sans-serif;
+  --font-tajawal: 'Tajawal', sans-serif;
+  --font-amiri:   'Amiri', serif;
 
   /* ── Tailles ── */
   --text-xs:   0.75rem;   /* 12px — badges, légendes     */
@@ -42,7 +191,12 @@ body {
   color: #1e293b;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background: linear-gradient(300deg, #dce9f1, oklab(92.767% -0.03851 0.02861));
+  background-color: #f7f3ec;
+  background-image: url('/images/bg-algerian.png');
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+  background-repeat: no-repeat;
 }
 
 /* ─── TYPOGRAPHIE GLOBALE ───────────────────────────────────── */
@@ -104,6 +258,69 @@ code, pre, kbd, .mono {
 /* Tableaux */
 table { font-family: var(--font-body); font-size: var(--text-sm); }
 th     { font-family: var(--font-heading); font-weight: 700; font-size: var(--text-sm); letter-spacing: var(--tracking-wide); text-transform: uppercase; color: #475569; }
+
+/* ═══════════════════════════════════════════════════════════════
+   CLASSES DE TYPOGRAPHIE ET CALLIGRAPHIE ARABE DZACADEMY
+   Adaptées pour collégiens et lycéens (Superbe Rendu Visuel)
+═══════════════════════════════════════════════════════════════ */
+.font-ruqaa { font-family: var(--font-ruqaa) !important; }
+.font-kufi { font-family: var(--font-kufi) !important; }
+.font-cairo { font-family: var(--font-cairo) !important; }
+.font-tajawal { font-family: var(--font-tajawal) !important; }
+.font-amiri { font-family: var(--font-amiri) !important; }
+
+/* Styles pour les titres de cours et les cartes (Lycée & Collège) */
+.arabic-course-banner-title {
+  font-family: 'Amiri', 'Tajawal', serif !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.5px;
+  background: linear-gradient(135deg, #ffffff 0%, #d1fae5 50%, #a7f3d0 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+}
+
+.arabic-course-title {
+  font-family: 'Amiri', 'Tajawal', serif !important;
+  font-weight: 700 !important;
+  color: #065f46;
+}
+
+.arabic-course-badge {
+  font-family: 'Reem Kufi', 'Tajawal', sans-serif !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.3px;
+}
+
+.arabic-welcome-heading {
+  font-family: 'Amiri', 'Tajawal', serif !important;
+  font-size: clamp(1.5rem, 3.5vw, 2.2rem) !important;
+  font-weight: 700 !important;
+  background: linear-gradient(135deg, #065F46 0%, #047857 60%, #0d9488 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 2px 4px rgba(6, 95, 70, 0.15));
+}
+
+.arabic-section-header {
+  font-family: 'Reem Kufi', 'Cairo', sans-serif !important;
+  font-weight: 700 !important;
+  color: #1b4332;
+}
+
+.arabic-body-text {
+  font-family: 'Tajawal', 'Cairo', sans-serif !important;
+  line-height: 1.8 !important;
+}
+
+/* Force les polices arabes de haute qualité dans tous les contextes RTL et conteneurs de cours */
+[dir="rtl"] h1, [dir="rtl"] h2, [dir="rtl"] h3, .course-container h1, .course-container h2, .course-container h3 {
+  font-family: var(--font-heading);
+}
+
+[dir="rtl"] body, [dir="rtl"] p, [dir="rtl"] button, [dir="rtl"] input, .course-container p {
+  font-family: var(--font-body);
+}
 
 
 /* ================= HEADER ================= */
@@ -242,7 +459,7 @@ main {
 .header {
   display: flex;
   justify-content: center;
-  background: linear-gradient(135deg, #020617 0%, #065f46 45%, #22c55e 100%);
+  background: linear-gradient(135deg, #065f46 0%, #10b981 100%);
   color: white;
   position: sticky;
   top: 0;
@@ -509,7 +726,7 @@ main {
 /* ================= FOOTER HARMONISÉ (mirror header) ================= */
 .footer {
   margin-top: 60px;
-  background: linear-gradient(135deg, #020617 0%, #065f46 45%, #22c55e 100%);
+  background: linear-gradient(135deg, #065f46 0%, #10b981 100%);
   color: white;
   border-radius: 30px 30px 0 0;
   overflow: hidden;
@@ -1242,13 +1459,16 @@ section {
 .dashboard-layout {
   display: flex;
   min-height: calc(100vh - 70px);
-  background: #f1f5f9;
+  background: transparent;
 }
 
 /* Sidebar Container */
 .dashboard-sidebar {
   width: 260px;
-  background: white;
+  background-color: #f7f3ec;
+  background-image: url('/images/bg-algerian.png');
+  background-size: 120px;
+  background-repeat: repeat;
   border-right: 1px solid #e2e8f0;
   display: flex;
   flex-direction: column;
@@ -1292,14 +1512,14 @@ section {
 }
 
 .dashboard-nav-item:hover {
-  background: #f8fafc;
-  color: #1e40af;
+  background: rgba(255, 255, 255, 0.6);
+  color: #b45309;
 }
 
 .dashboard-nav-item.active {
-  background: #eff6ff;
-  color: #1e40af;
-  border-right: 4px solid #1e40af;
+  background: rgba(245, 158, 11, 0.15);
+  color: #92400e;
+  border-right: 4px solid #f59e0b;
 }
 
 /* Main Content */
@@ -1516,3 +1736,473 @@ section {
   color: #e11d48;
   font-size: 0.9em;
 }
+/* À AJOUTER dans styles/globals.css (en haut du fichier) */
+
+* {
+  font-family: 'Cairo', system-ui, sans-serif;
+}
+
+html {
+  direction: rtl;
+}
+
+body {
+  font-family: 'Cairo', system-ui, sans-serif;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   ✨ DENTA-ART BUTTON EFFECTS FOR LMS STUDENT DASHBOARD
+   Pill Shape + Dynamic Ambient Glow Shadow + Shimmer Sweep + Lift Scale
+   ═══════════════════════════════════════════════════════════════════ */
+
+@keyframes btnDentShimmer {
+  0% {
+    left: -75%;
+  }
+  100% {
+    left: 150%;
+  }
+}
+
+.btn-dent-effect,
+.btn-dent-blue,
+.btn-dent-green,
+.btn-dent-orange,
+.btn-dent-whatsapp,
+.btn-dent-outline {
+  position: relative !important;
+  overflow: hidden !important;
+  border-radius: 9999px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.01em !important;
+  transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1),
+              box-shadow 0.35s ease,
+              background 0.35s ease,
+              color 0.35s ease,
+              border-color 0.35s ease !important;
+  cursor: pointer !important;
+  text-decoration: none !important;
+  z-index: 1 !important;
+}
+
+/* Shimmer sweep light overlay on hover */
+.btn-dent-effect::after,
+.btn-dent-blue::after,
+.btn-dent-green::after,
+.btn-dent-orange::after,
+.btn-dent-whatsapp::after,
+.btn-dent-outline::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -75%;
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.35), transparent);
+  transform: skewX(-25deg);
+  pointer-events: none;
+  z-index: 2;
+}
+
+.btn-dent-effect:hover::after,
+.btn-dent-blue:hover::after,
+.btn-dent-green:hover::after,
+.btn-dent-orange:hover::after,
+.btn-dent-whatsapp:hover::after,
+.btn-dent-outline:hover::after {
+  animation: btnDentShimmer 0.75s ease forwards;
+}
+
+/* Hover Lift & Scale Effect (from dent/css/style.css) */
+.btn-dent-effect:hover,
+.btn-dent-blue:hover,
+.btn-dent-green:hover,
+.btn-dent-orange:hover,
+.btn-dent-whatsapp:hover,
+.btn-dent-outline:hover {
+  transform: translateY(-3px) scale(1.03) !important;
+}
+
+/* Active Click Compression */
+.btn-dent-effect:active,
+.btn-dent-blue:active,
+.btn-dent-green:active,
+.btn-dent-orange:active,
+.btn-dent-whatsapp:active,
+.btn-dent-outline:active {
+  transform: translateY(-1px) scale(0.98) !important;
+}
+
+/* Blue primary button with blue colored ambient glow shadow */
+.btn-dent-blue {
+  background: linear-gradient(135deg, #1e3a5f, #1e40af) !important;
+  color: #ffffff !important;
+  border: none !important;
+  box-shadow: 0 6px 20px rgba(30, 64, 175, 0.35) !important;
+}
+
+.btn-dent-blue:hover {
+  box-shadow: 0 12px 30px rgba(30, 64, 175, 0.55), 0 0 20px rgba(30, 64, 175, 0.25) !important;
+  color: #ffffff !important;
+}
+
+/* Green action/trial button with green colored ambient glow shadow */
+.btn-dent-green {
+  background: linear-gradient(135deg, #059669, #10b981) !important;
+  color: #ffffff !important;
+  border: none !important;
+  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.35) !important;
+}
+
+.btn-dent-green:hover {
+  box-shadow: 0 12px 30px rgba(16, 185, 129, 0.55), 0 0 20px rgba(16, 185, 129, 0.25) !important;
+  color: #ffffff !important;
+}
+
+/* Orange sidebar/search button with orange colored ambient glow shadow */
+.btn-dent-orange {
+  background: linear-gradient(135deg, #f59e0b, #d97706) !important;
+  color: #ffffff !important;
+  border: none !important;
+  box-shadow: 0 6px 20px rgba(245, 158, 11, 0.35) !important;
+}
+
+.btn-dent-orange:hover {
+  box-shadow: 0 12px 30px rgba(245, 158, 11, 0.55), 0 0 20px rgba(245, 158, 11, 0.25) !important;
+  color: #ffffff !important;
+}
+
+/* WhatsApp button with WhatsApp brand green ambient glow shadow */
+.btn-dent-whatsapp {
+  background: linear-gradient(135deg, #25D366, #128C7E) !important;
+  color: #ffffff !important;
+  border: none !important;
+  box-shadow: 0 6px 20px rgba(37, 211, 102, 0.35) !important;
+}
+
+.btn-dent-whatsapp:hover {
+  box-shadow: 0 12px 30px rgba(37, 211, 102, 0.55), 0 0 20px rgba(37, 211, 102, 0.25) !important;
+  color: #ffffff !important;
+}
+
+/* Outline button with smooth fill & glow on hover */
+.btn-dent-outline {
+  background: transparent !important;
+  color: #1e40af !important;
+  border: 2px solid #1e40af !important;
+  box-shadow: 0 4px 12px rgba(30, 64, 175, 0.1) !important;
+}
+
+.btn-dent-outline:hover {
+  background: linear-gradient(135deg, #1e3a5f, #1e40af) !important;
+  color: #ffffff !important;
+  border-color: transparent !important;
+  box-shadow: 0 10px 25px rgba(30, 64, 175, 0.4) !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   ✨ MODERN LIGHT EFFECT FOR DASHBOARD LOGO
+   Golden Ring Aura + Sparkle Flares + Sweeping Light Beam
+   ═══════════════════════════════════════════════════════════════════ */
+
+.dashboard-logo-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 210px;
+  height: 210px;
+  margin: 0 auto;
+  border-radius: 50%;
+  cursor: pointer;
+  padding: 8px;
+  transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.4s ease;
+  z-index: 10;
+}
+
+.dashboard-logo-wrapper:hover {
+  transform: translateY(-4px) scale(1.05);
+}
+
+.dashboard-logo-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border-radius: 50%;
+  position: relative;
+  z-index: 3;
+  filter: drop-shadow(0 8px 20px rgba(0, 0, 0, 0.15));
+  transition: filter 0.3s ease;
+}
+
+.dashboard-logo-wrapper:hover .dashboard-logo-img {
+  filter: drop-shadow(0 12px 30px rgba(234, 179, 8, 0.35));
+}
+
+/* 🌟 Outer Golden Light Aura Backdrop */
+.logo-light-aura {
+  position: absolute;
+  inset: -6px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(250, 204, 21, 0.35) 0%, rgba(249, 115, 22, 0.15) 50%, transparent 75%);
+  box-shadow: 0 0 35px rgba(234, 179, 8, 0.45), 0 0 70px rgba(245, 158, 11, 0.25);
+  animation: logoAuraPulse 3s ease-in-out infinite alternate;
+  z-index: 1;
+  pointer-events: none;
+}
+
+@keyframes logoAuraPulse {
+  0% {
+    opacity: 0.6;
+    transform: scale(0.97);
+    box-shadow: 0 0 25px rgba(234, 179, 8, 0.35), 0 0 50px rgba(245, 158, 11, 0.15);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1.03);
+    box-shadow: 0 0 45px rgba(234, 179, 8, 0.65), 0 0 90px rgba(245, 158, 11, 0.35);
+  }
+}
+
+/* 🌀 Rotating Conic Light Sheen Ring */
+.logo-light-spin-ring {
+  position: absolute;
+  inset: -3px;
+  border-radius: 50%;
+  padding: 3px;
+  background: conic-gradient(from 0deg, transparent 0%, rgba(254, 240, 138, 0.9) 25%, transparent 50%, rgba(251, 146, 60, 0.8) 75%, transparent 100%);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  animation: logoRotateRing 6s linear infinite;
+  z-index: 2;
+  pointer-events: none;
+}
+
+@keyframes logoRotateRing {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* 💫 Sparkle Light Flares (Top-Left & Bottom-Right) */
+.logo-flare {
+  position: absolute;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #ffffff 0%, rgba(254, 240, 138, 0.9) 40%, rgba(250, 204, 21, 0.4) 70%, transparent 100%);
+  box-shadow: 0 0 15px #ffffff, 0 0 30px #facc15;
+  z-index: 5;
+  pointer-events: none;
+  animation: flareSparkle 2.5s ease-in-out infinite alternate;
+}
+
+.logo-flare-tl {
+  top: 10px;
+  left: 20px;
+}
+
+.logo-flare-br {
+  bottom: 15px;
+  right: 22px;
+  animation-delay: 1.25s;
+}
+
+@keyframes flareSparkle {
+  0% {
+    opacity: 0.3;
+    transform: scale(0.6) rotate(0deg);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.3) rotate(45deg);
+  }
+  100% {
+    opacity: 0.4;
+    transform: scale(0.8) rotate(90deg);
+  }
+}
+
+/* ⚡ Diagonal Light Ray Sweep Across Logo Face */
+.logo-light-sweep {
+  position: absolute;
+  top: 0;
+  left: -130%;
+  width: 70%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.15) 30%,
+    rgba(255, 255, 255, 0.65) 50%,
+    rgba(255, 255, 255, 0.15) 70%,
+    transparent 100%
+  );
+  transform: skewX(-30deg);
+  z-index: 4;
+  pointer-events: none;
+  border-radius: 50%;
+  animation: logoSweep 3.5s ease-in-out infinite;
+}
+
+.dashboard-logo-wrapper:hover .logo-light-sweep {
+  animation: logoSweepHover 0.8s ease forwards;
+}
+
+@keyframes logoSweep {
+  0% {
+    left: -130%;
+    opacity: 0;
+  }
+  20% {
+    opacity: 1;
+  }
+  45% {
+    left: 140%;
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
+  100% {
+    left: 140%;
+    opacity: 0;
+  }
+}
+
+@keyframes logoSweepHover {
+  0% {
+    left: -130%;
+    opacity: 1;
+  }
+  100% {
+    left: 140%;
+    opacity: 1;
+  }
+}
+
+/* ═══ BULLE D'INFORMATION FLOTTANTE (TOOLTIP) SURVOL DES COURS ═══ */
+.course-card-item {
+  position: relative;
+  z-index: 1;
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s ease, z-index 0s;
+}
+
+.course-card-item:hover {
+  z-index: 60 !important;
+}
+
+.course-title-container {
+  position: relative;
+  display: block;
+  cursor: pointer;
+  margin-bottom: 0.75rem;
+}
+
+.course-title-hoverable {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  transition: color 0.2s ease;
+}
+
+.course-title-container:hover .course-title-hoverable {
+  color: #059669 !important;
+}
+
+.course-title-hint {
+  font-size: 0.72rem;
+  background: rgba(5, 150, 105, 0.08);
+  color: #059669;
+  border: 1px solid rgba(5, 150, 105, 0.2);
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+
+.course-title-container:hover .course-title-hint {
+  background: #059669;
+  color: #ffffff;
+  border-color: #059669;
+  transform: translateY(-1px);
+}
+
+.course-title-tooltip {
+  visibility: hidden;
+  opacity: 0;
+  width: 320px;
+  max-width: 85vw;
+  background: linear-gradient(145deg, rgba(15, 23, 42, 0.97) 0%, rgba(30, 41, 59, 0.97) 100%);
+  color: #f8fafc;
+  text-align: right;
+  border-radius: 16px;
+  padding: 1.1rem 1.25rem;
+  position: absolute;
+  z-index: 1000;
+  bottom: calc(100% + 12px);
+  right: 50%;
+  transform: translateX(50%) translateY(10px) scale(0.96);
+  transition: opacity 0.25s cubic-bezier(0.16, 1, 0.3, 1), transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.25s ease;
+  box-shadow: 0 20px 40px -10px rgba(15, 23, 42, 0.5), 0 0 20px rgba(16, 185, 129, 0.2);
+  border: 1px solid rgba(52, 211, 153, 0.3);
+  font-size: 0.88rem;
+  font-weight: 500;
+  line-height: 1.7;
+  pointer-events: none;
+  word-wrap: break-word;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+/* Flèche pointeur vers le bas */
+.course-title-tooltip::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  right: 50%;
+  transform: translateX(50%);
+  border-width: 9px;
+  border-style: solid;
+  border-color: rgba(30, 41, 59, 0.97) transparent transparent transparent;
+}
+
+.course-title-tooltip-header {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(6, 182, 212, 0.2));
+  border: 1px solid rgba(52, 211, 153, 0.3);
+  color: #34d399;
+  font-weight: 800;
+  font-size: 0.8rem;
+  padding: 3px 10px;
+  border-radius: 20px;
+  margin-bottom: 0.6rem;
+}
+
+.course-title-container:hover .course-title-tooltip {
+  visibility: visible;
+  opacity: 1;
+  transform: translateX(50%) translateY(0) scale(1);
+}
+
+/* Responsive pour mobiles et petites tablettes */
+@media (max-width: 640px) {
+  .course-title-tooltip {
+    width: 280px;
+    max-width: 80vw;
+    font-size: 0.83rem;
+    padding: 0.9rem 1rem;
+    bottom: calc(100% + 10px);
+  }
+}
+
+
+
+

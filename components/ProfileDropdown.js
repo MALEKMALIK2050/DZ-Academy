@@ -2,6 +2,13 @@ import React, { useState } from "react";
 import { useRouter } from "next/router";
 import { useAuth } from "@/context/AuthContext";
 
+const ROLE_LABELS = {
+  STUDENT: "طالب",
+  TEACHER: "أستاذ",
+  DESIGNER: "مصمم",
+  ADMIN: "مدير",
+};
+
 export default function ProfileDropdown({ userRole }) {
   const { user, logout } = useAuth();
   const router = useRouter();
@@ -12,8 +19,10 @@ export default function ProfileDropdown({ userRole }) {
     router.push("/login");
   };
 
+  const roleLabel = ROLE_LABELS[userRole?.toUpperCase()] || userRole;
+
   return (
-    <div style={{ position: "relative" }}>
+    <div dir="rtl" lang="ar" style={{ position: "relative" }}>
       <button
         onClick={() => setIsOpen(!isOpen)}
         style={{
@@ -34,7 +43,7 @@ export default function ProfileDropdown({ userRole }) {
         onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "#f97316"}
       >
         <span>👤</span>
-        <span>{user?.prenom || user?.nom || "Admin"}</span>
+        <span>{user?.prenom || user?.nom || "المدير"}</span>
         <span style={{ fontSize: "0.75rem" }}>{isOpen ? "▲" : "▼"}</span>
       </button>
 
@@ -54,7 +63,7 @@ export default function ProfileDropdown({ userRole }) {
           <div style={{
             position: "absolute",
             top: "100%",
-            right: 0,
+            left: 0,
             marginTop: "0.5rem",
             backgroundColor: "white",
             borderRadius: "12px",
@@ -71,8 +80,8 @@ export default function ProfileDropdown({ userRole }) {
               <p style={{ margin: 0, fontWeight: "600", color: "#1e293b" }}>
                 {user?.prenom} {user?.nom}
               </p>
-              <p style={{ margin: "0.25rem 0 0", fontSize: "0.7rem", color: "#f97316", textTransform: "uppercase" }}>
-                {userRole}
+              <p style={{ margin: "0.25rem 0 0", fontSize: "0.7rem", color: "#f97316" }}>
+                {roleLabel}
               </p>
             </div>
             
@@ -85,7 +94,7 @@ export default function ProfileDropdown({ userRole }) {
                 display: "block",
                 width: "100%",
                 padding: "0.75rem 1rem",
-                textAlign: "left",
+                textAlign: "right",
                 backgroundColor: "transparent",
                 border: "none",
                 cursor: "pointer",
@@ -96,7 +105,7 @@ export default function ProfileDropdown({ userRole }) {
               onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "#f1f5f9"}
               onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "transparent"}
             >
-              ⚙️ Mon profil
+              ⚙️ ملفي الشخصي
             </button>
             
             <button
@@ -105,7 +114,7 @@ export default function ProfileDropdown({ userRole }) {
                 display: "block",
                 width: "100%",
                 padding: "0.75rem 1rem",
-                textAlign: "left",
+                textAlign: "right",
                 backgroundColor: "transparent",
                 border: "none",
                 borderTop: "1px solid #e2e8f0",
@@ -117,7 +126,7 @@ export default function ProfileDropdown({ userRole }) {
               onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "#fef2f2"}
               onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "transparent"}
             >
-              🚪 Déconnexion
+              🚪 تسجيل الخروج
             </button>
           </div>
         </>

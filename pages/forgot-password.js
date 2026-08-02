@@ -25,48 +25,52 @@ export default function ForgotPassword() {
       const data = await res.json();
 
       if (!res.ok) {
-        setError(data.error || "Une erreur est survenue");
+        setError(data.error || "حدث خطأ ما");
         return;
       }
 
-      setMessage("Un email vous a été envoyé avec les instructions pour réinitialiser votre mot de passe.");
+      setMessage("تم إرسال رابط إعادة تعيين كلمة المرور إلى بريدك الإلكتروني. يرجى التحقق من صندوق الوارد.");
     } catch (err) {
       console.error(err);
-      setError("Erreur serveur");
+      setError("خطأ في الخادم");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="auth-wrapper">
+    <div dir="rtl" lang="ar" className="auth-wrapper">
       <div className="auth-container">
-        <h2>Mot de passe oublié</h2>
-        <p style={{ marginBottom: "1.5rem", fontSize: "0.9rem", color: "#666" }}>
-          Entrez votre adresse email et nous vous enverrons un lien pour réinitialiser votre mot de passe.
+        <h2>نسيت كلمة المرور؟</h2>
+        <p style={{ marginBottom: "1.5rem", fontSize: "0.9rem", color: "#666", textAlign: "right" }}>
+          أدخل عنوان بريدك الإلكتروني وسنرسل لك رابطًا لإعادة تعيين كلمة المرور.
         </p>
 
-        {message && <p style={{ color: "#059669", fontWeight: "600", marginBottom: "1rem" }}>{message}</p>}
+        {message && (
+          <p style={{ color: "#059669", fontWeight: "600", marginBottom: "1rem", textAlign: "right" }}>
+            ✅ {message}
+          </p>
+        )}
         {error && <p className="error">{error}</p>}
 
         <form onSubmit={handleSubmit}>
           <input
             name="email"
             type="email"
-            placeholder="Votre adresse email"
+            placeholder="بريدك الإلكتروني"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
           />
 
           <button type="submit" disabled={loading}>
-            {loading ? "Envoi en cours..." : "Envoyer le lien"}
+            {loading ? "جارٍ الإرسال..." : "إرسال الرابط"}
           </button>
         </form>
 
         <div style={{ textAlign: "center", marginTop: "1.5rem" }}>
           <Link href="/login" style={{ fontSize: "0.875rem", color: "#3b82f6", textDecoration: "none" }}>
-            Retour à la connexion
+            العودة إلى تسجيل الدخول
           </Link>
         </div>
       </div>

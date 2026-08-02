@@ -16,20 +16,20 @@ function getUser(req) {
 }
 
 export default async function handler(req, res) {
-  if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
+  if (req.method !== 'GET') return res.status(405).json({ error: 'الطريقة غير مسموح بها' });
 
   const user = getUser(req);
-  if (!user) return res.status(401).json({ error: 'Non authentifié' });
+  if (!user) return res.status(401).json({ error: 'غير مصادَق عليه' });
 
   const { courseId } = req.query;
 
-  if (!courseId) return res.status(400).json({ error: 'courseId requis' });
+  if (!courseId) return res.status(400).json({ error: 'courseId مطلوب' });
 
   try {
     const result = await prisma.pretestResult.findFirst({
       where: { 
         courseId: parseInt(courseId),
-        studentId: user.id
+        studentId: parseInt(user.id)
       },
       include: {
         course: true
@@ -40,9 +40,23 @@ export default async function handler(req, res) {
       return res.status(200).json(null);
     }
 
-    const feedback = getFeedbackByScore(result.score, result.total, result.course?.annee);
+    const total = result.total || 1;
+    let percentage = result.pourcentage;
+    // Check if percentage was missing or improperly saved (e.g. if score was saved as percentage > total)
+    if (percentage === undefined || percentage === null) {
+      percentage = result.score <= total ? (result.score / total) * 100 : result.score;
+    }
+    percentage = Math.round(percentage);
 
-    return res.status(200).json({ ...result, feedback });
+    const feedback = getFeedbackByScore(percentage, 100, result.course?.annee);
+
+    return res.status(200).json({ 
+      ...result, 
+      correct: result.score <= total ? result.score : Math.round((percentage / 100) * total),
+      pourcentage: percentage,
+      percentage: percentage,
+      feedback 
+    });
   } catch (error) {
     return res.status(500).json({ error: error.message });
   }

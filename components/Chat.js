@@ -236,7 +236,7 @@ export default function Chat() {
           {contacts.length > 0 && (
             <>
               <div style={{ padding: "0.5rem 1rem", fontWeight: "600", color: "#718096", fontSize: "0.75rem", textTransform: "uppercase", background: "#f1f5f9", marginTop: "1rem" }}>
-                Utilisateurs
+                المستخدمون
               </div>
               {contacts.map((c) => (
                 <button

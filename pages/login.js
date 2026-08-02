@@ -17,13 +17,13 @@ export default function Login() {
   // Gérer les messages de l'URL
   useState(() => {
     if (router.query.verified === "true") {
-      setSuccess("✅ Compte activé avec succès ! Vous pouvez vous connecter.");
+      setSuccess("✅ تم تفعيل الحساب بنجاح! يمكنك الآن تسجيل الدخول.");
     }
     if (router.query.error === "token_invalide") {
-      setError("❌ Lien d'activation invalide ou expiré.");
+      setError("❌ رابط التفعيل غير صالح أو منتهي الصلاحية.");
     }
     if (router.query.error === "Compte désactivé") {
-      setError("⏳ Veuillez activer votre compte via l'email reçu.");
+      setError("⏳ يرجى تفعيل حسابك عبر البريد الإلكتروني المُستلم.");
     }
   });
 
@@ -53,7 +53,7 @@ export default function Login() {
       const data = await res.json();
 
       if (!res.ok) {
-        setError(data.error || "Erreur de connexion");
+        setError(data.error || "خطأ في تسجيل الدخول");
         return;
       }
 
@@ -68,16 +68,16 @@ export default function Login() {
       }
     } catch (err) {
       console.error(err);
-      setError("Erreur serveur");
+      setError("خطأ في الخادم");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="auth-wrapper">
+    <div dir="rtl" lang="ar" className="auth-wrapper">
       <div className="auth-container">
-        <h2>Connexion</h2>
+        <h2>تسجيل الدخول</h2>
 
         {success && <p style={{ color: "#059669", fontWeight: "600", marginBottom: "1rem" }}>{success}</p>}
         {error && <p className="error">{error}</p>}
@@ -86,7 +86,7 @@ export default function Login() {
           <input
             name="email"
             type="email"
-            placeholder="Email"
+            placeholder="البريد الإلكتروني"
             value={form.email}
             onChange={handleChange}
             required
@@ -95,20 +95,20 @@ export default function Login() {
           <input
             name="password"
             type="password"
-            placeholder="Mot de passe"
+            placeholder="كلمة المرور"
             value={form.password}
             onChange={handleChange}
             required
           />
 
-          <div style={{ textAlign: "right", marginBottom: "1rem" }}>
+          <div style={{ textAlign: "start", marginBottom: "1rem" }}>
             <Link href="/forgot-password" style={{ fontSize: "0.875rem", color: "#3b82f6", textDecoration: "none" }}>
-              Mot de passe oublié ?
+              نسيت كلمة المرور؟
             </Link>
           </div>
 
           <button type="submit" disabled={loading}>
-            {loading ? "Connexion..." : "Se connecter"}
+            {loading ? "جارٍ تسجيل الدخول..." : "تسجيل الدخول"}
           </button>
         </form>
       </div>

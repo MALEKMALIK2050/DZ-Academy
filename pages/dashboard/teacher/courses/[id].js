@@ -51,7 +51,7 @@ export default function TeacherCourse() {
       const sData = await sRes.json();
       const vData = await vRes.json();
 
-      if (!cRes.ok) return setError(cData.error || "Erreur chargement");
+      if (!cRes.ok) return setError(cData.error || "خطأ في التحميل");
       setCourse(cData);
       setVideoProgress(Array.isArray(vData) ? vData : []);
       if (cData.chapters?.length > 0) setActiveChapter(cData.chapters[0]);
@@ -61,27 +61,27 @@ export default function TeacherCourse() {
       setEnrollments(courseEnrollments);
       setQuizResults(sData?.quizResults || []);
       setDevoirs(sData?.devoirs || []);
-    } catch { setError("Erreur serveur"); }
+    } catch { setError("خطأ في الخادم"); }
     finally { setLoading(false); }
   };
 
-  if (loading) return <p style={{ padding: "2rem" }}>Chargement...</p>;
-  if (error)   return <p style={{ color: "red", padding: "2rem" }}>{error}</p>;
+  if (loading) return <p dir="rtl" lang="ar" style={{ padding: "2rem" }}>جارٍ التحميل...</p>;
+  if (error)   return <p dir="rtl" lang="ar" style={{ color: "red", padding: "2rem" }}>{error}</p>;
 
   const TABS = [
-    { key: "contenu",  label: "📚 Contenu du cours" },
-    { key: "suivi",    label: `👨‍🎓 Suivi élèves (${enrollments.length})` },
-    { key: "devoirs",  label: `📋 Devoirs à corriger (${devoirs.filter((d) => d.rendus?.some((r) => r.note === null)).length})` },
+    { key: "contenu",  label: "📚 محتوى الدرس" },
+    { key: "suivi",    label: `👨‍🎓 متابعة التلاميذ (${enrollments.length})` },
+    { key: "devoirs",  label: `📋 واجبات للتصحيح (${devoirs.filter((d) => d.rendus?.some((r) => r.note === null)).length})` },
   ];
 
   return (
     <ProtectedRoute allowedRoles={["TEACHER", "DESIGNER"]}>
-      <div style={{ minHeight: "100vh", background: "#f8fafc" }}>
+      <div dir="rtl" lang="ar" style={{ minHeight: "100vh", background: "#f8fafc" }}>
 
         {/* Header */}
         <div style={{ background: "#1a202c", color: "white", padding: "1rem 2rem", display: "flex", alignItems: "center", gap: "1rem" }}>
           <button onClick={() => router.push("/dashboard/teacher")} style={{ background: "none", border: "none", color: "#a0aec0", cursor: "pointer" }}>
-            ← Retour
+            → رجوع
           </button>
           <div>
             <h1 style={{ margin: 0, fontSize: "1.2rem" }}>{course?.title}</h1>
@@ -113,7 +113,7 @@ export default function TeacherCourse() {
 
               {/* Sidebar */}
               <div>
-                <h3 style={{ margin: "0 0 1rem", color: "#4a5568" }}>📚 Chapitres</h3>
+                <h3 style={{ margin: "0 0 1rem", color: "#4a5568" }}>📚 الفصول</h3>
                 {course?.chapters?.map((ch, i) => (
                   <div key={ch.id}
                     onClick={() => setActiveChapter(ch)}
@@ -128,7 +128,7 @@ export default function TeacherCourse() {
 
                 {course?.quizFinal && (
                   <div style={{ padding: "0.75rem", borderRadius: "8px", marginTop: "1rem", background: "#faf5ff", color: "#805ad5", fontWeight: "bold", cursor: "default" }}>
-                    📝 Test sommatif final
+                    📝 الاختبار النهائي الشامل
                   </div>
                 )}
               </div>
@@ -139,14 +139,14 @@ export default function TeacherCourse() {
                   <h2 style={{ marginTop: 0 }}>{activeChapter.title}</h2>
                   {activeChapter.objectifs && (
                     <div style={{ background: "#f0fff4", border: "1px solid #9ae6b4", padding: "0.75rem 1rem", borderRadius: "8px", marginBottom: "1.5rem", fontSize: "0.9rem" }}>
-                      🎯 <strong>Objectifs :</strong> {activeChapter.objectifs}
+                      🎯 <strong>الأهداف:</strong> {activeChapter.objectifs}
                     </div>
                   )}
 
                   {/* Supports */}
                   {activeChapter.supports?.length > 0 && (
                     <div style={{ marginBottom: "1.5rem" }}>
-                      <h3>📎 Supports pédagogiques</h3>
+                      <h3>📎 الدعائم البيداغوجية</h3>
                       <div style={{ display: "grid", gap: "0.75rem" }}>
                         {activeChapter.supports.map((s) => (
                           s.type === "TEXTE" ? (
@@ -161,7 +161,7 @@ export default function TeacherCourse() {
                                 {s.type}
                               </span>
                               <span style={{ color: "#3182ce" }}>{s.nom || s.url}</span>
-                              <span style={{ marginLeft: "auto", color: "#a0aec0" }}>→</span>
+                              <span style={{ marginRight: "auto", color: "#a0aec0" }}>←</span>
                             </a>
                           )
                         ))}
@@ -172,11 +172,11 @@ export default function TeacherCourse() {
                   {/* Forum de discussion */}
                   {activeChapter.supports?.some(s => s.type === "FORUM") && (
                     <div style={{ background: "white", border: "1px solid #e2e8f0", padding: "1.5rem", borderRadius: "10px", marginBottom: "1.5rem" }}>
-                      <h3 style={{ margin: "0 0 1rem" }}>💬 Forum de discussion</h3>
+                      <h3 style={{ margin: "0 0 1rem" }}>💬 منتدى النقاش</h3>
                       {activeChapter.supports.find(s => s.type === "FORUM")?.forum?.status === "DRAFT" ? (
                         <div style={{ background: "#ebf8ff", padding: "1rem", borderRadius: "8px", border: "1px solid #bee3f8" }}>
                           <p style={{ margin: "0 0 1rem", color: "#2c5282", fontSize: "0.95rem" }}>
-                            Le forum est actuellement en brouillon. Posez la question pour lancer la discussion avec les élèves.
+                            المنتدى حاليًا في وضع المسودة. اطرح السؤال لبدء النقاش مع التلاميذ.
                           </p>
                           <button
                             onClick={async () => {
@@ -190,7 +190,7 @@ export default function TeacherCourse() {
                             }}
                             style={{ background: "#3182ce", color: "white", border: "none", padding: "0.6rem 1.2rem", borderRadius: "6px", cursor: "pointer", fontWeight: "bold" }}
                           >
-                            🚀 Poser la question / Publier
+                            🚀 طرح السؤال / نشر
                           </button>
                         </div>
                       ) : (
@@ -204,9 +204,9 @@ export default function TeacherCourse() {
                   {/* Quiz formatif — lecture seule */}
                   {activeChapter.quiz && (
                     <div style={{ background: "white", border: "1px solid #e2e8f0", padding: "1.25rem", borderRadius: "10px", marginBottom: "1.5rem" }}>
-                      <h3 style={{ margin: "0 0 0.75rem" }}>📝 Quiz formatif</h3>
+                      <h3 style={{ margin: "0 0 0.75rem" }}>📝 اختبار تكويني</h3>
                       <p style={{ color: "#718096", fontSize: "0.9rem", margin: 0 }}>
-                        {activeChapter.quiz.questions?.length || 0} question(s) — seuil de réussite : 90%
+                        {activeChapter.quiz.questions?.length || 0} سؤال — نسبة النجاح: 90%
                       </p>
                     </div>
                   )}
@@ -214,7 +214,7 @@ export default function TeacherCourse() {
                   {/* Devoirs du chapitre */}
                   {activeChapter.devoirs?.length > 0 && (
                     <div>
-                      <h3>📋 Devoirs</h3>
+                      <h3>📋 الواجبات</h3>
                       {activeChapter.devoirs.map((d) => {
                         const deadline = new Date(d.dateLimit);
                         const depasse  = new Date() > deadline;
@@ -223,12 +223,12 @@ export default function TeacherCourse() {
                             <div style={{ display: "flex", justifyContent: "space-between" }}>
                               <strong>{d.titre}</strong>
                               <span style={{ background: depasse ? "#e53e3e" : "#dd6b20", color: "white", padding: "0.2rem 0.6rem", borderRadius: "20px", fontSize: "0.8rem" }}>
-                                {depasse ? "⛔ Clôturé" : `⏰ ${deadline.toLocaleDateString("fr-FR")}`}
+                                {depasse ? "⛔ مغلق" : `⏰ ${deadline.toLocaleDateString("ar-DZ")}`}
                               </span>
                             </div>
                             <div dangerouslySetInnerHTML={{ __html: d.consigne }} style={{ marginTop: "0.75rem", fontSize: "0.9rem", color: "#4a5568" }} />
                             <div style={{ marginTop: "0.5rem", fontSize: "0.85rem", color: "#718096" }}>
-                              {d.rendus?.length || 0} rendu(s)
+                              {d.rendus?.length || 0} تسليم
                             </div>
                           </div>
                         );
@@ -244,17 +244,17 @@ export default function TeacherCourse() {
           {tab === "suivi" && (
             <div>
               {enrollments.length === 0 ? (
-                <p style={{ color: "#718096" }}>Aucun élève inscrit à ce cours.</p>
+                <p style={{ color: "#718096" }}>لا يوجد أي تلميذ مسجَّل في هذا الدرس.</p>
               ) : (
                 <table style={{ width: "100%", borderCollapse: "collapse" }}>
                   <thead>
                     <tr style={{ background: "#edf2f7" }}>
-                      <th style={thStyle}>Élève</th>
-                      <th style={thStyle}>Niveau / Classe</th>
-                      <th style={thStyle}>Progression</th>
-                      <th style={thStyle}>Quiz passés</th>
-                      <th style={thStyle}>Score moyen</th>
-                      <th style={thStyle}>Complété</th>
+                      <th style={thStyle}>التلميذ</th>
+                      <th style={thStyle}>المستوى / القسم</th>
+                      <th style={thStyle}>التقدّم</th>
+                      <th style={thStyle}>الاختبارات المجتازة</th>
+                      <th style={thStyle}>المعدّل</th>
+                      <th style={thStyle}>مكتمل</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -287,8 +287,8 @@ export default function TeacherCourse() {
                           </td>
                           <td style={tdStyle}>
                             {e.completed
-                              ? <span style={{ color: "#38a169" }}>✅ Oui</span>
-                              : <span style={{ color: "#718096" }}>En cours</span>
+                              ? <span style={{ color: "#38a169" }}>✅ نعم</span>
+                              : <span style={{ color: "#718096" }}>جارٍ</span>
                             }
                           </td>
                         </tr>
@@ -304,7 +304,7 @@ export default function TeacherCourse() {
           {tab === "devoirs" && (
             <div>
               {devoirs.length === 0 ? (
-                <p style={{ color: "#718096" }}>Aucun devoir pour ce cours.</p>
+                <p style={{ color: "#718096" }}>لا يوجد أي واجب لهذا الدرس.</p>
               ) : (
                 devoirs.map((d) => {
                   const deadline = new Date(d.dateLimit);
@@ -316,25 +316,25 @@ export default function TeacherCourse() {
                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "1rem" }}>
                         <div>
                           <strong style={{ fontSize: "1.05rem" }}>📋 {d.titre}</strong>
-                          <div style={{ fontSize: "0.85rem", color: "#718096" }}>Chapitre : {d.chapter?.title}</div>
+                          <div style={{ fontSize: "0.85rem", color: "#718096" }}>الفصل: {d.chapter?.title}</div>
                           <div style={{ fontSize: "0.85rem", color: depasse ? "#e53e3e" : "#dd6b20" }}>
-                            {depasse ? "⛔ Clôturé" : "⏰ Deadline"} : {deadline.toLocaleDateString("fr-FR")}
+                            {depasse ? "⛔ مغلق" : "⏰ الموعد النهائي"} : {deadline.toLocaleDateString("ar-DZ")}
                           </div>
                         </div>
-                        <div style={{ textAlign: "right" }}>
+                        <div style={{ textAlign: "left" }}>
                           <div style={{ background: "#3182ce", color: "white", padding: "0.3rem 0.8rem", borderRadius: "20px", fontSize: "0.85rem" }}>
-                            {d.rendus?.length || 0} rendu(s)
+                            {d.rendus?.length || 0} تسليم
                           </div>
                           {rendusNonNotes.length > 0 && (
                             <div style={{ background: "#e53e3e", color: "white", padding: "0.3rem 0.8rem", borderRadius: "20px", fontSize: "0.85rem", marginTop: "0.3rem" }}>
-                              {rendusNonNotes.length} à corriger
+                              {rendusNonNotes.length} للتصحيح
                             </div>
                           )}
                         </div>
                       </div>
 
                       {d.rendus?.length === 0 ? (
-                        <p style={{ color: "#718096", fontSize: "0.9rem" }}>Aucun rendu pour ce devoir.</p>
+                        <p style={{ color: "#718096", fontSize: "0.9rem" }}>لا يوجد أي تسليم لهذا الواجب.</p>
                       ) : (
                         d.rendus.map((r) => (
                           <RenduCard key={r.id} rendu={r} devoirId={d.id} depasse={depasse} onRefresh={fetchAll} />
@@ -362,7 +362,7 @@ function RenduCard({ rendu, devoirId, depasse, onRefresh }) {
   const [error,    setError]    = useState("");
 
   const handleNote = async () => {
-    if (note === "" || note < 0 || note > 20) return setError("Note entre 0 et 20 obligatoire");
+    if (note === "" || note < 0 || note > 20) return setError("الدرجة بين 0 و20 إلزامية");
     setSaving(true); setError(""); setSuccess("");
     try {
       const res = await fetch(`/api/devoirs/${devoirId}`, {
@@ -371,14 +371,14 @@ function RenduCard({ rendu, devoirId, depasse, onRefresh }) {
         credentials: "include",
         body: JSON.stringify({ renduId: rendu.id, note: parseFloat(note), feedback }),
       });
-      if (res.ok) { setSuccess("✅ Note enregistrée !"); onRefresh(); }
-      else { const d = await res.json(); setError(d.error || "Erreur"); }
-    } catch { setError("Erreur serveur"); }
+      if (res.ok) { setSuccess("✅ تم تسجيل الدرجة!"); onRefresh(); }
+      else { const d = await res.json(); setError(d.error || "خطأ"); }
+    } catch { setError("خطأ في الخادم"); }
     finally { setSaving(false); }
   };
 
   return (
-    <div style={{ background: "white", border: "1px solid #e2e8f0", padding: "1rem", borderRadius: "8px", marginBottom: "0.75rem" }}>
+    <div dir="rtl" lang="ar" style={{ background: "white", border: "1px solid #e2e8f0", padding: "1rem", borderRadius: "8px", marginBottom: "0.75rem" }}>
       <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", marginBottom: "0.75rem" }}>
         <span style={{ background: rendu.fichierType === "PDF" ? "#e53e3e" : rendu.fichierType === "WORD" ? "#3182ce" : "#38a169", color: "white", padding: "0.2rem 0.5rem", borderRadius: "6px", fontSize: "0.75rem" }}>
           {rendu.fichierType}
@@ -386,8 +386,8 @@ function RenduCard({ rendu, devoirId, depasse, onRefresh }) {
         <strong>{rendu.student?.prenom} {rendu.student?.nom}</strong>
         <span style={{ fontSize: "0.8rem", color: "#718096" }}>{rendu.fichierNom}</span>
         <a href={rendu.fichierUrl} target="_blank" rel="noreferrer"
-          style={{ marginLeft: "auto", background: "#3182ce", color: "white", padding: "0.3rem 0.8rem", borderRadius: "6px", fontSize: "0.85rem", textDecoration: "none" }}>
-          📥 Télécharger
+          style={{ marginRight: "auto", background: "#3182ce", color: "white", padding: "0.3rem 0.8rem", borderRadius: "6px", fontSize: "0.85rem", textDecoration: "none" }}>
+          📥 تحميل
         </a>
       </div>
 
@@ -395,9 +395,9 @@ function RenduCard({ rendu, devoirId, depasse, onRefresh }) {
       {rendu.note !== null && rendu.note !== undefined && (
         <div style={{ background: "#f0fff4", padding: "0.5rem 0.75rem", borderRadius: "6px", marginBottom: "0.75rem" }}>
           <span style={{ fontWeight: "bold", color: rendu.note >= 10 ? "#38a169" : "#e53e3e" }}>
-            Note : {rendu.note}/20
+            الدرجة: {rendu.note}/20
           </span>
-          {rendu.feedback && <span style={{ color: "#4a5568", marginLeft: "0.75rem" }}>— {rendu.feedback}</span>}
+          {rendu.feedback && <span style={{ color: "#4a5568", marginRight: "0.75rem" }}>— {rendu.feedback}</span>}
         </div>
       )}
 
@@ -406,15 +406,15 @@ function RenduCard({ rendu, devoirId, depasse, onRefresh }) {
         <div>
           <div style={{ display: "grid", gridTemplateColumns: "100px 1fr auto", gap: "0.5rem", alignItems: "flex-end" }}>
             <div>
-              <label style={{ fontSize: "0.8rem", color: "#718096", display: "block", marginBottom: "0.2rem" }}>Note /20</label>
+              <label style={{ fontSize: "0.8rem", color: "#718096", display: "block", marginBottom: "0.2rem" }}>الدرجة /20</label>
               <input type="number" min="0" max="20" step="0.5" value={note}
                 onChange={(e) => setNote(e.target.value)}
                 style={{ width: "100%", padding: "0.5rem", border: "1px solid #cbd5e0", borderRadius: "6px" }}
               />
             </div>
             <div>
-              <label style={{ fontSize: "0.8rem", color: "#718096", display: "block", marginBottom: "0.2rem" }}>Feedback</label>
-              <input placeholder="Commentaire pour l'élève..."
+              <label style={{ fontSize: "0.8rem", color: "#718096", display: "block", marginBottom: "0.2rem" }}>ملاحظة</label>
+              <input placeholder="تعليق للتلميذ..."
                 value={feedback}
                 onChange={(e) => setFeedback(e.target.value)}
                 style={{ width: "100%", padding: "0.5rem", border: "1px solid #cbd5e0", borderRadius: "6px" }}
@@ -422,7 +422,7 @@ function RenduCard({ rendu, devoirId, depasse, onRefresh }) {
             </div>
             <button onClick={handleNote} disabled={saving}
               style={{ background: "#38a169", color: "white", border: "none", padding: "0.5rem 1rem", borderRadius: "6px", cursor: "pointer" }}>
-              {saving ? "..." : "💾 Noter"}
+              {saving ? "..." : "💾 تسجيل"}
             </button>
           </div>
           {error   && <p style={{ color: "red",   fontSize: "0.85rem", margin: "0.5rem 0 0" }}>{error}</p>}
@@ -432,7 +432,7 @@ function RenduCard({ rendu, devoirId, depasse, onRefresh }) {
 
       {!depasse && (
         <p style={{ color: "#718096", fontSize: "0.85rem", fontStyle: "italic" }}>
-          ⏳ Notation disponible après la date limite
+          ⏳ التنقيط متاح بعد الموعد النهائي
         </p>
       )}
     </div>
@@ -444,5 +444,5 @@ function typeColor(type) {
   return colors[type] || "#718096";
 }
 
-const thStyle = { padding: "0.75rem", textAlign: "left", fontWeight: "bold" };
+const thStyle = { padding: "0.75rem", textAlign: "right", fontWeight: "bold" };
 const tdStyle = { padding: "0.75rem" };

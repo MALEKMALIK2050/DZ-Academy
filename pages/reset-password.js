@@ -29,13 +29,13 @@ export default function ResetPassword() {
     setError("");
 
     if (form.password !== form.confirmPassword) {
-      setError("Les mots de passe ne correspondent pas.");
+      setError("كلمتا المرور غير متطابقتين.");
       setLoading(false);
       return;
     }
 
     if (form.password.length < 6) {
-      setError("Le mot de passe doit contenir au moins 6 caractères.");
+      setError("يجب أن تحتوي كلمة المرور على 6 أحرف على الأقل.");
       setLoading(false);
       return;
     }
@@ -52,11 +52,11 @@ export default function ResetPassword() {
       const data = await res.json();
 
       if (!res.ok) {
-        setError(data.error || "Une erreur est survenue");
+        setError(data.error || "حدث خطأ ما");
         return;
       }
 
-      setMessage("Votre mot de passe a été réinitialisé avec succès. Vous pouvez maintenant vous connecter.");
+      setMessage("تم إعادة تعيين كلمة المرور بنجاح. يمكنك الآن تسجيل الدخول.");
       
       // Optionnel: Rediriger vers la page de login après quelques secondes
       setTimeout(() => {
@@ -65,7 +65,7 @@ export default function ResetPassword() {
 
     } catch (err) {
       console.error(err);
-      setError("Erreur serveur");
+      setError("خطأ في الخادم");
     } finally {
       setLoading(false);
     }
@@ -73,13 +73,13 @@ export default function ResetPassword() {
 
   if (!token) {
     return (
-      <div className="auth-wrapper">
+      <div dir="rtl" lang="ar" className="auth-wrapper">
         <div className="auth-container">
-          <h2>Lien invalide</h2>
-          <p className="error">Le lien de réinitialisation est manquant ou invalide.</p>
+          <h2>رابط غير صالح</h2>
+          <p className="error">رابط إعادة التعيين مفقود أو غير صالح.</p>
           <div style={{ textAlign: "center", marginTop: "1.5rem" }}>
             <Link href="/login" style={{ fontSize: "0.875rem", color: "#3b82f6", textDecoration: "none" }}>
-              Retour à la connexion
+              العودة إلى تسجيل الدخول
             </Link>
           </div>
         </div>
@@ -88,11 +88,11 @@ export default function ResetPassword() {
   }
 
   return (
-    <div className="auth-wrapper">
+    <div dir="rtl" lang="ar" className="auth-wrapper">
       <div className="auth-container">
-        <h2>Nouveau mot de passe</h2>
+        <h2>كلمة مرور جديدة</h2>
         <p style={{ marginBottom: "1.5rem", fontSize: "0.9rem", color: "#666" }}>
-          Veuillez entrer votre nouveau mot de passe.
+          يرجى إدخال كلمة المرور الجديدة الخاصة بك.
         </p>
 
         {message ? (
@@ -100,7 +100,7 @@ export default function ResetPassword() {
             <p style={{ color: "#059669", fontWeight: "600", marginBottom: "1rem" }}>{message}</p>
             <div style={{ textAlign: "center", marginTop: "1.5rem" }}>
               <Link href="/login" style={{ fontSize: "0.875rem", color: "#3b82f6", textDecoration: "none" }}>
-                Aller à la page de connexion
+                الذهاب إلى صفحة تسجيل الدخول
               </Link>
             </div>
           </div>
@@ -111,7 +111,7 @@ export default function ResetPassword() {
             <input
               name="password"
               type="password"
-              placeholder="Nouveau mot de passe"
+              placeholder="كلمة المرور الجديدة"
               value={form.password}
               onChange={handleChange}
               required
@@ -120,14 +120,14 @@ export default function ResetPassword() {
             <input
               name="confirmPassword"
               type="password"
-              placeholder="Confirmer le mot de passe"
+              placeholder="تأكيد كلمة المرور"
               value={form.confirmPassword}
               onChange={handleChange}
               required
             />
 
             <button type="submit" disabled={loading}>
-              {loading ? "Réinitialisation..." : "Enregistrer le mot de passe"}
+              {loading ? "جارٍ إعادة التعيين..." : "حفظ كلمة المرور"}
             </button>
           </form>
         )}

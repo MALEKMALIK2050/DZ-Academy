@@ -108,12 +108,12 @@ export default function DesignerProfile() {
       const data = await res.json();
 
       if (res.ok) {
-        setSuccess("✅ Profil mis à jour avec succès!");
+        setSuccess("✅ تم تحديث الملف الشخصي بنجاح!");
       } else {
-        setError(data.error || "Erreur mise à jour");
+        setError(data.error || "خطأ في التحديث");
       }
     } catch (err) {
-      setError("Erreur serveur: " + err.message);
+      setError("خطأ في الخادم: " + err.message);
     } finally {
       setLoading(false);
     }
@@ -122,8 +122,8 @@ export default function DesignerProfile() {
   if (!user || user.role !== "DESIGNER") return null;
 
   return (
-    <div style={{ maxWidth: "600px", margin: "2rem auto", padding: "0 1rem" }}>
-      <h1 style={{ color: "#8b5cf6" }}>🎨 Mon Profil Concepteur</h1>
+    <div dir="rtl" lang="ar" style={{ maxWidth: "600px", margin: "2rem auto", padding: "0 1rem" }}>
+      <h1 style={{ color: "#8b5cf6" }}>🎨 ملفي الشخصي كمصمم</h1>
 
       {error && (
         <div style={{
@@ -158,13 +158,13 @@ export default function DesignerProfile() {
         {/* Photo */}
         <div style={{ marginBottom: "1.5rem" }}>
           <label style={{ display: "block", fontWeight: "600", marginBottom: "0.5rem" }}>
-            📸 Photo de Profil
+            📸 صورة الملف الشخصي
           </label>
           {form.photo && (
             <div style={{ marginBottom: "1rem" }}>
               <img
                 src={form.photo}
-                alt="Profil"
+                alt="الملف الشخصي"
                 style={{
                   width: "100px",
                   height: "100px",
@@ -191,14 +191,14 @@ export default function DesignerProfile() {
         {/* Matières */}
         <div style={{ marginBottom: "1.5rem" }}>
           <label style={{ display: "block", fontWeight: "600", marginBottom: "0.5rem" }}>
-            📚 Types de Cours Créés
+            📚 أنواع الدورات المُنشأة
           </label>
           <div style={{ display: "flex", gap: "0.5rem", marginBottom: "0.5rem" }}>
             <input
               type="text"
               value={matiereInput}
               onChange={(e) => setMatiereInput(e.target.value)}
-              placeholder="Ex: Python, Web Design"
+              placeholder="مثال: بايثون، تصميم الويب"
               style={{
                 flex: 1,
                 padding: "0.75rem",
@@ -218,7 +218,7 @@ export default function DesignerProfile() {
                 cursor: "pointer",
               }}
             >
-              ➕ Ajouter
+              ➕ إضافة
             </button>
           </div>
           <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem" }}>
@@ -251,14 +251,14 @@ export default function DesignerProfile() {
         {/* Niveaux */}
         <div style={{ marginBottom: "1.5rem" }}>
           <label style={{ display: "block", fontWeight: "600", marginBottom: "0.5rem" }}>
-            📊 Niveaux Ciblés
+            📊 المستويات المستهدفة
           </label>
           <div style={{ display: "flex", gap: "0.5rem", marginBottom: "0.5rem" }}>
             <input
               type="text"
               value={niveauInput}
               onChange={(e) => setNiveauInput(e.target.value)}
-              placeholder="Ex: Débutant, Intermédiaire"
+              placeholder="مثال: مبتدئ، متوسط"
               style={{
                 flex: 1,
                 padding: "0.75rem",
@@ -278,7 +278,7 @@ export default function DesignerProfile() {
                 cursor: "pointer",
               }}
             >
-              ➕ Ajouter
+              ➕ إضافة
             </button>
           </div>
           <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem" }}>
@@ -311,7 +311,7 @@ export default function DesignerProfile() {
         {/* Téléphone */}
         <div style={{ marginBottom: "1.5rem" }}>
           <label style={{ display: "block", fontWeight: "600", marginBottom: "0.5rem" }}>
-            📱 Téléphone
+            📱 الهاتف
           </label>
           <input
             type="tel"
@@ -333,13 +333,13 @@ export default function DesignerProfile() {
         {/* Bio */}
         <div style={{ marginBottom: "1.5rem" }}>
           <label style={{ display: "block", fontWeight: "600", marginBottom: "0.5rem" }}>
-            ✍️ Bio / Présentation
+            ✍️ نبذة / تقديم
           </label>
           <textarea
             name="bio"
             value={form.bio}
             onChange={handleChange}
-            placeholder="Décrivez votre expertise et vos créations..."
+            placeholder="صف خبرتك وإبداعاتك..."
             rows="4"
             style={{
               width: "100%",
@@ -369,7 +369,7 @@ export default function DesignerProfile() {
             cursor: loading ? "not-allowed" : "pointer",
           }}
         >
-          {loading ? "⏳ Enregistrement..." : "✅ Enregistrer mon profil"}
+          {loading ? "⏳ جارٍ الحفظ..." : "✅ حفظ ملفي الشخصي"}
         </button>
       </form>
     </div>

@@ -2,13 +2,13 @@ import prisma from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 
 export default async function handler(req, res) {
-  if (req.method !== "POST") return res.status(405).json({ error: "Not allowed" });
+  if (req.method !== "POST") return res.status(405).json({ error: "غير مسموح" });
 
   try {
     const { token, password } = req.body;
 
     if (!token || !password) {
-      return res.status(400).json({ error: "Token et mot de passe sont requis" });
+      return res.status(400).json({ error: "الرمز وكلمة المرور مطلوبان" });
     }
 
     // Chercher l'utilisateur avec ce token et vérifier si le token n'a pas expiré
@@ -22,7 +22,7 @@ export default async function handler(req, res) {
     });
 
     if (!user) {
-      return res.status(400).json({ error: "Le lien de réinitialisation est invalide ou a expiré" });
+      return res.status(400).json({ error: "رابط إعادة التعيين غير صالح أو منتهي الصلاحية" });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -36,7 +36,7 @@ export default async function handler(req, res) {
       },
     });
 
-    return res.status(200).json({ success: true, message: "Mot de passe réinitialisé avec succès!" });
+    return res.status(200).json({ success: true, message: "تم إعادة تعيين كلمة المرور بنجاح!" });
 
   } catch (error) {
     console.error(error);

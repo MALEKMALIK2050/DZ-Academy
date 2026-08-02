@@ -1,9 +1,54 @@
 import { NextResponse } from "next/server";
 import { jwtVerify } from "jose";
 
+const ALLOWED_ORIGINS = [
+  "https://cb-academy-dz.vercel.app",
+  "http://localhost:3000",
+  "http://localhost:8081",
+  "http://localhost:19006",
+];
+
+function getCorsOrigin(origin) {
+  if (!origin) return "https://cb-academy-dz.vercel.app";
+  if (ALLOWED_ORIGINS.includes(origin)) return origin;
+  if (process.env.NODE_ENV !== "production" && origin.startsWith("http://localhost:")) {
+    return origin;
+  }
+  return "https://cb-academy-dz.vercel.app";
+}
+
+const defaultCorsHeaders = {
+  "Access-Control-Allow-Methods": "GET, POST, PUT, PATCH, DELETE, OPTIONS",
+  "Access-Control-Allow-Headers":
+    "X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Authorization",
+  "Access-Control-Max-Age": "86400",
+};
+
 export async function middleware(req) {
-  const token = req.cookies.get("token")?.value;
   const { pathname } = req.nextUrl;
+
+  if (pathname.startsWith("/api/")) {
+    const origin = req.headers.get("origin");
+    const allowOrigin = getCorsOrigin(origin);
+    
+    const apiHeaders = {
+      ...defaultCorsHeaders,
+      "Access-Control-Allow-Origin": allowOrigin,
+      "Access-Control-Allow-Credentials": "true",
+    };
+
+    if (req.method === "OPTIONS") {
+      return new NextResponse(null, { status: 200, headers: apiHeaders });
+    }
+
+    const response = NextResponse.next();
+    Object.entries(apiHeaders).forEach(([key, value]) => {
+      response.headers.set(key, value);
+    });
+    return response;
+  }
+
+  const token = req.cookies.get("token")?.value;
 
   const publicRoutes = ["/", "/login", "/register"];
   if (publicRoutes.includes(pathname)) {
@@ -42,5 +87,5 @@ export async function middleware(req) {
 }
 
 export const config = {
-  matcher: ["/dashboard/:path*"],
+  matcher: ["/dashboard/:path*", "/api/:path*"],
 };

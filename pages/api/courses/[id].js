@@ -40,7 +40,7 @@ export default async function handler(req, res) {
           teachers: { select: { id: true, nom: true, prenom: true } },
           pretest: { include: { questions: true } },
           pretestResults: {
-            where: { studentId: user.id }
+            where: { studentId: parseInt(user.id) }
           },
           chapters: {
             orderBy: { ordre: "asc" },

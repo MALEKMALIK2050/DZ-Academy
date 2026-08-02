@@ -22,7 +22,7 @@ export default function DashboardHeader({ user, roleIcon, customTitle }) {
   return (
     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "2rem", background: "white", padding: "1.5rem 2rem", borderRadius: "20px", boxShadow: "0 10px 30px rgba(0,0,0,0.05)" }}>
       <div>
-        <h1 style={{ margin: 0, fontSize: "1.8rem", color: "#2d3748" }}>{roleIcon} {customTitle || `Bienvenue ${user.prenom || user.nom || "Utilisateur"} !`}</h1>
+        <h1 style={{ margin: 0, fontSize: "1.8rem", color: "#2d3748" }}>{roleIcon} {customTitle || `مرحبًا ${user.prenom || user.nom || "المستخدم"} !`}</h1>
         <p style={{ color: "#718096", margin: "0.25rem 0 0", fontSize: "1rem" }}>{user.email}</p>
       </div>
 
@@ -38,7 +38,7 @@ export default function DashboardHeader({ user, roleIcon, customTitle }) {
               user.prenom?.[0] || user.nom?.[0] || "👤"
             )}
           </div>
-          <span style={{ fontWeight: "bold", color: "#4a5568" }}>Profil</span>
+          <span style={{ fontWeight: "bold", color: "#4a5568" }}>الملف الشخصي</span>
           <span style={{ fontSize: "0.8rem", color: "#a0aec0", transform: open ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s" }}>▼</span>
         </div>
 
@@ -50,7 +50,7 @@ export default function DashboardHeader({ user, roleIcon, customTitle }) {
               onMouseOver={(e) => e.currentTarget.style.background = "#f8fafc"}
               onMouseOut={(e) => e.currentTarget.style.background = "none"}
             >
-              <span>👤</span> Compléter votre profil
+              <span>👤</span> إكمال ملفك الشخصي
             </button>
             <button 
               onClick={() => router.push("/dashboard/settings/password")}
@@ -58,7 +58,7 @@ export default function DashboardHeader({ user, roleIcon, customTitle }) {
               onMouseOver={(e) => e.currentTarget.style.background = "#f8fafc"}
               onMouseOut={(e) => e.currentTarget.style.background = "none"}
             >
-              <span>🔑</span> Changer le mot de passe
+              <span>🔑</span> تغيير كلمة المرور
             </button>
           </div>
         )}

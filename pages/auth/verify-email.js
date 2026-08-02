@@ -5,7 +5,7 @@ export default function VerifyEmailPage() {
   const router = useRouter();
   const { token } = router.query;
   const [status, setStatus] = useState("loading"); // "loading", "success", "error"
-  const [message, setMessage] = useState("Vérification de votre compte en cours...");
+  const [message, setMessage] = useState("جارٍ التحقق من حسابك...");
 
   useEffect(() => {
     // On attend que Next.js charge l'URL et que le token soit disponible
@@ -21,14 +21,15 @@ export default function VerifyEmailPage() {
 
         if (res.ok) {
           setStatus("success");
-          setMessage(data.message || "Votre compte a été vérifié avec succès !");
+          setMessage(data.message || "ثم التاكد من حسابك بنجاح!");
         } else {
           setStatus("error");
-          setMessage(data.error || "Le lien de vérification est invalide ou a expiré.");
+          setMessage(data.error || "الرابط الذي تحاول الدخول اليه غير صالح او انتهت مدته");
         }
       } catch (err) {
         setStatus("error");
-        setMessage("Erreur de connexion avec le serveur.");
+        setMessage("حدث خطأ في الاتصال بالخادم");
+
       }
     };
 
@@ -56,31 +57,32 @@ export default function VerifyEmailPage() {
       }}>
         {status === "loading" && (
           <div>
-            <h2 style={{ color: "#059669", marginBottom: "1rem" }}>⏳ Vérification...</h2>
+            <h2 style={{ color: "#059669", marginBottom: "1rem" }}>⏳  جاري التحقق من حسابك</h2>
             <p style={{ color: "#4b5563" }}>{message}</p>
           </div>
         )}
 
         {status === "success" && (
           <div>
-            <h2 style={{ color: "#059669", marginBottom: "1rem" }}>✅ Félicitations !</h2>
+            <h2 style={{ color: "#059669", marginBottom: "1rem" }}>✅ تهانينا !</h2>
             <p style={{ color: "#065f46", background: "#f0fdf4", padding: "0.75rem", borderRadius: "8px", border: "1px solid #bbf7d0", marginBottom: "1.5rem" }}>
               {message}
             </p>
             <button onClick={() => router.push("/login")} style={btnStyle}>
-              Se connecter
+              الدخول الى حسابك
             </button>
           </div>
         )}
 
         {status === "error" && (
           <div>
-            <h2 style={{ color: "#dc2626", marginBottom: "1rem" }}>❌ Échec de la vérification</h2>
+            <h2 style={{ color: "#dc2626", marginBottom: "1rem" }}>❌ فشلت عملية التحقق</h2>
             <p style={{ color: "#991b1b", background: "#fef2f2", padding: "0.75rem", borderRadius: "8px", border: "1px solid #fecaca", marginBottom: "1.5rem" }}>
               {message}
             </p>
             <button onClick={() => router.push("/register")} style={{ ...btnStyle, background: "#dc2626" }}>
-              Recommencer l'inscription
+              حاول التسجيل مرة أخرى
+
             </button>
           </div>
         )}

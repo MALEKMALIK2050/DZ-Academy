@@ -2,11 +2,11 @@ import prisma from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 
+import { setCorsHeaders } from "@/lib/cors";
+
 export default async function handler(req, res) {
   // ✅ CORS HEADERS
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  setCorsHeaders(req, res);
 
   // ✅ Gerer les preflight requests (OPTIONS)
   if (req.method === 'OPTIONS') {
@@ -16,7 +16,7 @@ export default async function handler(req, res) {
   if (req.method !== "POST") {
     return res.status(405).json({
       success: false,
-      error: "Method not allowed",
+      error: "الطريقة غير مسموح بها",
     });
   }
 
@@ -26,7 +26,7 @@ export default async function handler(req, res) {
     if (!email || !password) {
       return res.status(400).json({
         success: false,
-        error: "Missing fields",
+        error: "حقول ناقصة",
       });
     }
 
@@ -38,16 +38,16 @@ export default async function handler(req, res) {
     if (!user) {
       return res.status(401).json({
         success: false,
-        error: "Invalid credentials",
+        error: "بيانات الدخول غير صحيحة",
       });
     }
 
     if (!user.active) return res.status(403).json({
-      error: "Compte désactivé"
+      error: "الحساب معطّل"
     }); 
 
     if (user.verificationToken && user.role === "STUDENT") {
-      return res.status(403).json({ error: "Veuillez activer votre compte via l'email reçu" });
+      return res.status(403).json({ error: "يرجى تفعيل حسابك عبر البريد الإلكتروني المُستلم" });
     }
 
     const isValid = await bcrypt.compare(password, user.password);
@@ -55,14 +55,14 @@ export default async function handler(req, res) {
     if (!isValid) {
       return res.status(401).json({
         success: false,
-        error: "Invalid credentials",
+        error: "بيانات الدخول غير صحيحة",
       });
     }
 
     if (!process.env.JWT_SECRET) {
       return res.status(500).json({
         success: false,
-        error: "Server config error",
+        error: "خطأ في إعدادات الخادم",
       });
     }
 
@@ -96,7 +96,7 @@ export default async function handler(req, res) {
     console.error("LOGIN ERROR:", error);
     return res.status(500).json({
       success: false,
-      error: "Server error",
+      error: "خطأ في الخادم",
     });
   }
 }

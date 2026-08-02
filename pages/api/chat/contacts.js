@@ -29,10 +29,10 @@ export default async function handler(req, res) {
       });
 
       groups = [
-        { id: "TOUS",      label: "📢 Tout le monde",     color: "#3182ce" },
-        { id: "TEACHERS",  label: "👨‍🏫 Tous les teachers",  color: "#38a169" },
-        { id: "DESIGNERS", label: "🎨 Tous les designers",  color: "#805ad5" },
-        { id: "ELEVES",    label: "👨‍🎓 Tous les élèves",    color: "#dd6b20" },
+        { id: "TOUS",      label: "📢 الجميع",     color: "#3182ce" },
+        { id: "TEACHERS",  label: "👨‍🏫 جميع الأساتذة",  color: "#38a169" },
+        { id: "DESIGNERS", label: "🎨 جميع المصممين",  color: "#805ad5" },
+        { id: "ELEVES",    label: "👨‍🎓 جميع التلاميذ",    color: "#dd6b20" },
       ];
     }
 
@@ -61,7 +61,7 @@ else if (user.role === "STUDENT") {
   const coEleves = enrollments.flatMap((e) => e.course.enrollments.map((en) => en.student));
 
   groups = [
-    { id: "ELEVES", label: "👨‍🎓 Groupe Élèves", color: "#dd6b20" },
+    { id: "ELEVES", label: "👨‍🎓 مجموعة التلاميذ", color: "#dd6b20" },
   ];
 
   const allContacts = [...allTeachers, ...coEleves];

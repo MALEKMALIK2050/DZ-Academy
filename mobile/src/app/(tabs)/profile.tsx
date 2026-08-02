@@ -1,9 +1,10 @@
 import { ThemedView } from '@/components/themed-view';
 import { BottomTabInset, Spacing } from '@/constants/theme';
 import { useAuth } from '@/context/auth-context';
+import { useBadges, Badge } from '@/hooks/use-badges';
 import { Image } from 'expo-image';
-import { router } from 'expo-router';
-import React, { useState } from 'react';
+import { router, useFocusEffect } from 'expo-router';
+import React, { useState, useCallback } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -105,12 +106,42 @@ Pour suivre les formations sur la plateforme CB ACADEMY, l'utilisateur doit disp
 
 ⚠️ Important : L'utilisateur reconnaît que l'insuffisance de ses équipements techniques ne pourra en aucun cas engager la responsabilité de CB ACADEMY.`;
 
+// ── Badge card component ──
+function BadgeCard({ badge }: { badge: Badge }) {
+  return (
+    <View style={[badgeStyles.card, !badge.earned && badgeStyles.cardLocked]}>
+      <View style={[badgeStyles.iconCircle, !badge.earned && badgeStyles.iconCircleLocked]}>
+        <Text style={badgeStyles.icon}>{badge.icon}</Text>
+      </View>
+      <Text style={[badgeStyles.title, !badge.earned && badgeStyles.titleLocked]} numberOfLines={1}>
+        {badge.title}
+      </Text>
+      <Text style={[badgeStyles.desc, !badge.earned && badgeStyles.descLocked]} numberOfLines={2}>
+        {badge.description}
+      </Text>
+      <View style={[badgeStyles.pointsPill, !badge.earned && badgeStyles.pointsPillLocked]}>
+        <Text style={[badgeStyles.pointsText, !badge.earned && badgeStyles.pointsTextLocked]}>
+          {badge.earned ? `✓ ${badge.points} XP` : `🔒 ${badge.points} XP`}
+        </Text>
+      </View>
+    </View>
+  );
+}
+
 export default function ProfileScreen() {
-  const { user, logout } = useAuth();
+  const { user, logout, fetchStudentProfile } = useAuth();
+  const { data: badgesData, loading: badgesLoading, fetchBadges } = useBadges();
   const insets = useSafeAreaInsets();
   const [loggingOut, setLoggingOut] = React.useState(false);
   const [showCgu, setShowCgu] = useState(false);
   const [showPrereq, setShowPrereq] = useState(false);
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchStudentProfile();
+      fetchBadges();
+    }, [])
+  );
 
   const handleLogout = () => {
     Alert.alert('Déconnexion', 'Êtes-vous sûr de vouloir vous déconnecter ?', [
@@ -156,7 +187,7 @@ export default function ProfileScreen() {
   };
 
   return (
-    <ThemedView style={styles.container}>
+    <View style={[styles.container, { backgroundColor: '#FDFBF7' }]}>
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={[
@@ -213,6 +244,81 @@ export default function ProfileScreen() {
               Rôle : {user.role}
             </Text>
           ) : null}
+        </ThemedView>
+
+        {/* ── Section Badges & XP ── */}
+        <ThemedView style={styles.section}>
+          <Text style={styles.sectionTitle}>🏆 Mes Badges & XP</Text>
+
+          {badgesLoading && !badgesData ? (
+            <View style={badgeStyles.loadingContainer}>
+              <ActivityIndicator color={Colors.primary} size="small" />
+              <Text style={badgeStyles.loadingText}>Chargement...</Text>
+            </View>
+          ) : badgesData ? (
+            <>
+              {/* XP & Level card */}
+              <View style={badgeStyles.xpCard}>
+                <View style={badgeStyles.xpHeader}>
+                  <View>
+                    <Text style={badgeStyles.rankName}>{badgesData.levelStats.rankName}</Text>
+                    <Text style={badgeStyles.levelLabel}>Niveau {badgesData.levelStats.level}</Text>
+                  </View>
+                  <View style={badgeStyles.xpPill}>
+                    <Text style={badgeStyles.xpPillText}>⚡ {badgesData.xp} XP</Text>
+                  </View>
+                </View>
+
+                {/* Progress bar */}
+                <View style={badgeStyles.progressBarBg}>
+                  <View
+                    style={[
+                      badgeStyles.progressBarFill,
+                      { width: `${Math.min(badgesData.levelStats.progressPercent, 100)}%` },
+                    ]}
+                  />
+                </View>
+                <Text style={badgeStyles.progressLabel}>
+                  {badgesData.levelStats.nextThreshold === Infinity
+                    ? 'Niveau maximum atteint ! 🎉'
+                    : `${badgesData.levelStats.nextLevelXP} XP restants pour le niveau ${badgesData.levelStats.level + 1}`}
+                </Text>
+
+                {/* Stats row */}
+                <View style={badgeStyles.statsRow}>
+                  <View style={badgeStyles.statItem}>
+                    <Text style={badgeStyles.statValue}>{badgesData.earnedBadgesCount}</Text>
+                    <Text style={badgeStyles.statLabel}>Obtenus</Text>
+                  </View>
+                  <View style={badgeStyles.statDivider} />
+                  <View style={badgeStyles.statItem}>
+                    <Text style={badgeStyles.statValue}>{badgesData.totalBadgesCount}</Text>
+                    <Text style={badgeStyles.statLabel}>Total</Text>
+                  </View>
+                  <View style={badgeStyles.statDivider} />
+                  <View style={badgeStyles.statItem}>
+                    <Text style={badgeStyles.statValue}>
+                      {badgesData.totalBadgesCount > 0
+                        ? Math.round((badgesData.earnedBadgesCount / badgesData.totalBadgesCount) * 100)
+                        : 0}%
+                    </Text>
+                    <Text style={badgeStyles.statLabel}>Complétion</Text>
+                  </View>
+                </View>
+              </View>
+
+              {/* Badges grid */}
+              <View style={badgeStyles.grid}>
+                {badgesData.badges.map((badge) => (
+                  <BadgeCard key={badge.id} badge={badge} />
+                ))}
+              </View>
+            </>
+          ) : (
+            <View style={badgeStyles.loadingContainer}>
+              <Text style={badgeStyles.loadingText}>Impossible de charger les badges</Text>
+            </View>
+          )}
         </ThemedView>
 
         {/* Sections informatives */}
@@ -345,7 +451,7 @@ export default function ProfileScreen() {
           </Text>
         </ThemedView>
       </ScrollView>
-    </ThemedView>
+    </View>
   );
 }
 
@@ -545,5 +651,187 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginBottom: Spacing.one,
     fontWeight: '500',
+  },
+});
+
+// ── Badge-specific styles ──
+const badgeStyles = StyleSheet.create({
+  loadingContainer: {
+    alignItems: 'center',
+    paddingVertical: Spacing.five,
+  },
+  loadingText: {
+    marginTop: Spacing.two,
+    color: Colors.darkGray,
+    fontSize: 13,
+  },
+  xpCard: {
+    backgroundColor: 'white',
+    borderRadius: 12,
+    padding: Spacing.four,
+    marginBottom: Spacing.four,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  xpHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: Spacing.three,
+  },
+  rankName: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: Colors.dark,
+  },
+  levelLabel: {
+    fontSize: 13,
+    color: Colors.darkGray,
+    marginTop: 2,
+  },
+  xpPill: {
+    backgroundColor: '#FFF7ED',
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#FDBA74',
+  },
+  xpPillText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#EA580C',
+  },
+  progressBarBg: {
+    height: 10,
+    backgroundColor: '#F3F4F6',
+    borderRadius: 5,
+    overflow: 'hidden',
+    marginBottom: Spacing.two,
+  },
+  progressBarFill: {
+    height: '100%',
+    backgroundColor: Colors.primary,
+    borderRadius: 5,
+  },
+  progressLabel: {
+    fontSize: 12,
+    color: Colors.darkGray,
+    textAlign: 'center',
+    marginBottom: Spacing.three,
+  },
+  statsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    alignItems: 'center',
+    paddingTop: Spacing.three,
+    borderTopWidth: 1,
+    borderTopColor: '#F3F4F6',
+  },
+  statItem: {
+    alignItems: 'center',
+    flex: 1,
+  },
+  statValue: {
+    fontSize: 20,
+    fontWeight: '800',
+    color: Colors.dark,
+  },
+  statLabel: {
+    fontSize: 11,
+    color: Colors.darkGray,
+    marginTop: 2,
+  },
+  statDivider: {
+    width: 1,
+    height: 30,
+    backgroundColor: '#E5E7EB',
+  },
+  grid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+  },
+  card: {
+    backgroundColor: 'white',
+    borderRadius: 12,
+    padding: 14,
+    width: '47%',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 3,
+    elevation: 1,
+  },
+  cardLocked: {
+    backgroundColor: '#FAFAFA',
+    borderColor: '#F3F4F6',
+  },
+  iconCircle: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    backgroundColor: '#F0FDF4',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 8,
+    borderWidth: 2,
+    borderColor: Colors.primary,
+  },
+  iconCircleLocked: {
+    backgroundColor: '#F9FAFB',
+    borderColor: '#D1D5DB',
+  },
+  icon: {
+    fontSize: 24,
+  },
+  title: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: Colors.dark,
+    textAlign: 'center',
+    marginBottom: 4,
+  },
+  titleLocked: {
+    color: '#9CA3AF',
+  },
+  desc: {
+    fontSize: 11,
+    color: Colors.darkGray,
+    textAlign: 'center',
+    lineHeight: 15,
+    marginBottom: 8,
+    minHeight: 30,
+  },
+  descLocked: {
+    color: '#C0C4CC',
+  },
+  pointsPill: {
+    backgroundColor: '#F0FDF4',
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#BBF7D0',
+  },
+  pointsPillLocked: {
+    backgroundColor: '#F9FAFB',
+    borderColor: '#E5E7EB',
+  },
+  pointsText: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: Colors.primary,
+  },
+  pointsTextLocked: {
+    color: '#9CA3AF',
   },
 });

@@ -12,16 +12,22 @@ export default function DashboardLayout({ user, roleIcon, customTitle, tabs, act
   }, []);
 
   return (
-    <div className="dashboard-layout">
+    <div className="dashboard-layout" dir="rtl" lang="ar">
       {/* Sidebar (Desktop uniquement) */}
       {!isMobile && <aside className="dashboard-sidebar">
-        <div className="dashboard-sidebar-header" style={{ width: "100%", height: "260px", padding: "0", background: "white", borderBottom: "1px solid #e2e8f0", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center" }}>
-          <img 
-            src="/logo.png" 
-            alt="Logo" 
-            style={{ width: "100%", height: "100%", objectFit: "contain", cursor: "pointer", display: "block" }} 
-            onClick={() => window.location.href = "/"}
-          />
+        <div className="dashboard-sidebar-header" style={{ width: "100%", height: "260px", padding: "1rem 0", background: "transparent", borderBottom: "1px solid #e2e8f0", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <div className="dashboard-logo-wrapper" onClick={() => window.location.href = "/"}>
+            <div className="logo-light-aura"></div>
+            <div className="logo-light-spin-ring"></div>
+            <div className="logo-flare logo-flare-tl"></div>
+            <div className="logo-flare logo-flare-br"></div>
+            <div className="logo-light-sweep"></div>
+            <img 
+              src="/logo.png" 
+              alt="Logo" 
+              className="dashboard-logo-img" 
+            />
+          </div>
         </div>
 
         <nav className="dashboard-sidebar-nav">
@@ -45,7 +51,7 @@ export default function DashboardLayout({ user, roleIcon, customTitle, tabs, act
             {tabs.filter(t => t.isFooter).map((tab) => (
               <button
                 key={tab.key}
-                className={`dashboard-nav-item footer-item ${activeTab === tab.key ? "active" : ""}`}
+                className={`dashboard-nav-item footer-item btn-dent-orange ${activeTab === tab.key ? "active" : ""}`}
                 onClick={() => onTabChange(tab.key)}
               >
                 <span style={{ fontSize: "1.4rem" }}>{tab.icon}</span>
@@ -91,6 +97,30 @@ export default function DashboardLayout({ user, roleIcon, customTitle, tabs, act
           {children}
         </div>
       </main>
+
+      <style jsx global>{`
+        /* ✅ RTL : forcer le sidebar à droite quel que soit le système de positionnement */
+        .dashboard-layout {
+          direction: rtl;
+        }
+        .dashboard-layout[dir="rtl"] {
+          flex-direction: row;
+        }
+        /* Si le sidebar est en position fixed/absolute avec left:0 dans le CSS global existant */
+        .dashboard-sidebar {
+          left: auto !important;
+          right: 0 !important;
+        }
+        .dashboard-main {
+          margin-left: 0 !important;
+          margin-right: var(--sidebar-width, 260px);
+        }
+        @media (max-width: 1024px) {
+          .dashboard-main {
+            margin-right: 0 !important;
+          }
+        }
+      `}</style>
 
       <style jsx>{`
         .nav-badge {
@@ -172,25 +202,25 @@ export default function DashboardLayout({ user, roleIcon, customTitle, tabs, act
         }
         
         .footer-item {
-          background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%) !important;
-          color: #0369a1 !important;
+          background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%) !important;
+          color: #b45309 !important;
           margin: 0.5rem 1rem;
           width: calc(100% - 2rem) !important;
           border-radius: 12px;
-          border: 1px solid #bae6fd !important;
+          border: 1px solid #fde68a !important;
           box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
         }
 
         .footer-item:hover {
-          background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%) !important;
+          background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%) !important;
           transform: translateY(-2px);
           box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
         }
 
         .footer-item.active {
-          background: #0369a1 !important;
+          background: #f59e0b !important;
           color: white !important;
-          border-color: #0369a1 !important;
+          border-color: #f59e0b !important;
         }
 
         @media (max-width: 1024px) {

@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "mobile",
-    "slug": "mobile",
+    "name": "DZ Academy",
+    "slug": "dz-academy",
     "version": "1.0.0",
     "updates": {
       "enabled": false,
@@ -9,7 +9,7 @@
     },
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "mobile",
+    "scheme": "dzacademy",
     "userInterfaceStyle": "automatic",
     "ios": {
       "icon": "./assets/expo.icon"
@@ -22,7 +22,7 @@
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
-      "package": "com.anonymous.mobile"
+      "package": "com.dzacademy.mobile"
     },
     "web": {
       "output": "static",
@@ -33,7 +33,7 @@
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#208AEF",
+          "backgroundColor": "#10B981",
           "android": {
             "image": "./assets/images/splash-icon.png",
             "imageWidth": 76
@@ -42,11 +42,29 @@
       ],
       "expo-web-browser",
       "expo-secure-store",
-      "expo-sharing"
+      "expo-sharing",
+      "expo-video",
+      "expo-audio",
+      "expo-asset",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "L'application a besoin d'accéder à vos photos pour uploader la preuve de paiement.",
+          "cameraPermission": "L'application a besoin d'accéder à l'appareil photo pour photographier la preuve de paiement."
+        }
+      ],
+      "expo-document-picker"
     ],
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "7eaccfec-ee53-4ea6-b21f-9c0994146950"
+      }
+    },
+    "owner": "malekmalek2030"
   }
 }

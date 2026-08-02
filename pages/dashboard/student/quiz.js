@@ -23,7 +23,7 @@ export default function StudentQuizPage() {
         const res = await fetch(`/api/student/quiz?quizId=${quizId}`);
         if (!res.ok) {
           const errData = await res.json();
-          throw new Error(errData.error || "Impossible de charger le quiz...");
+          throw new Error(errData.error || "تعذّر تحميل الاختبار...");
         }
         const data = await res.json();
         setQuizInfo(data);
@@ -58,7 +58,7 @@ export default function StudentQuizPage() {
     if (!quizId) return;
 
     const unanswered = quizInfo.quiz.questions.filter(q => answers[q.id] === undefined || answers[q.id] === "");
-    if (unanswered.length > 0 && !confirm(`Il reste ${unanswered.length} question(s) non traitée(s). Voulez-vous continuer ?`)) {
+    if (unanswered.length > 0 && !confirm(`بقي ${unanswered.length} سؤال (أسئلة) بدون إجابة. هل تريد المتابعة؟`)) {
       return;
     }
 
@@ -75,7 +75,7 @@ export default function StudentQuizPage() {
 
       if (!res.ok) {
         const errData = await res.json();
-        throw new Error(errData.error || "Échec de l'enregistrement de vos réponses.");
+        throw new Error(errData.error || "فشل تسجيل إجاباتك.");
       }
 
       const data = await res.json();
@@ -90,8 +90,8 @@ export default function StudentQuizPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-6">
-        <div className="text-indigo-600 font-bold mb-4">Chargement du questionnaire...</div>
+      <div dir="rtl" lang="ar" className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-6">
+        <div className="text-indigo-600 font-bold mb-4">جارٍ تحميل الاختبار...</div>
         <div className="w-16 h-1 bg-slate-200 rounded-full overflow-hidden">
           <div className="bg-indigo-600 h-full animate-ping" />
         </div>
@@ -101,12 +101,12 @@ export default function StudentQuizPage() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-6">
+      <div dir="rtl" lang="ar" className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-6">
         <div className="p-6 bg-white border border-red-200 rounded-3xl max-w-md shadow-sm text-center">
-          <div className="text-red-500 font-bold mb-2">Erreur Fatale</div>
+          <div className="text-red-500 font-bold mb-2">خطأ جسيم</div>
           <p className="text-slate-600 text-sm mb-6">{error}</p>
           <button onClick={() => router.back()} className="px-5 py-2.5 bg-slate-800 text-white rounded-xl text-xs font-bold transition">
-            Retourner en arrière
+            العودة إلى الوراء
           </button>
         </div>
       </div>
@@ -117,7 +117,7 @@ export default function StudentQuizPage() {
 
   if (submitted && result) {
     return (
-      <div className="min-h-screen bg-slate-50 py-12 px-4 text-slate-800">
+      <div dir="rtl" lang="ar" className="min-h-screen bg-slate-50 py-12 px-4 text-slate-800">
         <div className="max-w-3xl mx-auto bg-white rounded-3xl p-6 md:p-8 border border-slate-200 shadow-sm">
           <div className="text-center mb-8">
             <div className={`mx-auto w-16 h-16 rounded-full flex items-center justify-center mb-4 ${result.reussi ? "bg-emerald-100 text-emerald-600" : "bg-red-100 text-red-600"}`}>
@@ -131,8 +131,8 @@ export default function StudentQuizPage() {
                 </svg>
               )}
             </div>
-            <h1 className="text-2xl font-black">{result.reussi ? "Félicitations, validé !" : "Score insuffisant"}</h1>
-            <p className="text-slate-500 text-xs mt-1">Vous avez obtenu un score de {result.score}% (Seuil requis : {result.seuil}%)</p>
+            <h1 className="text-2xl font-black">{result.reussi ? "تهانينا، تم القبول!" : "النتيجة غير كافية"}</h1>
+            <p className="text-slate-500 text-xs mt-1">لقد حصلت على نتيجة {result.score}% (النسبة المطلوبة: {result.seuil}%)</p>
           </div>
 
           <div className="space-y-4 mb-8">
@@ -140,13 +140,13 @@ export default function StudentQuizPage() {
               const qOriginal = quiz.questions.find(q => q.id === det.questionId);
               return (
                 <div key={det.questionId} className={`p-4 rounded-2xl border ${det.isCorrect ? "bg-emerald-50/50 border-emerald-100" : "bg-rose-50/50 border-rose-100"}`}>
-                  <p className="font-bold text-sm text-slate-800 mb-1">Question {index + 1}: {qOriginal?.questionText}</p>
+                  <p className="font-bold text-sm text-slate-800 mb-1">السؤال {index + 1}: {qOriginal?.questionText}</p>
                   <p className="text-xs">
-                    Votre réponse : <strong className="text-slate-900">{Array.isArray(det.userAnswer) ? det.userAnswer.join(", ") : String(det.userAnswer || "Vide")}</strong>
+                    إجابتك: <strong className="text-slate-900">{Array.isArray(det.userAnswer) ? det.userAnswer.join("، ") : String(det.userAnswer || "فارغة")}</strong>
                   </p>
                   {!det.isCorrect && qOriginal?.explanation && (
                     <p className="text-xs text-indigo-700 font-medium mt-2 bg-indigo-50/50 p-2.5 rounded-lg border border-indigo-100/30">
-                      💡 Explication : {qOriginal.explanation}
+                      💡 شرح: {qOriginal.explanation}
                     </p>
                   )}
                 </div>
@@ -156,10 +156,10 @@ export default function StudentQuizPage() {
 
           <div className="flex gap-4">
             <button onClick={() => router.reload()} className="flex-1 py-3 border border-slate-200 text-slate-700 bg-white hover:bg-slate-50 rounded-xl text-xs font-bold transition flex items-center justify-center gap-2">
-              Réessayer le quiz
+              إعادة محاولة الاختبار
             </button>
             <Link href="/dashboard/student/courses" className="flex-1 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition flex items-center justify-center">
-              Continuer vers le catalogue
+              المتابعة إلى الكتالوج
             </ Link>
           </div>
         </div>
@@ -168,21 +168,21 @@ export default function StudentQuizPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 py-12 px-4 text-slate-800">
+    <div dir="rtl" lang="ar" className="min-h-screen bg-slate-50 py-12 px-4 text-slate-800">
       <div className="max-w-3xl mx-auto">
         <div className="p-6 md:p-8 bg-white border border-slate-200 rounded-3xl shadow-sm mb-6">
           <span className="text-xs font-bold text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-full uppercase tracking-wider">
-            Évaluation Formative
+            تقييم تكويني
           </span>
           <h1 className="text-2xl font-black mt-2 text-slate-900">{quiz.title}</h1>
-          <p className="text-slate-500 text-xs mt-1">Nombre maximal de tentatives : {maxAttempts === Infinity ? "Illimité" : maxAttempts}</p>
+          <p className="text-slate-500 text-xs mt-1">العدد الأقصى للمحاولات: {maxAttempts === Infinity ? "غير محدود" : maxAttempts}</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
           {quiz.questions?.map((q, idx) => (
             <div key={q.id} className="p-6 bg-white border border-slate-200 rounded-3xl shadow-sm space-y-4">
               <span className="text-[10px] font-bold text-slate-400 bg-slate-50 px-2 py-0.5 rounded uppercase tracking-wider">
-                Question {idx + 1}
+                السؤال {idx + 1}
               </span>
               <p className="font-bold text-slate-800 text-md">{q.questionText}</p>
 
@@ -199,7 +199,7 @@ export default function StudentQuizPage() {
 
               {q.type === "VRAI_FAUX" && (
                 <div className="grid grid-cols-2 gap-3 pt-2">
-                  {["Vrai", "Faux"].map((opt) => (
+                  {["صحيح", "خاطئ"].map((opt) => (
                     <label key={opt} className={`p-4 border rounded-2xl flex items-center justify-center gap-3 cursor-pointer hover:bg-slate-50 transition ${answers[q.id] === opt ? "border-indigo-600 bg-indigo-50/20" : "border-slate-200"}`}>
                       <input type="radio" name={`q-${q.id}`} value={opt} checked={answers[q.id] === opt} onChange={() => handleAnswerChange(q.id, opt)} className="text-indigo-600 mr-2" />
                       <span className="text-xs font-bold text-slate-700">{opt}</span>
@@ -209,13 +209,13 @@ export default function StudentQuizPage() {
               )}
 
               {q.type === "OUVERTE" && (
-                <input type="text" value={answers[q.id] || ""} onChange={(e) => handleAnswerChange(q.id, e.target.value)} placeholder="Saisissez votre réponse ici..." className="w-full px-4 py-3 border border-slate-200 rounded-xl text-xs bg-slate-50 text-slate-900 focus:bg-white focus:ring-2 focus:ring-indigo-100 focus:border-indigo-600" />
+                <input type="text" value={answers[q.id] || ""} onChange={(e) => handleAnswerChange(q.id, e.target.value)} placeholder="اكتب إجابتك هنا..." className="w-full px-4 py-3 border border-slate-200 rounded-xl text-xs bg-slate-50 text-slate-900 focus:bg-white focus:ring-2 focus:ring-indigo-100 focus:border-indigo-600" />
               )}
             </div>
           ))}
 
           <button type="submit" disabled={submitting} className="w-full py-4 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm rounded-2xl transition flex items-center justify-center gap-2">
-            {submitting ? "Soumission en cours..." : "Soumettre les réponses"}
+            {submitting ? "جارٍ الإرسال..." : "إرسال الإجابات"}
           </button>
         </form>
       </div>

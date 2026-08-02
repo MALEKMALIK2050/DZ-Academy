@@ -9,13 +9,13 @@ export default function Sidebar() {
   return (
     <div className="sidebar">
 
-      <h2>📚 Mon espace</h2>
+      <h2>📚 مساحتي</h2>
 
       <nav>
 
 
         <Link href="/profile">
-          <p>👤 Profil</p>
+          <p>👤 الملف الشخصي</p>
         </Link>
 
         <p
@@ -25,7 +25,7 @@ export default function Sidebar() {
           }}
           style={{ cursor: 'pointer', color: 'red' }}
         >
-          🚪 Déconnexion
+          🚪 تسجيل الخروج
         </p>
 
       </nav>

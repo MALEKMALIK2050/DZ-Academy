@@ -57,3 +57,11 @@ public/uploads
 .vscode/
 .vercel
 .env*
+
+# dev test & debug scripts
+test-*.js
+test_*.js
+testMail.js
+tmp-*.js
+backup.sql
+

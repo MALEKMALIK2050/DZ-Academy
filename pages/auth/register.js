@@ -33,10 +33,10 @@ export default function RegisterPage() {
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data.error || "Une erreur est survenue");
+        throw new Error(data.error || "حدث خطأ ما");
       }
 
-      alert("🎉 Compte créé avec succès ! Vos identifiants ont été envoyés par e-mail.");
+      alert("🎉 تم إنشاء الحساب بنجاح! تم إرسال بيانات الدخول عبر البريد الإلكتروني.");
       router.push("/login"); // Redirection vers votre page de connexion après succès
     } catch (err) {
       setError(err.message);
@@ -46,7 +46,7 @@ export default function RegisterPage() {
   };
 
   return (
-    <div style={{
+    <div dir="rtl" lang="ar" style={{
       minHeight: "100vh",
       display: "flex",
       alignItems: "center",
@@ -63,7 +63,7 @@ export default function RegisterPage() {
         maxWidth: "450px",
         border: "1px solid #e2e8f0"
       }}>
-        <h2 style={{ textAlign: "center", color: "#059669", margin: "0 0 1.5rem" }}>📝 Inscription</h2>
+        <h2 style={{ textAlign: "center", color: "#059669", margin: "0 0 1.5rem" }}>📝 التسجيل</h2>
         
         {error && (
           <div style={{ background: "#fef2f2", color: "#dc2626", padding: "0.75rem", borderRadius: "8px", marginBottom: "1rem", fontSize: "0.9rem", border: "1px solid #fecaca" }}>
@@ -73,19 +73,19 @@ export default function RegisterPage() {
 
         <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
           <div>
-            <label style={{ display: "block", marginBottom: "0.3rem", fontWeight: "600", fontSize: "0.9rem" }}>Prénom</label>
+            <label style={{ display: "block", marginBottom: "0.3rem", fontWeight: "600", fontSize: "0.9rem" }}>الاسم</label>
             <input name="prenom" required value={form.prenom} onChange={handleChange} style={inputStyle} />
           </div>
           <div>
-            <label style={{ display: "block", marginBottom: "0.3rem", fontWeight: "600", fontSize: "0.9rem" }}>Nom</label>
+            <label style={{ display: "block", marginBottom: "0.3rem", fontWeight: "600", fontSize: "0.9rem" }}>اللقب</label>
             <input name="nom" required value={form.nom} onChange={handleChange} style={inputStyle} />
           </div>
           <div>
-            <label style={{ display: "block", marginBottom: "0.3rem", fontWeight: "600", fontSize: "0.9rem" }}>Email</label>
+            <label style={{ display: "block", marginBottom: "0.3rem", fontWeight: "600", fontSize: "0.9rem" }}>البريد الإلكتروني</label>
             <input name="email" type="email" required value={form.email} onChange={handleChange} style={inputStyle} />
           </div>
           <div>
-            <label style={{ display: "block", marginBottom: "0.3rem", fontWeight: "600", fontSize: "0.9rem" }}>Mot de passe</label>
+            <label style={{ display: "block", marginBottom: "0.3rem", fontWeight: "600", fontSize: "0.9rem" }}>كلمة المرور</label>
             <input name="password" type="password" required value={form.password} onChange={handleChange} style={inputStyle} />
           </div>
 
@@ -100,7 +100,7 @@ export default function RegisterPage() {
             fontSize: "1rem",
             marginTop: "0.5rem"
           }}>
-            {loading ? "Inscription en cours..." : "S'inscrire"}
+            {loading ? "جارٍ التسجيل..." : "التسجيل"}
           </button>
         </form>
       </div>

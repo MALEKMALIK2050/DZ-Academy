@@ -98,88 +98,105 @@ export default function ImportPretestPage() {
               <button onClick={() => router.push(`/dashboard/designer/courses/${id}`)} style={{ background: "none", border: "none", color: "#f97316", cursor: "pointer", marginBottom: "0.5rem", fontSize: "0.95rem", fontWeight: "600" }}>
                 ← Retour au cours
               </button>
-              <h1 style={{ 
-                margin: 0, 
-                fontSize: "2.2rem", 
-                fontWeight: "800",
-                background: "linear-gradient(135deg, #059669, #10b981)",
-                WebkitBackgroundClip: "text",
-                WebkitTextFillColor: "transparent"
-              }}>
+              <h1 style={{ margin: 0, fontSize: "1.8rem", fontWeight: "800", color: "#1e293b" }}>
                 📋 Importer le Pretest
               </h1>
+              <p style={{ margin: "0.25rem 0 0", color: "#64748b", fontSize: "0.95rem" }}>
+                Importez les questions du pré-test
+              </p>
             </div>
           </div>
 
-          <div style={{ background: "white", padding: "2rem", borderRadius: "20px", boxShadow: "0 10px 30px rgba(0,0,0,0.02)", border: "1px solid #edf2f7" }}>
+          <div style={{ background: "white", padding: "2.5rem", borderRadius: "20px", boxShadow: "0 10px 30px rgba(0,0,0,0.05)", border: "1px solid #edf2f7" }}>
 
-            <div style={{ marginBottom: "1.5rem", padding: "1rem", background: "#e0f2fe", borderRadius: "8px", border: "1px solid #0284c7" }}>
-              <strong>💡 Format requis:</strong>
-              <p style={{ margin: "0.5rem 0 0", fontSize: "0.9rem" }}>
-                Excel avec colonnes: Question, Option1, Option2, Option3, Option4, Réponse, Points
+            <div style={{ background: "#f8fafc", border: "1px solid #e2e8f0", padding: "1.25rem", borderRadius: "12px", marginBottom: "2rem" }}>
+              <h3 style={{ margin: "0 0 0.5rem", fontSize: "1rem", color: "#334155", display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                💡 Informations requises
+              </h3>
+              <p style={{ margin: 0, color: "#64748b", fontSize: "0.9rem", lineHeight: "1.5" }}>
+                Le fichier Excel doit contenir les colonnes suivantes :<br/>
+                <code>Question | Option1 | Option2 | Option3 | Option4 | Réponse | Points</code>
               </p>
             </div>
 
-            {success ? (
-              <div style={{ padding: "2rem", background: "#dcfce7", borderRadius: "10px", border: "1px solid #86efac", textAlign: "center" }}>
-                <h2 style={{ color: "#059669", margin: "0 0 1rem" }}>✅ Pretest importé!</h2>
-                <p style={{ color: "#166534", marginBottom: "1.5rem" }}>
-                  Le pretest a été créé avec succès.
-                </p>
-              </div>
-            ) : (
-              <form onSubmit={handleSubmit}>
-                <div style={{ marginBottom: "1.5rem" }}>
-                  <label style={{ display: "block", marginBottom: "0.5rem", fontWeight: "600", color: "#4a5568" }}>
-                    Fichier Pretest *:
-                  </label>
-                  <input
-                    type="file"
-                    onChange={handleFileChange}
-                    accept=".xlsx,.csv"
-                    style={{
-                      display: "block",
-                      width: "100%",
-                      padding: "0.75rem",
-                      border: "1px solid #cbd5e0",
-                      borderRadius: "8px",
-                      boxSizing: "border-box",
-                    }}
-                  />
-                  {file && <p style={{ color: "green", marginTop: "0.5rem", fontSize: "0.9rem" }}>✅ {file.name}</p>}
+            <div style={{
+              background: "#f8fafc",
+              border: "2px dashed #cbd5e1",
+              borderRadius: "16px",
+              padding: "3rem 2rem",
+              textAlign: "center",
+              marginBottom: "2rem",
+              transition: "all 0.2s ease"
+            }}>
+              <input
+                type="file"
+                accept=".xlsx,.csv"
+                onChange={handleFileChange}
+                style={{ display: "none" }}
+                id="fileInput"
+              />
+              <label htmlFor="fileInput" style={{ cursor: "pointer", display: "block" }}>
+                <div style={{ fontSize: "3rem", marginBottom: "1rem" }}>📁</div>
+                <div style={{ fontWeight: "600", color: "#334155", fontSize: "1.1rem", marginBottom: "0.5rem" }}>
+                  {file ? file.name : "Cliquez pour sélectionner un fichier Excel/CSV"}
                 </div>
+                <div style={{ fontSize: "0.9rem", color: "#94a3b8" }}>
+                  Format accepté : .xlsx, .csv
+                </div>
+              </label>
+            </div>
 
-                {error && (
-                  <div style={{
-                    padding: "1rem",
-                    background: "#fecaca",
-                    color: "#991b1b",
-                    borderRadius: "8px",
-                    marginBottom: "1rem",
-                    fontSize: "0.9rem",
-                  }}>
-                    ❌ {error}
-                  </div>
-                )}
-
-                <button
-                  type="submit"
-                  disabled={loading || !file}
-                  style={{
-                    width: "100%",
-                    padding: "0.75rem",
-                    background: loading || !file ? "#ccc" : "#059669",
-                    color: "white",
-                    border: "none",
-                    borderRadius: "8px",
-                    cursor: loading || !file ? "not-allowed" : "pointer",
-                    fontWeight: "600",
-                  }}
-                >
-                  {loading ? "⏳ Upload..." : "📤 Importer le pretest"}
-                </button>
-              </form>
+            {error && (
+              <div style={{ background: "#fef2f2", color: "#ef4444", padding: "1rem 1.25rem", borderRadius: "12px", marginBottom: "2rem", border: "1px solid #fee2e2", display: "flex", alignItems: "center", gap: "0.75rem", fontSize: "0.95rem", fontWeight: "500" }}>
+                ❌ {error}
+              </div>
             )}
+            
+            {success && (
+              <div style={{ background: "#f0fdf4", color: "#22c55e", padding: "1rem 1.25rem", borderRadius: "12px", marginBottom: "2rem", border: "1px solid #dcfce7", display: "flex", alignItems: "center", gap: "0.75rem", fontSize: "0.95rem", fontWeight: "500" }}>
+                ✅ Import réussi
+              </div>
+            )}
+
+            <div style={{ display: "flex", gap: "1rem", marginTop: "1rem" }}>
+              <button
+                onClick={handleSubmit}
+                disabled={!file || loading}
+                style={{
+                  flex: 1,
+                  padding: "1rem",
+                  background: file && !loading ? "#7c3aed" : "#cbd5e1",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "12px",
+                  fontSize: "1rem",
+                  fontWeight: "600",
+                  cursor: file && !loading ? "pointer" : "not-allowed",
+                  transition: "all 0.2s",
+                  boxShadow: file && !loading ? "0 4px 12px rgba(124, 58, 237, 0.2)" : "none",
+                }}
+              >
+                {loading ? "⏳ Traitement en cours..." : "📤 Démarrer l'importation"}
+              </button>
+              <button
+                onClick={() => router.push(`/dashboard/designer/courses/${id}`)}
+                style={{
+                  padding: "1rem 1.5rem",
+                  background: "white",
+                  color: "#64748b",
+                  border: "1px solid #e2e8f0",
+                  borderRadius: "12px",
+                  fontSize: "1rem",
+                  fontWeight: "600",
+                  cursor: "pointer",
+                  transition: "all 0.2s"
+                }}
+                onMouseOver={(e) => { e.currentTarget.style.background = "#f8fafc"; e.currentTarget.style.color = "#334155"; }}
+                onMouseOut={(e) => { e.currentTarget.style.background = "white"; e.currentTarget.style.color = "#64748b"; }}
+              >
+                Annuler
+              </button>
+            </div>
           </div>
         </div>
       </DashboardLayout>

@@ -43,38 +43,39 @@ export default async function handler(req, res) {
       if (reponses[q.id] == q.reponse) correct++;
     }
 
-    const score = Math.round((correct / pretest.questions.length) * 100);
-    const feedback = getFeedbackByScore(correct, pretest.questions.length, pretest.course.annee);
+    const total = pretest.questions.length;
+    const percentage = total > 0 ? Math.round((correct / total) * 100) : 0;
+    const feedback = getFeedbackByScore(percentage, 100, pretest.course?.annee);
 
     // UPDATE au lieu de CREATE
     const result = await prisma.pretestResult.upsert({
       where: {
         studentId_courseId: {
-          studentId: user.id,
+          studentId: parseInt(user.id),
           courseId: parseInt(courseId),
         },
       },
       update: {
-        score,
-        total: pretest.questions.length,
-        pourcentage: score,
+        score: correct,
+        total: total,
+        pourcentage: percentage,
         reponses: reponses,
       },
       create: {
-        studentId: user.id,
+        studentId: parseInt(user.id),
         courseId: parseInt(courseId),
-        score,
-        total: pretest.questions.length,
-        pourcentage: score,
+        score: correct,
+        total: total,
+        pourcentage: percentage,
         reponses: reponses,
       },
     });
 
-    console.log('✅ Pretest complété:', { score, correct });
+    console.log('✅ Pretest complété:', { correct, total, percentage });
 
     return res.status(200).json({ 
       success: true, 
-      data: { score, correct, total: pretest.questions.length, feedback }
+      data: { score: correct, correct, total, percentage, pourcentage: percentage, feedback }
     });
   } catch (error) {
     console.error('❌ ERROR:', error.message);

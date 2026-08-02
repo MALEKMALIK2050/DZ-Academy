@@ -2,34 +2,71 @@ import Link from 'next/link';
 
 export default function Footer() {
   return (
-    <footer className="footer">
-      <div className="footer-inner">
+    <footer className="footer" dir="rtl" lang="ar">
+      <div className="footer-inner" style={{ flexDirection: 'row-reverse' }}>
 
         {/* ===== GAUCHE : Logo + Description + Réseaux sociaux ===== */}
         <div className="footer-left">
-          <div className="footer-brand">
-            🎓 Cheikh Bouamama Academy
+          
+          <div className="footer-brand" style={{ display: "flex", alignItems: "center", gap: "1rem", marginBottom: "1rem" }}>
+            {/* أيقونة الشعار في إطار كريستالي فاخر */}
+            <div
+              style={{
+                background: "linear-gradient(135deg, rgba(255, 255, 255, 0.25) 0%, rgba(255, 255, 255, 0.05) 100%)",
+                padding: "8px",
+                borderRadius: "16px",
+                border: "1.5px solid rgba(255, 255, 255, 0.4)",
+                backdropFilter: "blur(10px)",
+                WebkitBackdropFilter: "blur(10px)",
+                boxShadow: "0 6px 20px rgba(0,0,0,0.25), inset 0 0 12px rgba(255, 255, 255, 0.3)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                flexShrink: 0
+              }}
+            >
+              <img
+                src="/logo.png"
+                alt="Logo"
+                style={{
+                  width: "50px",
+                  height: "50px",
+                  objectFit: "contain",
+                  filter: "drop-shadow(0 2px 6px rgba(0,0,0,0.3))"
+                }}
+              />
+            </div>
+
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
+              <div className="footer-title-artistic">
+                🎓 الأكاديمية الجزائرية
+              </div>
+              <div className="footer-subtitle-artistic">
+                ✦ للتعليم الثانوي و المتوسط ✦
+              </div>
+            </div>
           </div>
+
           <p className="footer-tagline">
-            Plateforme éducative moderne pour les apprenants algériens 🇩🇿
+            أرضية رقمية موجهة لتلاميذ التعليم الثانوي و المتوسط في الجزائر
           </p>
 
           {/* Réseaux sociaux */}
           <div className="footer-socials">
-            <a href="https://facebook.com"  target="_blank" rel="noreferrer" aria-label="Facebook"  className="social-icon si-facebook">
-              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18 2h-3a5 5 0 00-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 011-1h3z"/></svg>
+            <a href="https://facebook.com" target="_blank" rel="noreferrer" aria-label="Facebook" className="social-icon si-facebook">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18 2h-3a5 5 0 00-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 011-1h3z" /></svg>
             </a>
-            <a href="https://youtube.com"  target="_blank" rel="noreferrer" aria-label="YouTube"   className="social-icon si-youtube">
-              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M22.54 6.42a2.78 2.78 0 00-1.95-1.96C18.88 4 12 4 12 4s-6.88 0-8.59.46A2.78 2.78 0 001.46 6.42 29 29 0 001 12a29 29 0 00.46 5.58 2.78 2.78 0 001.95 1.96C5.12 20 12 20 12 20s6.88 0 8.59-.46a2.78 2.78 0 001.95-1.96A29 29 0 0023 12a29 29 0 00-.46-5.58zM9.75 15.02V8.98L15.5 12l-5.75 3.02z"/></svg>
+            <a href="https://youtube.com" target="_blank" rel="noreferrer" aria-label="YouTube" className="social-icon si-youtube">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M22.54 6.42a2.78 2.78 0 00-1.95-1.96C18.88 4 12 4 12 4s-6.88 0-8.59.46A2.78 2.78 0 001.46 6.42 29 29 0 001 12a29 29 0 00.46 5.58 2.78 2.78 0 001.95 1.96C5.12 20 12 20 12 20s6.88 0 8.59-.46a2.78 2.78 0 001.95-1.96A29 29 0 0023 12a29 29 0 00-.46-5.58zM9.75 15.02V8.98L15.5 12l-5.75 3.02z" /></svg>
             </a>
             <a href="https://instagram.com" target="_blank" rel="noreferrer" aria-label="Instagram" className="social-icon si-instagram">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5" /><path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z" /><line x1="17.5" y1="6.5" x2="17.51" y2="6.5" /></svg>
             </a>
-            <a href="https://linkedin.com"  target="_blank" rel="noreferrer" aria-label="LinkedIn"  className="social-icon si-linkedin">
-              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6zM2 9h4v12H2z"/><circle cx="4" cy="4" r="2"/></svg>
+            <a href="https://linkedin.com" target="_blank" rel="noreferrer" aria-label="LinkedIn" className="social-icon si-linkedin">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6zM2 9h4v12H2z" /><circle cx="4" cy="4" r="2" /></svg>
             </a>
-            <a href="https://t.me"          target="_blank" rel="noreferrer" aria-label="Telegram"  className="social-icon si-telegram">
-              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M11.944 0A12 12 0 000 12a12 12 0 0012 12 12 12 0 0012-12A12 12 0 0012 0a12 12 0 00-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 01.171.325c.016.093.036.306.02.472-.18 1.898-.96 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg>
+            <a href="https://t.me" target="_blank" rel="noreferrer" aria-label="Telegram" className="social-icon si-telegram">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M11.944 0A12 12 0 000 12a12 12 0 0012 12 12 12 0 0012-12A12 12 0 0012 0a12 12 0 00-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 01.171.325c.016.093.036.306.02.472-.18 1.898-.96 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z" /></svg>
             </a>
           </div>
         </div>
@@ -37,27 +74,26 @@ export default function Footer() {
         {/* ===== CENTRE : Navigation LMS ===== */}
         <div className="footer-center">
           <div className="footer-nav-group">
-            <h4 className="footer-nav-title">Plateforme</h4>
-            <Link href="/">Accueil</Link>
-            <Link href="/courses">Catalogue des cours</Link>
-            <Link href="/about">À propos</Link>
-            <Link href="/contact">Contact</Link>
+            <h4 className="footer-nav-title">الأرضية</h4>
+            <Link href="/">الرئيسية</Link>
+            <Link href="/courses">دليل الدروس</Link>
+            <Link href="/about">بخصوص الأكاديمية</Link>
+            <Link href="/contact">اتصل بنا</Link>
           </div>
           <div className="footer-nav-group">
-            <h4 className="footer-nav-title">Apprendre</h4>
-            <Link href="/register">S'inscrire</Link>
-            <Link href="/login">Se connecter</Link>
-            <Link href="/dashboard/student">Mon espace</Link>
-            <Link href="/forum">Forum</Link>
+            <h4 className="footer-nav-title">تعلم</h4>
+            <Link href="/register">التسجيل</Link>
+            <Link href="/login">الدخول</Link>
+            <Link href="/dashboard/student">فضاء التلميذ</Link>
           </div>
         </div>
 
         {/* ===== DROITE : Contact + Newsletter ===== */}
         <div className="footer-right">
-          <h4 className="footer-nav-title">Nous contacter</h4>
+          <h4 className="footer-nav-title">اتصل بنا</h4>
           <div className="footer-contact-item">
             <span>📧</span>
-            <span>contact@bouamama-academy.dz</span>
+            <span>contact@dzacademy.dz</span>
           </div>
           <div className="footer-contact-item">
             <span>📞</span>
@@ -65,14 +101,14 @@ export default function Footer() {
           </div>
           <div className="footer-contact-item">
             <span>📍</span>
-            <span>Algérie, Wilaya de Saïda</span>
+            <span>الجزائر العاصمة </span>
           </div>
 
           <div className="footer-newsletter">
-            <p>Restez informé des nouveaux cours :</p>
+            <p>اطلع على جديد الدروس:</p>
             <div className="newsletter-form">
-              <input type="email" placeholder="votre@email.dz" aria-label="Email newsletter" />
-              <button type="button" aria-label="S'abonner">→</button>
+              <input type="email" placeholder="بريدك@مثال.dz" aria-label="البريد الإلكتروني" />
+              <button type="button" aria-label="اشتراك">←</button>
             </div>
           </div>
         </div>
@@ -81,11 +117,14 @@ export default function Footer() {
 
       {/* ===== BAS ===== */}
       <div className="footer-bottom">
-        <span>© 2026 Cheikh Bouamama Academy — Apprendre devient fun 🚀</span>
-        <div className="footer-bottom-links">
-          <Link href="/privacy">Confidentialité</Link>
-          <Link href="/terms">Conditions d'utilisation</Link>
-          <Link href="/faq">FAQ</Link>
+        <span>© 2026 الأكاديمية الجزائرية للتعليم الثانوي و المتوسط- التعلم يصبح ممتعا 🚀</span>
+        <div className="footer-bottom-links" style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', justifyContent: 'center' }}>
+          <Link href="/privacy">سياسة الخصوصية</Link>
+          <Link href="/terms">شروط وأحكام الاستخدام</Link>
+          <Link href="/cookies">سياسة الكوكيز</Link>
+          <Link href="/legal-notice">الإشعارات القانونية</Link>
+          <Link href="/mobile-terms">شروط التطبيق المحمول</Link>
+          <Link href="/faq">الأسئلة الشائعة</Link>
         </div>
       </div>
     </footer>

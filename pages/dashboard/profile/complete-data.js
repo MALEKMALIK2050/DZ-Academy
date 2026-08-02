@@ -14,7 +14,7 @@ export default function CompleteDataPage() {
     adresse: "",
     codePostal: "",
     ville: "",
-    pays: "Algérie",
+    pays: "الجزائر",
     telephone: "",
     dateNaissance: "",
     lieuNaissance: "",
@@ -62,7 +62,7 @@ export default function CompleteDataPage() {
             adresse: userData.adresse || "",
             codePostal: userData.codePostal || "",
             ville: userData.ville || "",
-            pays: userData.pays || "Algérie",
+            pays: userData.pays || "الجزائر",
             telephone: userData.telephone || "",
             dateNaissance: userData.dateNaissance || "",
             lieuNaissance: userData.lieuNaissance || "",
@@ -116,7 +116,7 @@ export default function CompleteDataPage() {
 
     try {
       if (!user?.id) {
-        setError("Utilisateur non identifié");
+        setError("المستخدم غير معرَّف");
         return;
       }
 
@@ -139,18 +139,18 @@ export default function CompleteDataPage() {
       const data = await res.json();
 
       if (!res.ok) {
-        setError(data.error || "Erreur lors de la mise à jour");
+        setError(data.error || "خطأ أثناء التحديث");
         return;
       }
 
-      setMessage(`✅ Profil mis à jour! ${data.pourcentageCompletion}% complété`);
+      setMessage(`✅ تم تحديث الملف الشخصي! اكتمل بنسبة ${data.pourcentageCompletion}%`);
       
       setTimeout(() => {
         router.push("/dashboard/student");
       }, 2000);
     } catch (err) {
       console.error("Erreur soumission:", err);
-      setError("Erreur réseau: " + err.message);
+      setError("خطأ في الشبكة: " + err.message);
     } finally {
       setSubmitting(false);
     }
@@ -158,7 +158,7 @@ export default function CompleteDataPage() {
 
   if (loading) {
     return (
-      <div style={{
+      <div dir="rtl" lang="ar" style={{
         minHeight: "100vh",
         display: "flex",
         alignItems: "center",
@@ -178,7 +178,7 @@ export default function CompleteDataPage() {
             color: "#718096",
             fontWeight: "500"
           }}>
-            Chargement...
+            جارٍ التحميل...
           </p>
         </div>
       </div>
@@ -187,7 +187,7 @@ export default function CompleteDataPage() {
 
   if (!user) {
     return (
-      <div style={{
+      <div dir="rtl" lang="ar" style={{
         minHeight: "100vh",
         display: "flex",
         alignItems: "center",
@@ -206,7 +206,7 @@ export default function CompleteDataPage() {
             color: "#ef4444",
             marginBottom: "1rem"
           }}>
-            ❌ Vous devez être connecté
+            ❌ يجب عليك تسجيل الدخول
           </p>
           <button
             onClick={() => router.push("/login")}
@@ -220,7 +220,7 @@ export default function CompleteDataPage() {
               cursor: "pointer"
             }}
           >
-            Aller à la connexion
+            الذهاب إلى تسجيل الدخول
           </button>
         </div>
       </div>
@@ -228,13 +228,13 @@ export default function CompleteDataPage() {
   }
 
   return (
-    <div style={{ minHeight: "100vh", backgroundColor: "#f8fafc", padding: "2rem" }}>
+    <div dir="rtl" lang="ar" style={{ minHeight: "100vh", background: "url('/images/bg-algerian.png') #f7f3ec", backgroundAttachment: "fixed", padding: "2rem" }}>
       <div style={{ maxWidth: "600px", margin: "0 auto" }}>
         <h1 style={{ fontSize: "2rem", fontWeight: "800", marginBottom: "0.5rem", color: "#1e293b" }}>
-          📝 Compléter Vos Données
+          📝 أكمل بياناتك
         </h1>
         <p style={{ color: "#718096", marginBottom: "2rem" }}>
-          Remplissez vos informations pour compléter votre profil
+          املأ معلوماتك لإكمال ملفك الشخصي
         </p>
 
         {message && (
@@ -267,7 +267,7 @@ export default function CompleteDataPage() {
           {/* Photo */}
           <div style={{ marginBottom: "1.5rem" }}>
             <label style={{ display: "block", fontWeight: "600", marginBottom: "0.5rem", color: "#1e293b" }}>
-              📸 Photo de Profil
+              📸 صورة الملف الشخصي
             </label>
             <div style={{
               width: "100px",
@@ -297,14 +297,14 @@ export default function CompleteDataPage() {
           {/* Adresse */}
           <div style={{ marginBottom: "1.5rem" }}>
             <label style={{ display: "block", fontWeight: "600", marginBottom: "0.5rem", color: "#1e293b" }}>
-              📍 Adresse
+              📍 العنوان
             </label>
             <input
               type="text"
               name="adresse"
               value={formData.adresse}
               onChange={handleInputChange}
-              placeholder="Ex: 123 Rue de la Paix"
+              placeholder="مثال: 123 شارع السلام"
               style={{
                 width: "100%",
                 padding: "0.75rem",
@@ -320,7 +320,7 @@ export default function CompleteDataPage() {
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem", marginBottom: "1.5rem" }}>
             <div>
               <label style={{ display: "block", fontWeight: "600", marginBottom: "0.5rem", color: "#1e293b" }}>
-                Code Postal
+                الرمز البريدي
               </label>
               <input
                 type="text"
@@ -340,14 +340,14 @@ export default function CompleteDataPage() {
             </div>
             <div>
               <label style={{ display: "block", fontWeight: "600", marginBottom: "0.5rem", color: "#1e293b" }}>
-                Ville
+                المدينة
               </label>
               <input
                 type="text"
                 name="ville"
                 value={formData.ville}
                 onChange={handleInputChange}
-                placeholder="Alger"
+                placeholder="الجزائر العاصمة"
                 style={{
                   width: "100%",
                   padding: "0.75rem",
@@ -362,14 +362,14 @@ export default function CompleteDataPage() {
 
           <div style={{ marginBottom: "1.5rem" }}>
             <label style={{ display: "block", fontWeight: "600", marginBottom: "0.5rem", color: "#1e293b" }}>
-              Pays
+              البلد
             </label>
             <input
               type="text"
               name="pays"
               value={formData.pays}
               onChange={handleInputChange}
-              placeholder="Algérie"
+              placeholder="الجزائر"
               style={{
                 width: "100%",
                 padding: "0.75rem",
@@ -384,7 +384,7 @@ export default function CompleteDataPage() {
           {/* Téléphone */}
           <div style={{ marginBottom: "1.5rem" }}>
             <label style={{ display: "block", fontWeight: "600", marginBottom: "0.5rem", color: "#1e293b" }}>
-              📱 Téléphone
+              📱 الهاتف
             </label>
             <input
               type="tel"
@@ -407,7 +407,7 @@ export default function CompleteDataPage() {
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem", marginBottom: "1.5rem" }}>
             <div>
               <label style={{ display: "block", fontWeight: "600", marginBottom: "0.5rem", color: "#1e293b" }}>
-                Date de Naissance
+                تاريخ الميلاد
               </label>
               <input
                 type="date"
@@ -426,14 +426,14 @@ export default function CompleteDataPage() {
             </div>
             <div>
               <label style={{ display: "block", fontWeight: "600", marginBottom: "0.5rem", color: "#1e293b" }}>
-                Lieu de Naissance
+                مكان الميلاد
               </label>
               <input
                 type="text"
                 name="lieuNaissance"
                 value={formData.lieuNaissance}
                 onChange={handleInputChange}
-                placeholder="Alger"
+                placeholder="الجزائر العاصمة"
                 style={{
                   width: "100%",
                   padding: "0.75rem",
@@ -450,14 +450,14 @@ export default function CompleteDataPage() {
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem", marginBottom: "1.5rem" }}>
             <div>
               <label style={{ display: "block", fontWeight: "600", marginBottom: "0.5rem", color: "#1e293b" }}>
-                École/Université
+                المدرسة/الجامعة
               </label>
               <input
                 type="text"
                 name="ecole"
                 value={formData.ecole}
                 onChange={handleInputChange}
-                placeholder="Nom établissement"
+                placeholder="اسم المؤسسة"
                 style={{
                   width: "100%",
                   padding: "0.75rem",
@@ -470,7 +470,7 @@ export default function CompleteDataPage() {
             </div>
             <div>
               <label style={{ display: "block", fontWeight: "600", marginBottom: "0.5rem", color: "#1e293b" }}>
-                Niveau Scolaire
+                المستوى الدراسي
               </label>
               <select
                 name="niveauScolaire"
@@ -485,14 +485,14 @@ export default function CompleteDataPage() {
                   boxSizing: "border-box"
                 }}
               >
-                <option value="">Choisir...</option>
-                <option value="PRIMAIRE">Primaire</option>
-                <option value="CEM">CEM</option>
-                <option value="LYCEE">Lycée</option>
-                <option value="BAC">Bac</option>
-                <option value="LICENCE">Licence</option>
-                <option value="MASTER">Master</option>
-                <option value="DOCTORAT">Doctorat</option>
+                <option value="">اختر...</option>
+                <option value="PRIMAIRE">الابتدائي</option>
+                <option value="CEM">المتوسط</option>
+                <option value="LYCEE">الثانوي</option>
+                <option value="BAC">البكالوريا</option>
+                <option value="LICENCE">الليسانس</option>
+                <option value="MASTER">الماستر</option>
+                <option value="DOCTORAT">الدكتوراه</option>
               </select>
             </div>
           </div>
@@ -513,7 +513,7 @@ export default function CompleteDataPage() {
                 cursor: "pointer"
               }}
             >
-              Annuler
+              إلغاء
             </button>
             <button
               type="submit"
@@ -529,7 +529,7 @@ export default function CompleteDataPage() {
                 cursor: submitting ? "not-allowed" : "pointer"
               }}
             >
-              {submitting ? "Enregistrement..." : "✅ Enregistrer"}
+              {submitting ? "جارٍ الحفظ..." : "✅ حفظ"}
             </button>
           </div>
         </form>

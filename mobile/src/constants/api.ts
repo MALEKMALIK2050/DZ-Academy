@@ -1,6 +1,21 @@
 // src/constants/api.ts
+import { Platform } from 'react-native';
 
-export const API_URL = 'https://cb-academy-dz.vercel.app';
+// ── Configuration API ──
+// Web (navigateur)  → localhost car même machine
+// Native (Expo Go)  → URL Vercel (évite les soucis de réseau local / tunnel)
+// Production        → URL Vercel
+const DEV_PORT = '3000';
+
+const API_URL_MAP = {
+  web: `http://localhost:${DEV_PORT}`,
+  native: 'https://cb-academy-dz.vercel.app',
+  production: 'https://cb-academy-dz.vercel.app',
+};
+
+// En dev, utiliser Vercel pour le web et natif par défaut pour éviter les erreurs si le serveur local n'est pas lancé
+const IS_DEV = __DEV__;
+export const API_URL = API_URL_MAP.native; // Force l'API en ligne (Vercel) pour tous les environnements
 
 export const API_ENDPOINTS = {
   // ── Auth ──────────────────────────────────────────────
@@ -46,4 +61,13 @@ export const API_ENDPOINTS = {
     `${API_URL}/api/pretest/${courseId}`,
   pretestSubmit: (courseId: string | number) =>
     `${API_URL}/api/student/submit-pretest?courseId=${courseId}`,
+
+  // ── Paiement & Inscription ────────────────────────────
+  accessCheck:   (courseId: string | number) =>
+    `${API_URL}/api/student/access-check?courseId=${courseId}`,
+  enrollCourse:  `${API_URL}/api/student/courses`,
+  uploadPreuve:  `${API_URL}/api/student/upload-preuve`,
+
+  // ── Badges & Gamification ─────────────────────────────
+  studentBadges: `${API_URL}/api/student/badges`,
 };

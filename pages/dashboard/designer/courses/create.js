@@ -26,7 +26,7 @@ export default function CreateCourse() {
     setError("");
 
     if (!form.title || !form.matiere || !form.niveau || !form.annee) {
-      return setError("Titre, matière, niveau et année sont obligatoires");
+      return setError("العنوان والمادة والمستوى والسنة إلزامية");
     }
 
     setLoading(true);
@@ -40,21 +40,21 @@ export default function CreateCourse() {
 
       const data = await res.json();
 
-      if (!res.ok) return setError(data.detail ? `${data.error}: ${data.detail}` : (data.error || "Erreur création cours"));
+      if (!res.ok) return setError(data.detail ? `${data.error}: ${data.detail}` : (data.error || "خطأ في إنشاء الدرس"));
 
       router.push(`/dashboard/designer/courses/${data.id}`);
 
     } catch {
-      setError("Erreur serveur");
+      setError("خطأ في الخادم");
     } finally {
       setLoading(false);
     }
   };
 
   const DASHBOARD_TABS = [
-    { key: "overview", label: "Espace Designer", icon: "🎨" },
-    { key: "courses",  label: "Mes cours",       icon: "🎨" },
-    { key: "messages", label: "Messages",        icon: "✉️" },
+    { key: "overview", label: "فضاء المصمم", icon: "🎨" },
+    { key: "courses",  label: "دروسي",       icon: "🎨" },
+    { key: "messages", label: "الرسائل",        icon: "✉️" },
   ];
 
   return (
@@ -62,16 +62,16 @@ export default function CreateCourse() {
       <DashboardLayout
         user={user}
         roleIcon="🎨"
-        customTitle="Création de Cours"
+        customTitle="إنشاء درس"
         tabs={DASHBOARD_TABS}
         activeTab="overview"
         onTabChange={(tab) => router.push("/dashboard/designer")}
       >
-        <div style={{ maxWidth: "800px", margin: "0 auto" }}>
+        <div style={{ maxWidth: "800px", margin: "0 auto" }} dir="rtl">
           
           <button onClick={() => router.push("/dashboard/designer")} style={btnBack}>
-            <span style={{ fontSize: "1.2rem", marginRight: "0.5rem" }}>←</span> 
-            Retour au dashboard
+            <span style={{ fontSize: "1.2rem", marginLeft: "0.5rem" }}>←</span> 
+            العودة إلى لوحة القيادة
           </button>
 
           <div style={{ 
@@ -90,9 +90,9 @@ export default function CreateCourse() {
                 WebkitBackgroundClip: "text",
                 WebkitTextFillColor: "transparent"
               }}>
-                ➕ Nouveau Cours
+                ➕ درس جديد
               </h1>
-              <p style={{ color: "#718096", marginTop: "0.5rem" }}>Définissez les bases de votre nouveau programme pédagogique</p>
+              <p style={{ color: "#718096", marginTop: "0.5rem" }}>حدد أساسيات برنامجك التعليمي الجديد</p>
             </div>
 
             {error && (
@@ -115,14 +115,14 @@ export default function CreateCourse() {
               
               <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: "1.5rem" }}>
                 <div>
-                  <label style={labelStyle}>Titre du cours *</label>
-                  <input name="title" value={form.title} onChange={handleChange} placeholder="Ex: Maîtrise des Fonctions Trigonométriques" style={inputStyle} required />
+                  <label style={labelStyle}>عنوان الدرس *</label>
+                  <input name="title" value={form.title} onChange={handleChange} placeholder="مثال: إتقان الدوال المثلثية" style={inputStyle} required />
                 </div>
 
                 <div>
-                  <label style={labelStyle}>Matière *</label>
+                  <label style={labelStyle}>المادة *</label>
                   <select name="matiere" value={form.matiere} onChange={handleChange} style={inputStyle} required>
-                    <option value="">Choisir...</option>
+                    <option value="">اختر...</option>
                     {MATIERES.map(m => <option key={m.value} value={m.value}>{m.label}</option>)}
                   </select>
                 </div>
@@ -130,18 +130,18 @@ export default function CreateCourse() {
 
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1.5rem" }}>
                 <div>
-                  <label style={labelStyle}>Niveau scolaire *</label>
+                  <label style={labelStyle}>المستوى الدراسي *</label>
                   <select name="niveau" value={form.niveau} onChange={handleChange} style={inputStyle} required>
-                    <option value="">Choisir un niveau</option>
-                    <option value="college">Collège</option>
-                    <option value="lycee">Lycée</option>
+                    <option value="">اختر مستوى</option>
+                    <option value="college">متوسط</option>
+                    <option value="lycee">ثانوي</option>
                   </select>
                 </div>
 
                 <div>
-                  <label style={labelStyle}>Année / Classe *</label>
+                  <label style={labelStyle}>السنة / القسم *</label>
                   <select name="annee" value={form.annee} onChange={handleChange} style={inputStyle} required disabled={!form.niveau}>
-                    <option value="">Choisir une année</option>
+                    <option value="">اختر سنة</option>
                     {form.niveau === "college" && ANNEES_COLLEGE.map((a) => <option key={a} value={a}>{a}</option>)}
                     {form.niveau === "lycee"   && ANNEES_LYCEE.map((a)   => <option key={a} value={a}>{a}</option>)}
                   </select>
@@ -149,13 +149,13 @@ export default function CreateCourse() {
               </div>
 
               <div>
-                <label style={labelStyle}>Description courte</label>
-                <textarea name="description" value={form.description} onChange={handleChange} placeholder="Présentez brièvement le but de ce cours..." style={{ ...inputStyle, height: "100px", resize: "vertical" }} />
+                <label style={labelStyle}>وصف قصير</label>
+                <textarea name="description" value={form.description} onChange={handleChange} placeholder="قدم لمحة موجزة عن هدف هذا الدرس..." style={{ ...inputStyle, height: "100px", resize: "vertical" }} />
               </div>
 
               <div>
-                <label style={labelStyle}>Objectifs pédagogiques</label>
-                <textarea name="objectifs" value={form.objectifs} onChange={handleChange} placeholder="Qu'est-ce que l'élève saura faire à la fin ? (Séparez par | )" style={{ ...inputStyle, height: "100px", resize: "vertical" }} />
+                <label style={labelStyle}>الأهداف البيداغوجية</label>
+                <textarea name="objectifs" value={form.objectifs} onChange={handleChange} placeholder="ما الذي سيتعلمه التلميذ في النهاية؟ (افصل بينها بـ | )" style={{ ...inputStyle, height: "100px", resize: "vertical" }} />
               </div>
 
               <div style={{ marginTop: "1rem", paddingTop: "1.5rem", borderTop: "1px solid #f7fafc" }}>
@@ -172,7 +172,7 @@ export default function CreateCourse() {
                     opacity: loading ? 0.7 : 1 
                   }}
                 >
-                  {loading ? "Création en cours..." : "🚀 Créer et commencer à construire"}
+                  {loading ? "جاري الإنشاء..." : "🚀 إنشاء والبدء في بناء الدرس"}
                 </button>
               </div>
 

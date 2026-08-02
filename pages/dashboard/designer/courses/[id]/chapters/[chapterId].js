@@ -368,24 +368,24 @@ const handleAddSupport = async () => {
   };
 
   const DASHBOARD_TABS = [
-    { key: "overview", label: "Espace Designer", icon: "🎨" },
-    { key: "courses",  label: "Mes cours",       icon: "📚" },
-    { key: "messages", label: "Messages",        icon: "✉️" },
+    { key: "overview", label: "فضاء المصمم", icon: "🎨" },
+    { key: "courses",  label: "دروسي",       icon: "📚" },
+    { key: "messages", label: "الرسائل",        icon: "✉️" },
   ];
 
-  if (loading) return <div style={{ padding: "2rem", textAlign: "center" }}>Chargement du chapitre...</div>;
+  if (loading) return <div style={{ padding: "2rem", textAlign: "center" }} dir="rtl">جارٍ تحميل الفصل...</div>;
 
   return (
     <ProtectedRoute allowedRoles={["DESIGNER"]}>
       <DashboardLayout
         user={user}
         roleIcon="🎨"
-        customTitle={`Gérer Chapitre: ${chapter?.title}`}
+        customTitle={`إدارة الفصل: ${chapter?.title}`}
         tabs={DASHBOARD_TABS}
         activeTab="courses"
         onTabChange={(t) => router.push("/dashboard/designer")}
       >
-        <div style={{ maxWidth: "1100px", margin: "0 auto" }}></div>
+        <div style={{ maxWidth: "1100px", margin: "0 auto" }} dir="rtl"></div>
           
           <div style={{ 
             display: "flex", 
@@ -397,10 +397,10 @@ const handleAddSupport = async () => {
             borderRadius: "20px",
             boxShadow: "0 4px 20px rgba(0,0,0,0.05)",
             border: "1px solid #edf2f7"
-          }}>
+          }} dir="rtl">
             <div>
               <button onClick={() => router.push(`/dashboard/designer/courses/${id}`)} style={{ ...btnBack, marginBottom: "0.5rem" }}>
-                ← Retour au cours
+                ← العودة إلى الدرس
               </button>
               <h1 style={{ 
                 margin: 0, 
@@ -410,12 +410,12 @@ const handleAddSupport = async () => {
                 WebkitBackgroundClip: "text",
                 WebkitTextFillColor: "transparent"
               }}>
-                Chapitre : {chapter?.title}
+                الفصل: {chapter?.title}
               </h1>
             </div>
             <div style={{ display: "flex", gap: "0.5rem" }}>
               <span style={{ background: "#edf2f7", color: "#4a5568", padding: "0.4rem 1rem", borderRadius: "12px", fontSize: "0.9rem", fontWeight: "600" }}>
-                {chapter?.supports?.length || 0} Support(s)
+                {chapter?.supports?.length || 0} ملحق(ات)
               </span>
             </div>
           </div>
@@ -424,11 +424,11 @@ const handleAddSupport = async () => {
           {success && <div style={{ background: "#f0fff4", color: "#059669", padding: "1rem", borderRadius: "12px", marginBottom: "1.5rem", border: "1px solid #c6f6d5" }}>✅ {success}</div>}
 
           {/* Onglets */}
-          <div style={{ display: "flex", gap: "0.5rem", marginBottom: "1.5rem", borderBottom: "2px solid #edf2f7" }}>
+          <div style={{ display: "flex", gap: "0.5rem", marginBottom: "1.5rem", borderBottom: "2px solid #edf2f7" }} dir="rtl">
             {[
-              { key: "supports", label: `📎 Supports (${chapter?.supports?.length || 0})` },
-              { key: "quiz",     label: `📝 Quiz formatif (${questions.length})` },
-              { key: "devoirs",  label: `📋 Devoirs (${devoirs.length})` },
+              { key: "supports", label: `📎 الملحقات (${chapter?.supports?.length || 0})` },
+              { key: "quiz",     label: `📝 اختبار تكويني (${questions.length})` },
+              { key: "devoirs",  label: `📋 الواجبات (${devoirs.length})` },
             ].map(t => (
               <button 
                 key={t.key}
@@ -451,7 +451,7 @@ const handleAddSupport = async () => {
             ))}
           </div>
 
-          <div style={{ background: "white", padding: "2rem", borderRadius: "20px", boxShadow: "0 10px 30px rgba(0,0,0,0.02)", border: "1px solid #edf2f7", minHeight: "500px" }}>
+          <div style={{ background: "white", padding: "2rem", borderRadius: "20px", boxShadow: "0 10px 30px rgba(0,0,0,0.02)", border: "1px solid #edf2f7", minHeight: "500px" }} dir="rtl">
 
         {/* ── Tab Supports ── */}
         {tab === "supports" && (
@@ -465,9 +465,9 @@ const handleAddSupport = async () => {
                 {editingSupport === s.id ? (
                   // ── Mode édition ──
                   <div style={{ background: "#eff6ff", padding: "1.25rem", borderRadius: "12px", marginBottom: "0.75rem", border: "1px solid #bfdbfe" }}>
-                    <h4 style={{ margin: "0 0 1rem" }}>✏️ Modifier — {s.type}</h4>
+                    <h4 style={{ margin: "0 0 1rem" }}>✏️ تعديل — {s.type}</h4>
 
-                    <label style={labelStyle}>Nom affiché</label>
+                    <label style={labelStyle}>الاسم المعروض</label>
                     <input value={editSupport.nom} onChange={(e) => setEditSupport({ ...editSupport, nom: e.target.value })} style={inputStyle} />
 
                     {s.type !== "TEXTE" && s.type !== "FORUM" && (
@@ -480,7 +480,7 @@ const handleAddSupport = async () => {
                     {(s.type === "TEXTE" || s.type === "FORUM") && (
                       <>
                         <label style={{ ...labelStyle, marginTop: "0.75rem" }}>
-                          {s.type === "FORUM" ? "Objectifs du forum" : "Contenu"}
+                          {s.type === "FORUM" ? "أهداف المنتدى" : "المحتوى"}
                         </label>
                         <RichEditor
                           value={editSupport.contenu}
@@ -490,18 +490,18 @@ const handleAddSupport = async () => {
                     )}
 
                     <div style={{ display: "flex", gap: "0.5rem", marginTop: "1rem" }}>
-                      <button onClick={handleUpdateSupport} style={btnSuccess}>💾 Sauvegarder</button>
-                      <button onClick={() => setEditingSupport(null)} style={btnWarning}>Annuler</button>
+                      <button onClick={handleUpdateSupport} style={btnSuccess}>💾 حفظ</button>
+                      <button onClick={() => setEditingSupport(null)} style={btnWarning}>إلغاء</button>
                     </div>
                   </div>
                 ) : (
                   // ── Mode affichage ──
                   <div style={{ background: "#f8fafc", padding: "1rem", borderRadius: "12px", marginBottom: "0.75rem", display: "flex", justifyContent: "space-between", alignItems: "center", border: "1px solid #e2e8f0" }}>
                     <div style={{ flex: 1 }}>
-                      <span style={{ background: typeColor(s.type), color: "white", padding: "0.2rem 0.6rem", borderRadius: "20px", fontSize: "0.8rem", marginRight: "0.5rem" }}>
+                      <span style={{ background: typeColor(s.type), color: "white", padding: "0.2rem 0.6rem", borderRadius: "20px", fontSize: "0.8rem", marginLeft: "0.5rem" }}>
                         {s.type}
                       </span>
-                      <strong>{s.nom || s.url || "Texte"}</strong>
+                      <strong>{s.nom || s.url || "نص"}</strong>
                       {s.url && s.type !== "TEXTE" && !isScormType(s.type) && (
                         <div style={{ fontSize: "0.8rem", color: "#64748b", marginTop: "0.25rem" }}>
                           <a href={s.url} target="_blank" rel="noreferrer" style={{ color: "#1e40af" }}>{s.url}</a>
@@ -519,14 +519,14 @@ const handleAddSupport = async () => {
                             fontSize: "0.85rem",
                             fontWeight: "600",
                           }}>
-                            ▶️ Prévisualiser le module {s.type}
+                            ▶️ معاينة وحدة {s.type}
                           </a>
                         </div>
                       )}
-                      {s.type === "TEXTE" && <div style={{ fontSize: "0.8rem", color: "#64748b", marginTop: "0.25rem" }}>📄 Contenu texte riche</div>}
+                      {s.type === "TEXTE" && <div style={{ fontSize: "0.8rem", color: "#64748b", marginTop: "0.25rem" }}>📄 محتوى نصي منسق</div>}
                       {s.type === "FORUM" && (
-                        <div style={{ marginLeft: "1rem", marginTop: "0.5rem", padding: "0.75rem", background: "#f0f9ff", borderRadius: "8px", border: "1px solid #bae6fd" }}>
-                          <div style={{ fontSize: "0.85rem", color: "#0369a1", fontWeight: "bold", marginBottom: "0.25rem" }}>💬 Forum de discussion</div>
+                        <div style={{ marginRight: "1rem", marginTop: "0.5rem", padding: "0.75rem", background: "#f0f9ff", borderRadius: "8px", border: "1px solid #bae6fd" }}>
+                          <div style={{ fontSize: "0.85rem", color: "#0369a1", fontWeight: "bold", marginBottom: "0.25rem" }}>💬 منتدى للنقاش</div>
                           {s.contenu && <div style={{ fontSize: "0.8rem", color: "#0c4a6e", fontStyle: "italic" }} className="rich-text-content" dangerouslySetInnerHTML={{ __html: s.contenu }} />}
                         </div>
                       )}
@@ -565,9 +565,9 @@ const handleAddSupport = async () => {
 
             {addingSupport ? (
               <div style={{ background: "#eff6ff", padding: "1.25rem", borderRadius: "12px", marginTop: "1rem", border: "1px solid #bfdbfe" }}>
-                <h3 style={{ margin: "0 0 1rem" }}>Ajouter un support</h3>
+                <h3 style={{ margin: "0 0 1rem" }}>إضافة ملحق</h3>
 
-                <label style={labelStyle}>Type de support</label>
+                <label style={labelStyle}>نوع الملحق</label>
                 <select
                   value={newSupport.type}
                   onChange={(e) => { setNewSupport({ type: e.target.value, url: "", nom: "", contenu: "" }); setScormFile(null); setUploadProgress(0); }}
@@ -579,9 +579,9 @@ const handleAddSupport = async () => {
                   ))}
                 </select>
 
-                <label style={{ ...labelStyle, marginTop: "0.75rem" }}>Nom affiché *</label>
+                <label style={{ ...labelStyle, marginTop: "0.75rem" }}>الاسم المعروض *</label>
                 <input
-                  placeholder="Ex: Cours chapitre 1"
+                  placeholder="مثال: ملحق الفصل الأول"
                   value={newSupport.nom}
                   onChange={(e) => setNewSupport({ ...newSupport, nom: e.target.value })}
                   style={inputStyle}
@@ -591,7 +591,7 @@ const handleAddSupport = async () => {
                 {/* ── SCORM / ARTICULATE : Upload ZIP ── */}
                 {isScormType(newSupport.type) && (
                   <div style={{ marginTop: "0.75rem" }}>
-                    <label style={labelStyle}>Package ZIP *</label>
+                    <label style={labelStyle}>حزمة ZIP *</label>
                     <div
                       onDragOver={(e) => { e.preventDefault(); e.currentTarget.style.borderColor = "#3b82f6"; e.currentTarget.style.background = "#dbeafe"; }}
                       onDragLeave={(e) => { e.preventDefault(); e.currentTarget.style.borderColor = newSupport.type === "SCORM" ? "#7c3aed" : "#0d9488"; e.currentTarget.style.background = "#f8fafc"; }}
@@ -640,15 +640,15 @@ const handleAddSupport = async () => {
                             <button
                               onClick={(e) => { e.stopPropagation(); setScormFile(null); }}
                               style={{ marginTop: "0.5rem", background: "#ef4444", color: "white", border: "none", borderRadius: "6px", padding: "0.3rem 0.8rem", cursor: "pointer", fontSize: "0.8rem" }}
-                            >✕ Retirer</button>
+                            >✕ إزالة</button>
                           )}
                         </div>
                       ) : (
                         <div>
                           <div style={{ fontSize: "2.5rem", marginBottom: "0.5rem" }}>{newSupport.type === "SCORM" ? "🎓" : "🎯"}</div>
-                          <div style={{ fontWeight: "600", color: "#475569" }}>Glissez un package .zip ici</div>
-                          <div style={{ fontSize: "0.85rem", color: "#94a3b8", marginTop: "0.25rem" }}>ou cliquez pour sélectionner un fichier</div>
-                          <div style={{ fontSize: "0.75rem", color: "#cbd5e1", marginTop: "0.5rem" }}>Max 50 Mo • Doit contenir un index.html</div>
+                          <div style={{ fontWeight: "600", color: "#475569" }}>اسحب حزمة .zip إلى هنا</div>
+                          <div style={{ fontSize: "0.85rem", color: "#94a3b8", marginTop: "0.25rem" }}>أو اضغط لاختيار ملف</div>
+                          <div style={{ fontSize: "0.75rem", color: "#cbd5e1", marginTop: "0.5rem" }}>الحد الأقصى 50 ميجابايت • يجب أن يحتوي على index.html</div>
                         </div>
                       )}
                     </div>
@@ -659,8 +659,8 @@ const handleAddSupport = async () => {
                         <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.85rem", color: "#475569", marginBottom: "0.3rem" }}>
                           <span>
                             {uploadProgress < 100 
-                              ? "⏳ Envoi du fichier..." 
-                              : "⚙️ Décompression et traitement (veuillez patienter...)"}
+                              ? "⏳ جاري إرسال الملف..." 
+                              : "⚙️ جاري فك الضغط والمعالجة (الرجاء الانتظار...)"}
                           </span>
                           <span style={{ fontWeight: "700" }}>{uploadProgress}%</span>
                         </div>
@@ -677,7 +677,7 @@ const handleAddSupport = async () => {
                         </div>
                         {uploadProgress === 100 && (
                           <div style={{ marginTop: "0.5rem", fontSize: "0.8rem", color: "#d97706", fontStyle: "italic", textAlign: "center" }}>
-                            Le serveur analyse et sauvegarde les centaines de fichiers du module. Cela peut prendre 1 à 2 minutes, merci de ne pas fermer cette page !
+                            يقوم الخادم بمعالجة الملفات الخاصة بالوحدة. قد يستغرق هذا دقيقة أو دقيقتين، يرجى عدم إغلاق الصفحة!
                           </div>
                         )}
                       </div>
@@ -688,12 +688,12 @@ const handleAddSupport = async () => {
                 {/* ── Autres types : URL classique ── */}
                 {!isScormType(newSupport.type) && newSupport.type !== "TEXTE" && newSupport.type !== "FORUM" && (
                   <>
-                    <label style={{ ...labelStyle, marginTop: "0.75rem" }}>URL / Lien *</label>
+                    <label style={{ ...labelStyle, marginTop: "0.75rem" }}>الرابط (URL) *</label>
                     <input
                       placeholder="https://..."
                       value={newSupport.url}
                       onChange={(e) => setNewSupport({ ...newSupport, url: e.target.value })}
-                      style={inputStyle}
+                      style={{ ...inputStyle, textAlign: "left" }}
                     />
                   </>
                 )}
@@ -701,7 +701,7 @@ const handleAddSupport = async () => {
                 {(newSupport.type === "TEXTE" || newSupport.type === "FORUM") && (
                   <>
                     <label style={{ ...labelStyle, marginTop: "0.75rem" }}>
-                      {newSupport.type === "FORUM" ? "Objectifs du forum" : "Contenu *"}
+                      {newSupport.type === "FORUM" ? "أهداف المنتدى" : "المحتوى *"}
                     </label>
                     <RichEditor
                       value={newSupport.contenu}
@@ -712,14 +712,14 @@ const handleAddSupport = async () => {
 
                 <div style={{ display: "flex", gap: "0.5rem", marginTop: "1rem" }}>
                   <button onClick={handleAddSupport} disabled={uploading} style={{ ...btnSuccess, opacity: uploading ? 0.6 : 1, cursor: uploading ? "not-allowed" : "pointer" }}>
-                    {uploading ? "⏳ Import en cours..." : isScormType(newSupport.type) ? "📦 Importer le package" : "✅ Ajouter"}
+                    {uploading ? "⏳ جاري الرفع..." : isScormType(newSupport.type) ? "📦 استيراد الحزمة" : "✅ إضافة"}
                   </button>
-                  <button onClick={() => { setAddingSupport(false); setNewSupport({ type: "PDF", url: "", nom: "", contenu: "" }); setScormFile(null); setUploadProgress(0); }} disabled={uploading} style={{ ...btnWarning, opacity: uploading ? 0.6 : 1 }}>Annuler</button>
+                  <button onClick={() => { setAddingSupport(false); setNewSupport({ type: "PDF", url: "", nom: "", contenu: "" }); setScormFile(null); setUploadProgress(0); }} disabled={uploading} style={{ ...btnWarning, opacity: uploading ? 0.6 : 1 }}>إلغاء</button>
                 </div>
               </div>
             ) : (
               <button onClick={() => setAddingSupport(true)} style={{ ...btnPrimary, marginTop: "1rem" }}>
-                ➕ Ajouter un support
+                ➕ إضافة ملحق
               </button>
             )}
           </div>
@@ -729,7 +729,7 @@ const handleAddSupport = async () => {
         {tab === "devoirs" && (
           <div>
             {devoirs.length === 0 && (
-              <p style={{ color: "#718096" }}>Aucun devoir — créez un devoir pour ce chapitre !</p>
+              <p style={{ color: "#718096" }}>لا يوجد أي واجب — قم بإنشاء واجب لهذا الفصل!</p>
             )}
 
             {devoirs.map((d) => {
@@ -742,9 +742,9 @@ const handleAddSupport = async () => {
                     <div>
                       <strong style={{ fontSize: "1.05rem" }}>📋 {d.titre}</strong>
                       <div style={{ fontSize: "0.85rem", color: depasse ? "#dc2626" : "#d97706", marginTop: "0.25rem" }}>
-                        {depasse ? "⛔ Deadline dépassé" : "⏰ Deadline"} : {deadline.toLocaleDateString("fr-FR")} à 00h00
+                        {depasse ? "⛔ انتهت المهلة" : "⏰ الموعد النهائي"} : {deadline.toLocaleDateString("ar-DZ")} على 00:00
                       </div>
-                      <div style={{ fontSize: "0.85rem", color: "#64748b" }}>{nbRendus} rendu(s)</div>
+                      <div style={{ fontSize: "0.85rem", color: "#64748b" }}>{nbRendus} تسليم(ات)</div>
                     </div>
                     <button onClick={() => handleDeleteDevoir(d.id)} style={btnDanger}>🗑</button>
                   </div>
@@ -752,17 +752,17 @@ const handleAddSupport = async () => {
                     dangerouslySetInnerHTML={{ __html: d.consigne }} />
                   {nbRendus > 0 && (
                     <div style={{ marginTop: "1rem" }}>
-                      <strong style={{ fontSize: "0.9rem" }}>Rendus :</strong>
+                      <strong style={{ fontSize: "0.9rem" }}>التسليمات:</strong>
                       {d.rendus.map((r) => (
                         <div key={r.id} style={{ display: "flex", alignItems: "center", gap: "0.75rem", padding: "0.5rem", background: "white", borderRadius: "6px", marginTop: "0.5rem", border: "1px solid #e2e8f0" }}>
                           <span style={{ background: r.fichierType === "PDF" ? "#dc2626" : r.fichierType === "WORD" ? "#1e40af" : "#059669", color: "white", padding: "0.2rem 0.5rem", borderRadius: "6px", fontSize: "0.75rem" }}>
                             {r.fichierType}
                           </span>
                           <span style={{ flex: 1 }}>{r.student.prenom} {r.student.nom}</span>
-                          <a href={r.fichierUrl} target="_blank" rel="noreferrer" style={{ color: "#1e40af", fontSize: "0.85rem" }}>📥 Télécharger</a>
+                          <a href={r.fichierUrl} target="_blank" rel="noreferrer" style={{ color: "#1e40af", fontSize: "0.85rem", marginRight: "0.5rem", marginLeft: "0.5rem" }}>📥 تحميل</a>
                           {r.note !== null && r.note !== undefined
                             ? <span style={{ fontWeight: "bold", color: r.note >= 10 ? "#059669" : "#dc2626" }}>{r.note}/20</span>
-                            : <span style={{ color: "#64748b", fontSize: "0.85rem" }}>Non noté</span>
+                            : <span style={{ color: "#64748b", fontSize: "0.85rem" }}>غير مُقيّم</span>
                           }
                         </div>
                       ))}
@@ -774,26 +774,26 @@ const handleAddSupport = async () => {
 
             {addingDevoir ? (
               <div style={{ background: "#eff6ff", padding: "1.25rem", borderRadius: "12px", marginTop: "1rem", border: "1px solid #bfdbfe" }}>
-                <h3 style={{ margin: "0 0 1rem" }}>Nouveau devoir</h3>
+                <h3 style={{ margin: "0 0 1rem" }}>واجب جديد</h3>
 
-                <label style={labelStyle}>Titre *</label>
+                <label style={labelStyle}>العنوان *</label>
                 <input
-                  placeholder="Ex: Recherche sur les transformations géométriques"
+                  placeholder="مثال: بحث حول التحويلات الهندسية"
                   value={newDevoir.titre}
                   onChange={(e) => setNewDevoir({ ...newDevoir, titre: e.target.value })}
                   style={inputStyle}
                 />
 
-                <label style={{ ...labelStyle, marginTop: "0.75rem" }}>Date limite * (fermeture à 00h00)</label>
+                <label style={{ ...labelStyle, marginTop: "0.75rem" }}>الموعد النهائي * (يُغلق عند 00:00)</label>
                 <input
                   type="date"
                   value={newDevoir.dateLimit}
                   min={new Date().toISOString().split("T")[0]}
                   onChange={(e) => setNewDevoir({ ...newDevoir, dateLimit: e.target.value })}
-                  style={{ ...inputStyle, width: "220px" }}
+                  style={{ ...inputStyle, width: "220px", textAlign: "right", direction: "rtl" }}
                 />
 
-                <label style={{ ...labelStyle, marginTop: "0.75rem" }}>Consigne * (détaillez le travail attendu)</label>
+                <label style={{ ...labelStyle, marginTop: "0.75rem" }}>التعليمات * (قم بتفصيل العمل المطلوب)</label>
                 <RichEditor
                   value={newDevoir.consigne}
                   onChange={(html) => setNewDevoir({ ...newDevoir, consigne: html })}
@@ -820,11 +820,11 @@ const handleAddSupport = async () => {
                         onClick={() => router.push(`/dashboard/designer/courses/${id}/chapters/${chapterId}/import-quiz-formatif`)}
                         style={{ ...btnPrimary, marginBottom: "1.5rem" }}
                       >
-                        📥 Importer le quiz formatif
+                        📥 استيراد اختبار تكويني
                       </button>
 
                       {questions.length === 0 && (
-                        <p style={{ color: "#718096" }}>Aucune question — importez ou créez un quiz formatif!</p>
+                        <p style={{ color: "#718096" }}>لا يوجد أي سؤال — قم باستيراد أو إنشاء اختبار تكويني!</p>
                       )}
 
             {questions.map((q, index) => (
@@ -834,8 +834,8 @@ const handleAddSupport = async () => {
                     <span style={{ background: typeQColor(q.type), color: "white", padding: "0.2rem 0.6rem", borderRadius: "20px", fontSize: "0.75rem", marginRight: "0.5rem" }}>
                       {q.type}
                     </span>
-                    <strong>Q{index + 1} : {q.texte}</strong>
-                    <span style={{ color: "#64748b", fontSize: "0.85rem", marginLeft: "0.5rem" }}>({q.points} pt{q.points > 1 ? "s" : ""})</span>
+                    <strong>س{index + 1} : {q.texte}</strong>
+                    <span style={{ color: "#64748b", fontSize: "0.85rem", marginLeft: "0.5rem" }}>({q.points} نقطة)</span>
                   </div>
                   <button onClick={() => handleDeleteQuestion(q.id)} style={btnDanger}>🗑</button>
                 </div>
@@ -856,8 +856,8 @@ const handleAddSupport = async () => {
                     })}
                   </ul>
                 )}
-                {q.type === "OUVERTE"  && <p style={{ color: "#718096", fontStyle: "italic" }}>Réponse modèle : {q.reponse}</p>}
-                {q.type === "GAP"      && <p style={{ color: "#718096" }}>Réponses : {JSON.parse(q.reponse || "[]").join(", ")}</p>}
+                {q.type === "OUVERTE"  && <p style={{ color: "#718096", fontStyle: "italic" }}>الرد النموذجي: {q.reponse}</p>}
+                {q.type === "GAP"      && <p style={{ color: "#718096" }}>الإجابات: {JSON.parse(q.reponse || "[]").join(", ")}</p>}
                 {q.type === "MATCHING" && (
                   <div style={{ marginTop: "0.5rem" }}>
                     {Object.entries(JSON.parse(q.reponse || "{}")).map(([g, d], i) => (
@@ -875,37 +875,37 @@ const handleAddSupport = async () => {
 
             {addingQuestion ? (
               <div style={{ background: "#eff6ff", padding: "1.25rem", borderRadius: "12px", marginTop: "1rem", border: "1px solid #bfdbfe" }}>
-                <h3 style={{ margin: "0 0 1rem" }}>Nouvelle question</h3>
+                <h3 style={{ margin: "0 0 1rem" }}>سؤال جديد</h3>
 
-                <label style={labelStyle}>Type de question</label>
+                <label style={labelStyle}>نوع السؤال</label>
                 <select value={questionType} onChange={(e) => { setQuestionType(e.target.value); setNewQuestion(emptyQuestion); }} style={inputStyle}>
-                  <option value="QCM">QCM — Une seule bonne réponse</option>
-                  <option value="QCM_MULTIPLE">QCM Multiple — Plusieurs bonnes réponses</option>
-                  <option value="VRAI_FAUX">Vrai / Faux</option>
-                  <option value="OUVERTE">Question ouverte</option>
-                  <option value="GAP">Texte à trous (Fill the gap)</option>
-                  <option value="MATCHING">Relier (Matching)</option>
-                  <option value="ORDERING">Remettre en ordre</option>
+                  <option value="QCM">QCM — إجابة واحدة صحيحة</option>
+                  <option value="QCM_MULTIPLE">QCM متعدد — إجابات صحيحة متعددة</option>
+                  <option value="VRAI_FAUX">صحيح / خطأ</option>
+                  <option value="OUVERTE">سؤال مفتوح</option>
+                  <option value="GAP">نص بفرغات (Fill the gap)</option>
+                  <option value="MATCHING">ربط (Matching)</option>
+                  <option value="ORDERING">ترتيب</option>
                 </select>
 
-                <label style={{ ...labelStyle, marginTop: "0.75rem" }}>Points</label>
+                <label style={{ ...labelStyle, marginTop: "0.75rem" }}>النقاط</label>
                 <input type="number" min="1" max="10" value={newQuestion.points}
                   onChange={(e) => setNewQuestion({ ...newQuestion, points: parseInt(e.target.value) || 1 })}
-                  style={{ ...inputStyle, width: "80px" }} />
+                  style={{ ...inputStyle, width: "80px", textAlign: "right", direction: "ltr" }} />
 
                 {questionType === "QCM" && (
                   <div style={{ marginTop: "0.75rem" }}>
-                    <label style={labelStyle}>Question *</label>
-                    <input placeholder="Question..." value={newQuestion.texte} onChange={(e) => setNewQuestion({ ...newQuestion, texte: e.target.value })} style={inputStyle} />
-                    <label style={{ ...labelStyle, marginTop: "0.75rem" }}>Choix *</label>
+                    <label style={labelStyle}>السؤال *</label>
+                    <input placeholder="السؤال..." value={newQuestion.texte} onChange={(e) => setNewQuestion({ ...newQuestion, texte: e.target.value })} style={inputStyle} />
+                    <label style={{ ...labelStyle, marginTop: "0.75rem" }}>الخيارات *</label>
                     {newQuestion.choix.map((c, i) => (
-                      <input key={i} placeholder={`Choix ${i + 1}`} value={c}
+                      <input key={i} placeholder={`خيار ${i + 1}`} value={c}
                         onChange={(e) => { const choix = [...newQuestion.choix]; choix[i] = e.target.value; setNewQuestion({ ...newQuestion, choix }); }}
                         style={{ ...inputStyle, marginBottom: "0.5rem" }} />
                     ))}
-                    <label style={{ ...labelStyle, marginTop: "0.75rem" }}>Bonne réponse *</label>
+                    <label style={{ ...labelStyle, marginTop: "0.75rem" }}>الإجابة الصحيحة *</label>
                     <select value={newQuestion.reponse} onChange={(e) => setNewQuestion({ ...newQuestion, reponse: e.target.value })} style={inputStyle}>
-                      <option value="">Choisir</option>
+                      <option value="">اختر الإجابة</option>
                       {newQuestion.choix.filter((c) => c.trim()).map((c, i) => <option key={i} value={c}>{c}</option>)}
                     </select>
                   </div>
@@ -913,9 +913,9 @@ const handleAddSupport = async () => {
 
                 {questionType === "QCM_MULTIPLE" && (
                   <div style={{ marginTop: "0.75rem" }}>
-                    <label style={labelStyle}>Question *</label>
-                    <input placeholder="Question..." value={newQuestion.texte} onChange={(e) => setNewQuestion({ ...newQuestion, texte: e.target.value })} style={inputStyle} />
-                    <label style={{ ...labelStyle, marginTop: "0.75rem" }}>Choix (cochez les bonnes) *</label>
+                    <label style={labelStyle}>السؤال *</label>
+                    <input placeholder="السؤال..." value={newQuestion.texte} onChange={(e) => setNewQuestion({ ...newQuestion, texte: e.target.value })} style={inputStyle} />
+                    <label style={{ ...labelStyle, marginTop: "0.75rem" }}>الخيارات (ضع علامة على الخيارات الصحيحة) *</label>
                     {newQuestion.choix.map((c, i) => (
                       <div key={i} style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.5rem" }}>
                         <input type="checkbox" checked={newQuestion.reponsesMultiples.includes(c)}
@@ -924,7 +924,7 @@ const handleAddSupport = async () => {
                             if (e.target.checked) rep.push(c); else rep.splice(rep.indexOf(c), 1);
                             setNewQuestion({ ...newQuestion, reponsesMultiples: rep });
                           }} />
-                        <input placeholder={`Choix ${i + 1}`} value={c}
+                        <input placeholder={`خيار ${i + 1}`} value={c}
                           onChange={(e) => { const choix = [...newQuestion.choix]; choix[i] = e.target.value; setNewQuestion({ ...newQuestion, choix }); }}
                           style={inputStyle} />
                       </div>
@@ -934,10 +934,10 @@ const handleAddSupport = async () => {
 
                 {questionType === "VRAI_FAUX" && (
                   <div style={{ marginTop: "0.75rem" }}>
-                    <label style={labelStyle}>Affirmation *</label>
-                    <input placeholder="Affirmation..." value={newQuestion.texte} onChange={(e) => setNewQuestion({ ...newQuestion, texte: e.target.value })} style={inputStyle} />
+                    <label style={labelStyle}>البيان *</label>
+                    <input placeholder="البيان..." value={newQuestion.texte} onChange={(e) => setNewQuestion({ ...newQuestion, texte: e.target.value })} style={inputStyle} />
                     <div style={{ display: "flex", gap: "1rem", marginTop: "0.75rem" }}>
-                      {["Vrai", "Faux"].map((v) => (
+                      {["صحيح", "خطأ"].map((v) => (
                         <label key={v} style={{ display: "flex", alignItems: "center", gap: "0.5rem", cursor: "pointer" }}>
                           <input type="radio" name="vf" value={v} checked={newQuestion.reponse === v} onChange={(e) => setNewQuestion({ ...newQuestion, reponse: e.target.value })} />
                           {v}
@@ -949,66 +949,66 @@ const handleAddSupport = async () => {
 
                 {questionType === "OUVERTE" && (
                   <div style={{ marginTop: "0.75rem" }}>
-                    <label style={labelStyle}>Question *</label>
-                    <textarea placeholder="Question..." value={newQuestion.texte} onChange={(e) => setNewQuestion({ ...newQuestion, texte: e.target.value })} style={{ ...inputStyle, height: "80px", resize: "vertical" }} />
-                    <label style={{ ...labelStyle, marginTop: "0.75rem" }}>Réponse modèle *</label>
-                    <textarea placeholder="Réponse attendue..." value={newQuestion.reponse} onChange={(e) => setNewQuestion({ ...newQuestion, reponse: e.target.value })} style={{ ...inputStyle, height: "80px", resize: "vertical" }} />
+                    <label style={labelStyle}>السؤال *</label>
+                    <textarea placeholder="السؤال..." value={newQuestion.texte} onChange={(e) => setNewQuestion({ ...newQuestion, texte: e.target.value })} style={{ ...inputStyle, height: "80px", resize: "vertical" }} />
+                    <label style={{ ...labelStyle, marginTop: "0.75rem" }}>الرد النموذجي *</label>
+                    <textarea placeholder="الإجابة المتوقعة..." value={newQuestion.reponse} onChange={(e) => setNewQuestion({ ...newQuestion, reponse: e.target.value })} style={{ ...inputStyle, height: "80px", resize: "vertical" }} />
                   </div>
                 )}
 
                 {questionType === "GAP" && (
                   <div style={{ marginTop: "0.75rem" }}>
-                    <label style={labelStyle}>Texte à trous * — utilisez [trou]</label>
-                    <textarea placeholder="Ex: La capitale de [trou] est [trou]" value={newQuestion.texteTrous}
+                    <label style={labelStyle}>نص بفرغات * — استخدم [trou]</label>
+                    <textarea placeholder="مثال: عاصمة [trou] هي [trou]" value={newQuestion.texteTrous}
                       onChange={(e) => setNewQuestion({ ...newQuestion, texteTrous: e.target.value })}
                       style={{ ...inputStyle, height: "100px", resize: "vertical" }} />
-                    <label style={{ ...labelStyle, marginTop: "0.75rem" }}>Réponses séparées par virgules *</label>
-                    <input placeholder="Ex: France, Paris" value={newQuestion.reponse} onChange={(e) => setNewQuestion({ ...newQuestion, reponse: e.target.value })} style={inputStyle} />
+                    <label style={{ ...labelStyle, marginTop: "0.75rem" }}>الإجابات مفصولة بفواصل *</label>
+                    <input placeholder="مثال: فرنسا، باريس" value={newQuestion.reponse} onChange={(e) => setNewQuestion({ ...newQuestion, reponse: e.target.value })} style={inputStyle} />
                   </div>
                 )}
 
                 {questionType === "MATCHING" && (
                   <div style={{ marginTop: "0.75rem" }}>
-                    <label style={labelStyle}>Question *</label>
-                    <input placeholder="Question..." value={newQuestion.texte} onChange={(e) => setNewQuestion({ ...newQuestion, texte: e.target.value })} style={inputStyle} />
-                    <label style={{ ...labelStyle, marginTop: "0.75rem" }}>Paires *</label>
+                    <label style={labelStyle}>السؤال *</label>
+                    <input placeholder="السؤال..." value={newQuestion.texte} onChange={(e) => setNewQuestion({ ...newQuestion, texte: e.target.value })} style={inputStyle} />
+                    <label style={{ ...labelStyle, marginTop: "0.75rem" }}>أزواج *</label>
                     {newQuestion.paires.map((p, i) => (
                       <div key={i} style={{ display: "grid", gridTemplateColumns: "1fr auto 1fr", gap: "0.5rem", marginBottom: "0.5rem" }}>
-                        <input placeholder={`Élément ${i + 1}`} value={p.gauche}
+                        <input placeholder={`عنصر ${i + 1}`} value={p.gauche}
                           onChange={(e) => { const paires = [...newQuestion.paires]; paires[i] = { ...paires[i], gauche: e.target.value }; setNewQuestion({ ...newQuestion, paires }); }} style={inputStyle} />
-                        <span style={{ textAlign: "center", lineHeight: "2.5" }}>→</span>
-                        <input placeholder={`Correspondance ${i + 1}`} value={p.droite}
+                        <span style={{ textAlign: "center", lineHeight: "2.5" }}>←</span>
+                        <input placeholder={`تطابق ${i + 1}`} value={p.droite}
                           onChange={(e) => { const paires = [...newQuestion.paires]; paires[i] = { ...paires[i], droite: e.target.value }; setNewQuestion({ ...newQuestion, paires }); }} style={inputStyle} />
                       </div>
                     ))}
-                    <button onClick={() => setNewQuestion({ ...newQuestion, paires: [...newQuestion.paires, { gauche: "", droite: "" }] })} style={{ ...btnSmall, marginTop: "0.5rem" }}>➕ Paire</button>
+                    <button onClick={() => setNewQuestion({ ...newQuestion, paires: [...newQuestion.paires, { gauche: "", droite: "" }] })} style={{ ...btnSmall, marginTop: "0.5rem" }}>➕ زوج</button>
                   </div>
                 )}
 
                 {questionType === "ORDERING" && (
                   <div style={{ marginTop: "0.75rem" }}>
-                    <label style={labelStyle}>Question *</label>
-                    <input placeholder="Question..." value={newQuestion.texte} onChange={(e) => setNewQuestion({ ...newQuestion, texte: e.target.value })} style={inputStyle} />
-                    <label style={{ ...labelStyle, marginTop: "0.75rem" }}>Éléments dans le bon ordre *</label>
+                    <label style={labelStyle}>السؤال *</label>
+                    <input placeholder="السؤال..." value={newQuestion.texte} onChange={(e) => setNewQuestion({ ...newQuestion, texte: e.target.value })} style={inputStyle} />
+                    <label style={{ ...labelStyle, marginTop: "0.75rem" }}>العناصر بالترتيب الصحيح *</label>
                     {newQuestion.elements.map((e, i) => (
                       <div key={i} style={{ display: "flex", gap: "0.5rem", marginBottom: "0.5rem" }}>
                         <span style={{ color: "#64748b", minWidth: "20px", lineHeight: "2.5" }}>{i + 1}.</span>
-                        <input placeholder={`Élément ${i + 1}`} value={e}
+                        <input placeholder={`عنصر ${i + 1}`} value={e}
                           onChange={(ev) => { const elements = [...newQuestion.elements]; elements[i] = ev.target.value; setNewQuestion({ ...newQuestion, elements }); }} style={inputStyle} />
                       </div>
                     ))}
-                    <button onClick={() => setNewQuestion({ ...newQuestion, elements: [...newQuestion.elements, ""] })} style={{ ...btnSmall, marginTop: "0.5rem" }}>➕ Élément</button>
+                    <button onClick={() => setNewQuestion({ ...newQuestion, elements: [...newQuestion.elements, ""] })} style={{ ...btnSmall, marginTop: "0.5rem" }}>➕ عنصر</button>
                   </div>
                 )}
 
                 <div style={{ display: "flex", gap: "0.5rem", marginTop: "1.5rem" }}>
-                  <button onClick={handleAddQuestion} style={btnSuccess}>✅ Ajouter la question</button>
-                  <button onClick={() => { setAddingQuestion(false); resetQuestion(); }} style={btnWarning}>Annuler</button>
+                  <button onClick={handleAddQuestion} style={btnSuccess}>✅ إضافة السؤال</button>
+                  <button onClick={() => { setAddingQuestion(false); resetQuestion(); }} style={btnWarning}>إلغاء</button>
                 </div>
               </div>
             ) : (
               <button onClick={() => setAddingQuestion(true)} style={{ ...btnPrimary, marginTop: "1rem" }}>
-                ➕ Ajouter une question
+                ➕ إضافة سؤال
               </button>
             )}
           </div>

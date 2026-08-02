@@ -38,7 +38,7 @@ export default function StudentChapterPage() {
       setChapter(chapterData);
     } catch (err) {
       console.error("Erreur:", err);
-      setError("Erreur lors du chargement du chapitre");
+      setError("خطأ أثناء تحميل الفصل");
     } finally {
       setLoading(false);
     }
@@ -47,7 +47,7 @@ export default function StudentChapterPage() {
   if (loading) {
     return (
       <ProtectedRoute allowedRoles={["STUDENT"]}>
-        <div style={{ padding: "2rem", textAlign: "center" }}>⏳ Chargement...</div>
+        <div dir="rtl" lang="ar" style={{ padding: "2rem", textAlign: "center" }}>⏳ جارٍ التحميل...</div>
       </ProtectedRoute>
     );
   }
@@ -55,14 +55,14 @@ export default function StudentChapterPage() {
   if (error || !chapter) {
     return (
       <ProtectedRoute allowedRoles={["STUDENT"]}>
-        <div style={{ padding: "2rem", color: "#e53e3e" }}>❌ {error}</div>
+        <div dir="rtl" lang="ar" style={{ padding: "2rem", color: "#e53e3e" }}>❌ {error}</div>
       </ProtectedRoute>
     );
   }
 
   const DASHBOARD_TABS = [
-    { key: "overview", label: "Mes cours", icon: "📚" },
-    { key: "messages", label: "Messages", icon: "✉️" },
+    { key: "overview", label: "دروسي", icon: "📚" },
+    { key: "messages", label: "الرسائل", icon: "✉️" },
   ];
 
   return (
@@ -75,7 +75,7 @@ export default function StudentChapterPage() {
         activeTab="overview"
         onTabChange={() => router.push("/dashboard/student")}
       >
-        <div style={{ maxWidth: "1200px", margin: "0 auto" }}>
+        <div dir="rtl" lang="ar" style={{ maxWidth: "1200px", margin: "0 auto" }}>
           {/* Header */}
           <div
             style={{
@@ -99,7 +99,7 @@ export default function StudentChapterPage() {
                 fontWeight: "600",
               }}
             >
-              ← {course?.title}
+              → {course?.title}
             </button>
 
             <h1
@@ -132,12 +132,12 @@ export default function StudentChapterPage() {
             }}
           >
             {[
-              { key: "contenu", label: "📚 Contenu", icon: null },
+              { key: "contenu", label: "📚 المحتوى", icon: null },
               {
                 key: "quiz",
-                label: `🧪 Quiz Formatif (${chapter.quiz?.questions?.length || 0})`,
+                label: `🧪 اختبار تكويني (${chapter.quiz?.questions?.length || 0})`,
               },
-              { key: "devoirs", label: `📝 Devoirs (${chapter.devoirs?.length || 0})` },
+              { key: "devoirs", label: `📝 الواجبات (${chapter.devoirs?.length || 0})` },
             ].map((t) => (
               <button
                 key={t.key}
@@ -184,11 +184,10 @@ export default function StudentChapterPage() {
                 {chapter.quiz?.questions?.length > 0 ? (
                   <div>
                     <h3 style={{ marginBottom: "1rem", color: "#059669" }}>
-                      🧪 Quiz Formatif — {chapter.quiz.questions.length} questions
+                      🧪 اختبار تكويني — {chapter.quiz.questions.length} سؤال
                     </h3>
                     <p style={{ color: "#718096", marginBottom: "1.5rem" }}>
-                      Ce quiz vous permet de tester votre compréhension. Vous pouvez le refaire
-                      autant de fois que vous le souhaitez.
+                      يتيح لك هذا الاختبار قياس فهمك. يمكنك إعادته بقدر ما تشاء.
                     </p>
 
                     <div style={{ display: "grid", gap: "1.5rem" }}>
@@ -210,10 +209,10 @@ export default function StudentChapterPage() {
                                 padding: "0.2rem 0.6rem",
                                 borderRadius: "20px",
                                 fontSize: "0.75rem",
-                                marginRight: "0.5rem",
+                                marginLeft: "0.5rem",
                               }}
                             >
-                              Q{i + 1}
+                              س{i + 1}
                             </span>
                             <strong style={{ fontSize: "1.05rem" }}>{q.texte}</strong>
                           </div>
@@ -245,7 +244,7 @@ export default function StudentChapterPage() {
                           </div>
 
                           <div style={{ marginTop: "1rem", fontSize: "0.85rem", color: "#718096" }}>
-                            Points: {q.points}
+                            النقاط: {q.points}
                           </div>
                         </div>
                       ))}
@@ -264,12 +263,12 @@ export default function StudentChapterPage() {
                         fontSize: "1rem",
                       }}
                     >
-                      ✅ Valider mes réponses
+                      ✅ تأكيد إجاباتي
                     </button>
                   </div>
                 ) : (
                   <p style={{ color: "#718096", textAlign: "center", padding: "2rem" }}>
-                    Aucun quiz formatif pour ce chapitre
+                    لا يوجد اختبار تكويني لهذا الفصل
                   </p>
                 )}
               </div>
@@ -281,7 +280,7 @@ export default function StudentChapterPage() {
                 {chapter.devoirs?.length > 0 ? (
                   <div>
                     <h3 style={{ marginBottom: "1rem", color: "#059669" }}>
-                      📝 Devoirs — {chapter.devoirs.length} devoir(s)
+                      📝 الواجبات — {chapter.devoirs.length} واجب
                     </h3>
 
                     <div style={{ display: "grid", gap: "1.5rem" }}>
@@ -317,7 +316,7 @@ export default function StudentChapterPage() {
                                   }}
                                 />
                               </div>
-                              <div style={{ textAlign: "right", minWidth: "150px" }}>
+                              <div style={{ textAlign: "left", minWidth: "150px" }}>
                                 <div
                                   style={{
                                     background: isLate ? "#ef4444" : "#059669",
@@ -328,10 +327,10 @@ export default function StudentChapterPage() {
                                     fontWeight: "600",
                                   }}
                                 >
-                                  {isLate ? "⏰ En retard" : "📅 À rendre"}
+                                  {isLate ? "⏰ متأخر" : "📅 للتسليم"}
                                 </div>
                                 <div style={{ fontSize: "0.85rem", color: "#718096", marginTop: "0.5rem" }}>
-                                  {dateLimit.toLocaleDateString("fr-FR")}
+                                  {dateLimit.toLocaleDateString("ar-DZ")}
                                 </div>
                               </div>
                             </div>
@@ -348,7 +347,7 @@ export default function StudentChapterPage() {
                                 fontSize: "0.9rem",
                               }}
                             >
-                              📤 Rendre un devoir
+                              📤 تسليم واجب
                             </button>
                           </div>
                         );
@@ -357,7 +356,7 @@ export default function StudentChapterPage() {
                   </div>
                 ) : (
                   <p style={{ color: "#718096", textAlign: "center", padding: "2rem" }}>
-                    Aucun devoir pour ce chapitre
+                    لا يوجد أي واجب لهذا الفصل
                   </p>
                 )}
               </div>

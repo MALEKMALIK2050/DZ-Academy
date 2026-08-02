@@ -178,7 +178,7 @@ export default function PolicyModal({ isOpen, onClose, title, content }) {
               e.target.style.boxShadow = "0 4px 14px rgba(5, 150, 105, 0.35)";
             }}
           >
-            ✅ J'ai compris
+            ✅ فهمتُ
           </button>
         </div>
       </div>

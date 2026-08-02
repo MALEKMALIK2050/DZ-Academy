@@ -7,16 +7,16 @@ export default function SidebarTeacher() {
   return (
     <div className="sidebar">
 
-      <h2>🎓 Teacher</h2>
+      <h2>👨‍🏫 أستاذ</h2>
 
       <nav>
 
         <Link href="/dashboard-teacher">
-          <p>📚 Mes cours</p>
+          <p>📚 دروسي</p>
         </Link>
 
         <Link href="/dashboard-teacher/students">
-          <p>👨‍🎓 Élèves</p>
+          <p>👨‍🎓 تلاميذي</p>
         </Link>
 
         <p
@@ -26,7 +26,7 @@ export default function SidebarTeacher() {
           }}
           style={{ cursor: 'pointer', color: 'red' }}
         >
-          🚪 Déconnexion
+          🚪 تسجيل الخروج
         </p>
 
       </nav>

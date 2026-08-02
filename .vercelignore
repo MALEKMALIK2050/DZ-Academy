@@ -1,3 +1,18 @@
 mobile
 node_modules
 .git
+
+# Exclure les scripts de test/debug développeur du build Vercel
+pages/api/test-*.js
+test-*.js
+test_*.js
+testMail.js
+tmp-*.js
+add_xp.js
+list-*.js
+query.js
+reset-admin.js
+seed-users.js
+backup.sql
+CREATE-TEST-ZIP.sh
+INSTALL.sh

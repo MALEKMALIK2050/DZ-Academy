@@ -1,9 +1,12 @@
 import { useState } from "react";
 import { useRouter } from "next/router";
+import { useAuth } from "@/context/AuthContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import DashboardLayout from "@/components/layout/DashboardLayout";
 
 export default function ImportChaptersSupportsDevoirsPage() {
   const router = useRouter();
+  const { user } = useAuth();
   const { id: courseId } = router.query;
   const [file, setFile] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -56,174 +59,169 @@ export default function ImportChaptersSupportsDevoirsPage() {
     }
   };
 
+  const DASHBOARD_TABS = [
+    { key: "overview", label: "Espace Designer", icon: "🎨" },
+    { key: "courses",  label: "Mes cours",       icon: "📚" },
+    { key: "messages", label: "Messages",        icon: "✉️" },
+  ];
+
   if (!router.isReady) return <div style={{ padding: "2rem" }}>⏳</div>;
 
   return (
     <ProtectedRoute allowedRoles={["DESIGNER"]}>
-      <div
-        style={{
-          maxWidth: "800px",
-          margin: "50px auto",
-          padding: "2rem",
-          background: "linear-gradient(135deg, #f0fdf4 0%, #fef3c7 100%)",
-          borderRadius: "20px",
-        }}
+      <DashboardLayout
+        user={user}
+        roleIcon="🎨"
+        customTitle="Importation Cours Complet"
+        tabs={DASHBOARD_TABS}
+        activeTab="courses"
+        onTabChange={(t) => router.push("/dashboard/designer")}
       >
-        {/* Header */}
-        <div style={{ marginBottom: "2rem" }}>
-          <h1 style={{ margin: "0 0 0.5rem", fontSize: "2rem", fontWeight: "800" }}>
-            📚 Import Chapitres + Supports + Devoirs
-          </h1>
-          <p style={{ margin: 0, color: "#666", fontSize: "0.95rem" }}>
-            Importez tous vos contenus en une seule fois
-          </p>
-        </div>
-
-        {/* Instructions */}
-        <div
-          style={{
+        <div style={{ maxWidth: "800px", margin: "0 auto" }}>
+          
+          <div style={{ 
+            display: "flex", 
+            justifyContent: "space-between", 
+            alignItems: "center", 
+            marginBottom: "2rem",
             background: "white",
-            padding: "1.5rem",
-            borderRadius: "12px",
-            marginBottom: "1.5rem",
-            border: "1px solid #e5e7eb",
-          }}
-        >
-          <h3 style={{ margin: "0 0 1rem", color: "#059669" }}>📋 Format requis:</h3>
-          <ol style={{ color: "#4b5563", lineHeight: "1.8", margin: 0 }}>
-            <li>
-              <strong>Sheet "Chapitres":</strong> Titre, Ordre, Objectifs
-            </li>
-            <li>
-              <strong>Sheet "Supports":</strong> Chapitre (Titre), Type (TEXTE/VIDEO/PDF/SCORM/FORUM/IMAGE), Nom, URL/Contenu, Ordre
-            </li>
-            <li>
-              <strong>Sheet "Quiz Formatifs":</strong> Chapitre (Titre), Question, Option1, Option2, Option3, Option4, Réponse, Points
-            </li>
-            <li>
-              <strong>Sheet "Devoirs":</strong> Chapitre (Titre), Titre, Description, DateLimit
-            </li>
-          </ol>
-        </div>
-
-        {/* Template Download */}
-        <div
-          style={{
-            background: "#e0f2fe",
-            padding: "1rem",
-            borderRadius: "8px",
-            marginBottom: "1.5rem",
-            border: "1px solid #0284c7",
-          }}
-        >
-          <p style={{ margin: "0 0 0.5rem", color: "#0c4a6e", fontWeight: "600" }}>
-            💡 Besoin d'un template?
-          </p>
-          <a
-            href="/chapitres-supports-devoirs-TEMPLATE.xlsx"
-            download
-            style={{
-              display: "inline-block",
-              padding: "0.5rem 1rem",
-              background: "#0284c7",
-              color: "white",
-              textDecoration: "none",
-              borderRadius: "6px",
-              fontWeight: "600",
-              fontSize: "0.9rem",
-            }}
-          >
-            ⬇️ Télécharger le template
-          </a>
-        </div>
-
-        {/* Upload */}
-        <div
-          style={{
-            background: "white",
-            border: "2px dashed #059669",
-            borderRadius: "12px",
-            padding: "2rem",
-            textAlign: "center",
-            marginBottom: "1.5rem",
-          }}
-        >
-          <input
-            type="file"
-            accept=".xlsx"
-            onChange={(e) => setFile(e.target.files?.[0])}
-            style={{ display: "none" }}
-            id="fileInput"
-          />
-          <label htmlFor="fileInput" style={{ cursor: "pointer", display: "block" }}>
-            <div style={{ fontSize: "2rem", marginBottom: "0.5rem" }}>📤</div>
-            <div style={{ fontWeight: "600", marginBottom: "0.25rem" }}>
-              {file ? file.name : "Sélectionnez un fichier Excel"}
+            padding: "1.5rem 2rem",
+            borderRadius: "20px",
+            boxShadow: "0 4px 20px rgba(0,0,0,0.05)",
+            border: "1px solid #edf2f7"
+          }}>
+            <div>
+              <button onClick={() => router.push(`/dashboard/designer/courses/${courseId}`)} style={{ background: "none", border: "none", color: "#f97316", cursor: "pointer", marginBottom: "0.5rem", fontSize: "0.95rem", fontWeight: "600" }}>
+                ← Retour au cours
+              </button>
+              <h1 style={{ margin: 0, fontSize: "1.8rem", fontWeight: "800", color: "#1e293b" }}>
+                📚 Import Chapitres + Supports + Devoirs
+              </h1>
+              <p style={{ margin: "0.25rem 0 0", color: "#64748b", fontSize: "0.95rem" }}>
+                Importez tous vos contenus en une seule fois
+              </p>
             </div>
-            <div style={{ fontSize: "0.85rem", color: "#666" }}>
-              ou glissez-déposez votre fichier
-            </div>
-          </label>
-        </div>
-
-        {/* Messages */}
-        {error && (
-          <div
-            style={{
-              background: "#fee2e2",
-              color: "#991b1b",
-              padding: "1rem",
-              borderRadius: "8px",
-              marginBottom: "1rem",
-              border: "1px solid #fecaca",
-            }}
-          >
-            ❌ {error}
           </div>
-        )}
+          
+          <div style={{ background: "white", padding: "2.5rem", borderRadius: "20px", boxShadow: "0 10px 30px rgba(0,0,0,0.05)", border: "1px solid #edf2f7" }}>
 
-        {success && (
-          <div
-            style={{
-              background: "#dcfce7",
-              color: "#166534",
-              padding: "1rem",
-              borderRadius: "8px",
-              marginBottom: "1rem",
-              border: "1px solid #86efac",
-            }}
-          >
-            ✅ {success}
-            {stats && (
-              <div style={{ marginTop: "0.5rem", fontSize: "0.9rem" }}>
-                • {stats.chapitres} chapitres
-                <br />• {stats.supports} supports
-                <br />• {stats.devoirs} devoirs
+            <div style={{ background: "#f8fafc", border: "1px solid #e2e8f0", padding: "1.25rem", borderRadius: "12px", marginBottom: "2rem", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "1rem" }}>
+              <div>
+                <h3 style={{ margin: "0 0 0.5rem", fontSize: "1rem", color: "#334155", display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                  💡 Format requis
+                </h3>
+                <p style={{ margin: 0, color: "#64748b", fontSize: "0.9rem", lineHeight: "1.5" }}>
+                  Le fichier Excel doit contenir les onglets suivants :
+                  <strong> Chapitres, Supports, Quiz Formatifs, Devoirs</strong>
+                </p>
+              </div>
+              <a
+                href="/chapitres-supports-devoirs-TEMPLATE.xlsx"
+                download
+                style={{
+                  display: "inline-block",
+                  padding: "0.5rem 1rem",
+                  background: "#e2e8f0",
+                  color: "#334155",
+                  textDecoration: "none",
+                  borderRadius: "8px",
+                  fontWeight: "600",
+                  fontSize: "0.9rem",
+                  border: "1px solid #cbd5e1"
+                }}
+                onMouseOver={(e) => { e.currentTarget.style.background = "#cbd5e1"; }}
+                onMouseOut={(e) => { e.currentTarget.style.background = "#e2e8f0"; }}
+              >
+                ⬇️ Télécharger le modèle
+              </a>
+            </div>
+
+            <div style={{
+              background: "#f8fafc",
+              border: "2px dashed #cbd5e1",
+              borderRadius: "16px",
+              padding: "3rem 2rem",
+              textAlign: "center",
+              marginBottom: "2rem",
+              transition: "all 0.2s ease"
+            }}>
+              <input
+                type="file"
+                accept=".xlsx"
+                onChange={(e) => setFile(e.target.files?.[0])}
+                style={{ display: 'none' }}
+                id="fileInput"
+              />
+              <label htmlFor="fileInput" style={{ cursor: 'pointer', display: 'block' }}>
+                <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>📁</div>
+                <div style={{ fontWeight: '600', color: "#334155", fontSize: "1.1rem", marginBottom: "0.5rem" }}>
+                  {file ? file.name : "Cliquez pour sélectionner un fichier Excel"}
+                </div>
+                <div style={{ fontSize: '0.9rem', color: '#94a3b8' }}>
+                  Format accepté : .xlsx
+                </div>
+              </label>
+            </div>
+
+            {error && (
+              <div style={{ background: "#fef2f2", color: "#ef4444", padding: "1rem 1.25rem", borderRadius: "12px", marginBottom: "2rem", border: "1px solid #fee2e2", display: "flex", alignItems: "center", gap: "0.75rem", fontSize: "0.95rem", fontWeight: "500" }}>
+                ❌ {error}
               </div>
             )}
-          </div>
-        )}
+            
+            {success && (
+              <div style={{ background: "#f0fdf4", color: "#22c55e", padding: "1rem 1.25rem", borderRadius: "12px", marginBottom: "2rem", border: "1px solid #dcfce7", display: "flex", alignItems: "center", gap: "0.75rem", fontSize: "0.95rem", fontWeight: "500" }}>
+                ✅ {success}
+                {stats && (
+                  <div style={{ marginLeft: "1rem", fontSize: "0.85rem", color: "#166534" }}>
+                    ({stats.chapitres} chapitres, {stats.supports} supports, {stats.devoirs} devoirs)
+                  </div>
+                )}
+              </div>
+            )}
 
-        {/* Button */}
-        <button
-          onClick={handleUpload}
-          disabled={!file || loading}
-          style={{
-            width: "100%",
-            padding: "0.75rem 1.5rem",
-            background: file && !loading ? "linear-gradient(135deg, #059669 0%, #10b981 100%)" : "#ccc",
-            color: "white",
-            border: "none",
-            borderRadius: "10px",
-            cursor: file && !loading ? "pointer" : "not-allowed",
-            fontWeight: "600",
-            fontSize: "1rem",
-            boxShadow: file && !loading ? "0 4px 12px rgba(5, 150, 105, 0.3)" : "none",
-          }}
-        >
-          {loading ? "⏳ Import en cours..." : "✅ Importer"}
-        </button>
-      </div>
+            <div style={{ display: "flex", gap: "1rem", marginTop: "1rem" }}>
+              <button
+                onClick={handleUpload}
+                disabled={!file || loading}
+                style={{
+                  flex: 1,
+                  padding: "1rem",
+                  background: file && !loading ? "#7c3aed" : "#cbd5e1",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "12px",
+                  fontSize: "1rem",
+                  fontWeight: "600",
+                  cursor: file && !loading ? "pointer" : "not-allowed",
+                  transition: "all 0.2s",
+                  boxShadow: file && !loading ? "0 4px 12px rgba(124, 58, 237, 0.2)" : "none",
+                }}
+              >
+                {loading ? "⏳ Traitement en cours..." : "📤 Démarrer l'importation"}
+              </button>
+              <button
+                onClick={() => router.push(`/dashboard/designer/courses/${courseId}`)}
+                style={{
+                  padding: "1rem 1.5rem",
+                  background: "white",
+                  color: "#64748b",
+                  border: "1px solid #e2e8f0",
+                  borderRadius: "12px",
+                  fontSize: "1rem",
+                  fontWeight: "600",
+                  cursor: "pointer",
+                  transition: "all 0.2s"
+                }}
+                onMouseOver={(e) => { e.currentTarget.style.background = "#f8fafc"; e.currentTarget.style.color = "#334155"; }}
+                onMouseOut={(e) => { e.currentTarget.style.background = "white"; e.currentTarget.style.color = "#64748b"; }}
+              >
+                Annuler
+              </button>
+            </div>
+          </div>
+        </div>
+      </DashboardLayout>
     </ProtectedRoute>
   );
 }

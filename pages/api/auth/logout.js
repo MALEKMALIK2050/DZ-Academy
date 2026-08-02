@@ -1,6 +1,6 @@
 export default function handler(req, res) {
   if (req.method !== "POST") {
-    return res.status(405).json({ error: "Method not allowed" });
+    return res.status(405).json({ error: "الطريقة غير مسموح بها" });
   }
 
   res.setHeader(
@@ -8,5 +8,5 @@ export default function handler(req, res) {
     "token=; Path=/; HttpOnly; Max-Age=0; SameSite=Lax" // ✅ Strict → Lax
   );
 
-  return res.status(200).json({ message: "Logged out" });
+  return res.status(200).json({ message: "تم تسجيل الخروج" });
 }

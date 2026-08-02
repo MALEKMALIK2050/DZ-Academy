@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/router";
+import { ANNEES_COLLEGE, ANNEES_LYCEE } from "@/lib/constants";
 
 export default function CreateCourse() {
   const router = useRouter();
@@ -47,8 +48,9 @@ export default function CreateCourse() {
     }
   };
 
-  const anneesCollege = ["6eme", "5eme", "4eme", "3eme"];
-  const anneesLycee = ["1AS", "2AS", "Terminale"];
+  // ✅ Années centralisées (valeurs en arabe pour rester cohérent avec le reste du LMS)
+  const anneesCollege = ANNEES_COLLEGE;
+  const anneesLycee = ANNEES_LYCEE;
 
   return (
     <div style={{ maxWidth: "800px", margin: "0 auto", padding: "2rem" }}>

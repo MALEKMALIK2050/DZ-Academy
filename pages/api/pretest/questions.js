@@ -11,8 +11,8 @@ function getUser(req) {
 
 export default async function handler(req, res) {
   const user = getUser(req);
-  if (!user) return res.status(401).json({ error: "Non autorisé" });
-  if (user.role !== "DESIGNER") return res.status(403).json({ error: "Accès refusé" });
+  if (!user) return res.status(401).json({ error: "غير مسموح" });
+  if (user.role !== "DESIGNER") return res.status(403).json({ error: "الوصول مرفوض" });
 
   try {
     // POST — Ajouter une question au pretest
@@ -21,10 +21,10 @@ export default async function handler(req, res) {
       const parsedCourseId = parseInt(courseId);
 
       if (!courseId || isNaN(parsedCourseId)) {
-        return res.status(400).json({ error: "courseId valide obligatoire" });
+        return res.status(400).json({ error: "courseId صالح إلزامي" });
       }
       if (!texte) {
-        return res.status(400).json({ error: "Le texte de la question est obligatoire" });
+        return res.status(400).json({ error: "نص السؤال إلزامي" });
       }
 
       // Vérifier que le cours existe
@@ -32,7 +32,7 @@ export default async function handler(req, res) {
         where: { id: parsedCourseId },
       });
       if (!courseExists) {
-        return res.status(404).json({ error: `Le cours avec l'ID ${parsedCourseId} n'existe pas.` });
+        return res.status(404).json({ error: `الدورة ذات المعرّف ${parsedCourseId} غير موجودة.` });
       }
 
       // Créer le pretest s'il n'existe pas
@@ -69,7 +69,7 @@ export default async function handler(req, res) {
         await prisma.pretest.deleteMany({
           where: { courseId: parseInt(courseId) },
         });
-        return res.status(200).json({ message: "Pretest vidé avec succès" });
+        return res.status(200).json({ message: "تم إفراغ الاختبار التمهيدي بنجاح" });
       }
 
       if (questionId) {
@@ -77,16 +77,16 @@ export default async function handler(req, res) {
         await prisma.pretestQuestion.delete({
           where: { id: parseInt(questionId) },
         });
-        return res.status(200).json({ message: "Question supprimée" });
+        return res.status(200).json({ message: "تم حذف السؤال" });
       }
 
-      return res.status(400).json({ error: "questionId ou courseId manquant" });
+      return res.status(400).json({ error: "questionId أو courseId مفقود" });
     }
 
-    return res.status(405).json({ error: "Méthode non autorisée" });
+    return res.status(405).json({ error: "الطريقة غير مسموح بها" });
 
   } catch (error) {
     console.error("API PRETEST QUESTIONS ERROR:", error);
-    return res.status(500).json({ error: "Erreur serveur" });
+    return res.status(500).json({ error: "خطأ في الخادم" });
   }
 }

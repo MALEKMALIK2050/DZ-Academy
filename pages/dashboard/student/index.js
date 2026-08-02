@@ -6,7 +6,7 @@ import ProtectedRoute from "@/components/ProtectedRoute";
 import Chat from "@/components/Chat";
 import DashboardLayout from "../../../components/layout/DashboardLayout";
 import ProfileDropdown from "@/components/ProfileDropdown";
-import { MATIERES, NIVEAUX, ANNEES_COLLEGE, ANNEES_LYCEE, getMatiereLabel, getNiveauLabel } from "@/lib/constants";
+import { MATIERES, NIVEAUX, ANNEES_COLLEGE, ANNEES_LYCEE, getMatiereLabel, getNiveauLabel, getMatiereStyles, getSubjectIcon, getSubjectDecorations } from "@/lib/constants";
 
 // 🎨 Couleurs du LMS
 const COLORS = {
@@ -37,6 +37,8 @@ const COLORS = {
   success: "#059669",
 };
 
+import CataloguePaymentModal from "@/components/student/CataloguePaymentModal";
+
 export default function StudentDashboard() {
   const router = useRouter();
   const { user, logout, loading: authLoading } = useAuth();
@@ -50,6 +52,7 @@ export default function StudentDashboard() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [typePaiements, setTypePaiements] = useState({});
+  const [paymentModalParams, setPaymentModalParams] = useState(null);
 
   // ✅ ÉTATS POUR LES FILTRES DU CATALOGUE
   const [filtreNiveau, setFiltreNiveau] = useState("");
@@ -141,37 +144,49 @@ export default function StudentDashboard() {
     fetchCatalogueCourses("", "", "");
   };
 
-  const handleEnroll = async (courseId, typePaiement) => {
+  const handleEnroll = async (courseId, typePaiement, preuveFile) => {
     setError("");
     setSuccess("");
     try {
+      const body = { courseId, typePaiement };
       const res = await fetch("/api/student/courses", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ courseId, typePaiement }),
+        body: JSON.stringify(body),
       });
       const data = await res.json();
       if (res.ok) {
+        if (preuveFile && data.id) {
+          const formData = new FormData();
+          formData.append("preuve", preuveFile);
+          formData.append("enrollmentId", data.id);
+          await fetch("/api/student/upload-preuve", {
+            method: "POST",
+            credentials: "include",
+            body: formData,
+          });
+        }
         await fetch("/api/notifications/admin", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           credentials: "include",
           body: JSON.stringify({ courseId, type: "DEMANDE_INSCRIPTION" }),
         });
-        setSuccess("✅ Demande envoyée ! L'admin validera votre inscription.");
-        fetchAll("", "", "");
+        setSuccess("✅ تم إرسال الطلب! سيقوم المسؤول بالتحقق من تسجيلك.");
+        setPaymentModalParams(null);
+        fetchAll("", "");
         fetchCatalogueCourses(filtreNiveau, filtreAnnee, filtreMatiere);
       } else {
-        setError(data.error || "Erreur inscription");
+        setError(data.error || "خطأ في التسجيل");
       }
     } catch {
-      setError("Erreur serveur");
+      setError("خطأ في الخادم");
     }
   };
 
   const handleUnenroll = async (courseId) => {
-    if (!confirm("Annuler la demande d'inscription ?")) return;
+    if (!confirm("هل تريد إلغاء طلب التسجيل؟")) return;
     try {
       await fetch("/api/student/courses", {
         method: "DELETE",
@@ -179,7 +194,7 @@ export default function StudentDashboard() {
         credentials: "include",
         body: JSON.stringify({ courseId }),
       });
-      fetchAll("", "", "");
+      fetchAll("", "");
       fetchCatalogueCourses(filtreNiveau, filtreAnnee, filtreMatiere);
     } catch {}
   };
@@ -261,7 +276,7 @@ export default function StudentDashboard() {
     }
   }, [tab, messages.length, socket]);
 
-  if (authLoading || loading) return <p>Chargement...</p>;
+  if (authLoading || loading) return <p>جارٍ التحميل...</p>;
 
   const nonLus = messages.filter((m) => m.receiverId === user?.id && !m.lu).length;
 
@@ -286,17 +301,17 @@ export default function StudentDashboard() {
     .length;
 
   const DASHBOARD_TABS = [
-    { key: "overview", label: "Espace élève", icon: "🎓" },
+    { key: "overview", label: "فضاء التلميذ", icon: "🎓" },
     {
       key: "mes-cours",
-      label: "Mes cours",
+      label: "دروسي",
       icon: "📖",
       badge: enrollments.filter((e) => e.statut === "PAYE" || e.statut === "GRATUIT")
         .length,
     },
-    { key: "messages", label: "Messages", icon: "✉️", badge: nonLus },
-    { key: "chat", label: "Chat", icon: "💬", badge: totalUnreadChat },
-    { key: "catalogue", label: "Chercher plus de cours !", icon: "🔍", isFooter: true },
+    { key: "messages", label: "الرسائل", icon: "✉️", badge: nonLus },
+    { key: "chat", label: "الدردشة", icon: "💬", badge: totalUnreadChat },
+    { key: "catalogue", label: "ابحث عن المزيد من الدروس!", icon: "🔍", isFooter: true },
   ];
 
   // Styles réutilisables
@@ -322,22 +337,23 @@ export default function StudentDashboard() {
   const btnPrimary = {
     background: COLORS.blue.gradient,
     color: "white",
-    padding: "0.75rem 1.5rem",
+    padding: "0.75rem 1.75rem",
     border: "none",
-    borderRadius: "10px",
+    borderRadius: "9999px",
     cursor: "pointer",
-    fontWeight: "600",
-    boxShadow: "0 4px 12px rgba(30,64,175,0.3)",
+    fontWeight: "700",
+    boxShadow: "0 6px 20px rgba(30,64,175,0.35)",
   };
 
   const btnSuccess = {
     background: COLORS.green.gradient,
     color: "white",
-    padding: "0.75rem 1.5rem",
+    padding: "0.75rem 1.75rem",
     border: "none",
-    borderRadius: "10px",
+    borderRadius: "9999px",
     cursor: "pointer",
-    fontWeight: "600",
+    fontWeight: "700",
+    boxShadow: "0 6px 20px rgba(16,185,129,0.35)",
   };
 
   return (
@@ -345,7 +361,7 @@ export default function StudentDashboard() {
       <DashboardLayout
         user={user}
         roleIcon="🎓"
-        customTitle="Espace Élève"
+        customTitle="فضاء التلميذ"
         tabs={DASHBOARD_TABS}
         activeTab={tab}
         onTabChange={setTab}
@@ -367,11 +383,11 @@ export default function StudentDashboard() {
                 color: COLORS.text.primary,
               }}
             >
-              👨‍🎓 Bienvenue{" "}
+              👨‍🎓 مرحباً{" "}
               <span style={{ color: COLORS.green.DEFAULT }}>{user?.prenom}</span>!
             </h1>
             <p style={{ color: COLORS.text.secondary }}>
-              Explorez vos cours et progressez
+              استكشف دروسك وطوّر مستواك
             </p>
           </div>
           <div style={{ display: "flex", gap: "0.75rem", alignItems: "center" }}>
@@ -395,7 +411,7 @@ export default function StudentDashboard() {
                 {enrollments.filter((e) => e.statut === "PAYE" || e.statut === "GRATUIT")
                   .length}
               </div>
-              <div style={{ fontSize: "0.85rem", opacity: 0.9 }}>Mes cours actifs</div>
+              <div style={{ fontSize: "0.85rem", opacity: 0.9 }}>دروسي النشطة</div>
             </div>
             <div
               style={{
@@ -410,7 +426,7 @@ export default function StudentDashboard() {
               <div style={{ fontSize: "2.2rem", fontWeight: "800" }}>
                 {enrollments.filter((e) => e.statut === "EN_ATTENTE").length}
               </div>
-              <div style={{ fontSize: "0.85rem", opacity: 0.9 }}>En attente</div>
+              <div style={{ fontSize: "0.85rem", opacity: 0.9 }}>قيد الانتظار</div>
             </div>
             <div
               style={{
@@ -425,7 +441,7 @@ export default function StudentDashboard() {
               <div style={{ fontSize: "2.2rem", fontWeight: "800" }}>
                 {enrollments.filter((e) => e.completed).length}
               </div>
-              <div style={{ fontSize: "0.85rem", opacity: 0.9 }}>Cours terminés</div>
+              <div style={{ fontSize: "0.85rem", opacity: 0.9 }}>الدروس المكتملة</div>
             </div>
             <div
               style={{
@@ -441,7 +457,7 @@ export default function StudentDashboard() {
               }}
             >
               <div style={{ fontSize: "2.2rem", fontWeight: "800" }}>{nonLus}</div>
-              <div style={{ fontSize: "0.85rem", opacity: 0.9 }}>Messages non lus</div>
+              <div style={{ fontSize: "0.85rem", opacity: 0.9 }}>رسائل غير مقروءة</div>
             </div>
           </div>
         )}
@@ -487,7 +503,7 @@ export default function StudentDashboard() {
                 }}
               >
                 <h2 style={{ margin: "0 0 1.25rem", color: COLORS.orange.text }}>
-                  ⏳ Demandes en attente de validation
+                  ⏳ طلبات في انتظار المصادقة
                 </h2>
                 {enrollments
                   .filter((e) => e.statut === "EN_ATTENTE")
@@ -512,8 +528,8 @@ export default function StudentDashboard() {
                           }}
                         >
                           ({e.typePaiement === "PARCOURS_COMPLET"
-                            ? "Parcours complet"
-                            : "Cours seul"}
+                            ? "المسار الكامل"
+                            : "الدرس فقط"}
                           )
                         </span>
                       </div>
@@ -529,7 +545,7 @@ export default function StudentDashboard() {
                           fontSize: "0.85rem",
                         }}
                       >
-                        Annuler
+                        إلغاء
                       </button>
                     </div>
                   ))}
@@ -539,9 +555,9 @@ export default function StudentDashboard() {
             {enrollments.filter((e) => e.statut === "PAYE" || e.statut === "GRATUIT")
               .length === 0 ? (
               <div style={{ textAlign: "center", padding: "3rem", color: "#718096" }}>
-                <p style={{ fontSize: "1.2rem" }}>Vous n'avez aucun cours actif.</p>
-                <button onClick={() => setTab("catalogue")} style={btnPrimary}>
-                  🔍 Parcourir le catalogue
+                <p style={{ fontSize: "1.2rem" }}>ليس لديك أي دروس نشطة حالياً.</p>
+                <button onClick={() => setTab("catalogue")} className="btn-dent-blue" style={btnPrimary}>
+                  🔍 تصفّح الفهرس
                 </button>
               </div>
             ) : (
@@ -565,19 +581,25 @@ export default function StudentDashboard() {
                         }}
                       >
                         <div>
-                          <strong style={{ fontSize: "1.1rem" }}>
-                            {e.course.title}
+                          <strong style={{ fontSize: "1.2rem", fontWeight: "700", color: "#1a202c", letterSpacing: "-0.5px" }}>
+                            {e.course?.title}
                           </strong>
                           <div
                             style={{
                               fontSize: "1rem",
                               color: "#718096",
                               marginTop: "1rem",
+                              display: "flex",
+                              alignItems: "center",
+                              gap: "0.4rem",
+                              flexWrap: "wrap"
                             }}
                           >
-                            {[e.course.matiere, e.course.niveau, e.course.annee]
-                              .filter(Boolean)
-                              .join(" • ")}
+                            <span style={getMatiereStyles(e.course?.matiere)}>
+                              {getMatiereLabel(e.course?.matiere)}
+                            </span>
+                            {e.course?.niveau || e.course?.annee ? " • " : ""}
+                            {[e.course?.niveau, e.course?.annee].filter(Boolean).join(" • ")}
                           </div>
                           {e.course.teacher && (
                             <div style={{ fontSize: "1rem", color: "#718096" }}>
@@ -594,16 +616,17 @@ export default function StudentDashboard() {
                               fontSize: "0.75rem",
                             }}
                           >
-                            {e.statut === "GRATUIT" ? "Gratuit" : "Payé"}
+                            {e.statut === "GRATUIT" ? "مجاني" : "مدفوع"}
                           </span>
                         </div>
                         <button
                           onClick={() =>
                             router.push(`/dashboard/student/courses/${e.course.id}`)
                           }
+                          className="btn-dent-blue"
                           style={btnPrimary}
                         >
-                          {e.progression > 0 ? "📖 Continuer" : "📖 Commencer"}
+                          {e.progression > 0 ? "📖 المتابعة" : "📖 البداية"}
                         </button>
                       </div>
                       <div style={{ marginTop: "2rem" }}>
@@ -615,7 +638,7 @@ export default function StudentDashboard() {
                             marginBottom: "0.25rem",
                           }}
                         >
-                          <span>Progression</span>
+                          <span>التقدم</span>
                           <span style={{ fontWeight: "bold" }}>{e.progression}%</span>
                         </div>
                         <div
@@ -648,7 +671,7 @@ export default function StudentDashboard() {
                               marginTop: "0.25rem",
                             }}
                           >
-                            ✅ Cours complété !
+                            ✅ تم إكمال الدرس!
                           </p>
                         )}
                       </div>
@@ -659,564 +682,341 @@ export default function StudentDashboard() {
           </div>
         )}
         
-{/* ── Tab : Catalogue (AMÉLIORÉ) ── */}
-{/* ── Tab : Catalogue (AMÉLIORÉ) ── */}
-{tab === "catalogue" && (
-  <div>
-    {/* Filtres */}
-    <div
-      style={{
-        background: COLORS.green.light,
-        padding: "1.5rem",
-        borderRadius: "15px",
-        marginBottom: "2rem",
-        border: `1px solid ${COLORS.border}`,
-      }}
-    >
-      <h3
-        style={{
-          margin: "0 0 1.25rem",
-          color: COLORS.text.primary,
-          fontSize: "1.1rem",
-        }}
-      >
-        🔍 Filtrer les cours
-      </h3>
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
-          gap: "1rem",
-        }}
-      >
-        <div>
-          <label style={labelStyle}>🎓 Niveau</label>
-          <select
-            value={filtreNiveau}
-            onChange={(e) => {
-              setFiltreNiveau(e.target.value);
-              setFiltreAnnee("");
-            }}
-            style={inputStyle}
-          >
-            <option value="">Tous les niveaux</option>
-            <option value="college">Collège</option>
-            <option value="lycee">Lycée</option>
-          </select>
-        </div>
-        <div>
-          <label style={labelStyle}>📅 Classe</label>
-          <select
-            value={filtreAnnee}
-            onChange={(e) => setFiltreAnnee(e.target.value)}
-            style={inputStyle}
-          >
-            <option value="">Toutes les classes</option>
-            {filtreNiveau === "college" &&
-              ANNEES_COLLEGE.map((a) => (
-                <option key={a} value={a}>
-                  {a}
-                </option>
-              ))}
-            {filtreNiveau === "lycee" &&
-              ANNEES_LYCEE.map((a) => (
-                <option key={a} value={a}>
-                  {a}
-                </option>
-              ))}
-            {!filtreNiveau &&
-              [...ANNEES_COLLEGE, ...ANNEES_LYCEE].map((a) => (
-                <option key={a} value={a}>
-                  {a}
-                </option>
-              ))}
-          </select>
-        </div>
-        <div>
-          <label style={labelStyle}>📖 Matière</label>
-          <select
-            value={filtreMatiere}
-            onChange={(e) => setFiltreMatiere(e.target.value)}
-            style={inputStyle}
-          >
-            <option value="">Toutes les matières</option>
-            {[
-              "Mathématiques",
-              "Physique",
-              "SVT",
-              "Informatique & Programmation",
-              "Philosophie",
-              "Histoire & Géographie",
-              "Arabe",
-              "Education islamique",
-              "Français",
-              "Anglais",
-              "Espagnol",
-            ].map((m) => (
-              <option key={m} value={m}>
-                {m}
-              </option>
-            ))}
-          </select>
-        </div>
-      </div>
-      <div
-        style={{
-          display: "flex",
-          gap: "0.75rem",
-          marginTop: "1rem",
-        }}
-      >
-        <button
-          onClick={handleCatalogueSearch}
-          style={{
-            flex: 1,
-            padding: "0.75rem",
-            background: COLORS.green.gradient,
-            color: "white",
-            border: "none",
-            borderRadius: "8px",
-            fontWeight: "700",
-            cursor: "pointer",
-            fontSize: "1rem",
-            transition: "transform 0.2s, box-shadow 0.2s",
-            boxShadow: "0 4px 14px rgba(5, 150, 105, 0.3)",
-          }}
-          onMouseEnter={(e) => {
-            e.target.style.transform = "translateY(-2px)";
-            e.target.style.boxShadow = "0 6px 20px rgba(5, 150, 105, 0.4)";
-          }}
-          onMouseLeave={(e) => {
-            e.target.style.transform = "translateY(0)";
-            e.target.style.boxShadow = "0 4px 14px rgba(5, 150, 105, 0.3)";
-          }}
-        >
-          🔍 Rechercher
-        </button>
-        <button
-          onClick={handleCatalogueReset}
-          style={{
-            padding: "0.75rem 1.5rem",
-            background: COLORS.orange.light,
-            color: COLORS.orange.text,
-            border: `1px solid ${COLORS.orange.DEFAULT}`,
-            borderRadius: "8px",
-            fontWeight: "600",
-            cursor: "pointer",
-            fontSize: "1rem",
-            transition: "background 0.2s",
-          }}
-        >
-          ✕ Réinitialiser
-        </button>
-      </div>
-    </div>
-
-    {catalogueLoading ? (
-      <div style={{ textAlign: "center", padding: "3rem", color: "#94a3b8" }}>
-        ⏳ Chargement des cours...
-      </div>
-    ) : catalogue.length === 0 ? (
-      <div style={{ textAlign: "center", padding: "3rem", color: "#94a3b8" }}>
-        <div style={{ fontSize: "3rem", marginBottom: "1rem" }}>📭</div>
-        <p>Aucun cours disponible pour ces critères.</p>
-        <button
-          onClick={handleCatalogueReset}
-          style={{
-            marginTop: "1rem",
-            padding: "0.6rem 1.5rem",
-            background: COLORS.green.gradient,
-            color: "white",
-            border: "none",
-            borderRadius: "8px",
-            fontWeight: "600",
-            cursor: "pointer",
-          }}
-        >
-          Réinitialiser les filtres
-        </button>
-      </div>
-    ) : (
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
-          gap: "1.25rem",
-        }}
-      >
-        {catalogue.map((c) => {
-          // ✅ Récupérer le statut d'inscription
-          const enrollment = c.enrollments?.[0];
-          const isEnrolled = enrollment?.statut === "PAYE" || enrollment?.statut === "GRATUIT";
-          const isPending = enrollment?.statut === "EN_ATTENTE";
-          const isRejected = enrollment?.statut === "REJETE";
-
-          return (
+        {/* ── Tab : Catalogue (AMÉLIORÉ) ── */}
+        {tab === "catalogue" && (
+          <div>
+            {/* Filtres */}
             <div
-              key={c.id}
               style={{
-                background: "white",
-                borderRadius: "16px",
-                overflow: "hidden",
-                boxShadow: "0 4px 20px rgba(0,0,0,0.06)",
-                border: isEnrolled 
-                  ? "2px solid #059669" 
-                  : isPending 
-                    ? "2px solid #f59e0b" 
-                    : "1px solid #e2e8f0",
-                transition: "transform 0.2s, box-shadow 0.2s",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform = "translateY(-4px)";
-                e.currentTarget.style.boxShadow = "0 8px 30px rgba(0,0,0,0.12)";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = "translateY(0)";
-                e.currentTarget.style.boxShadow = "0 4px 20px rgba(0,0,0,0.06)";
+                backgroundColor: "#f7f3ec",
+                backgroundImage: "url('/images/bg-algerian.png')",
+                backgroundSize: "250px",
+                backgroundRepeat: "repeat",
+                padding: "2rem",
+                borderRadius: "20px",
+                marginBottom: "3rem",
+                border: "2px solid #ea580c",
+                boxShadow: "8px 8px 0px rgba(234, 88, 12, 0.8)",
               }}
             >
-              {/* Cover */}
-              <div
+              <h3
                 style={{
-                  height: "100px",
-                  background: isEnrolled 
-                    ? "linear-gradient(135deg, #059669, #10b981)" 
-                    : isPending 
-                      ? "linear-gradient(135deg, #f59e0b, #d97706)" 
-                      : "linear-gradient(135deg, #6b7280, #9ca3af)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontSize: "3rem",
-                  position: "relative",
+                  margin: "0 0 1.25rem",
+                  color: COLORS.text.primary,
+                  fontSize: "1.1rem",
                 }}
               >
-                {c.coverImage ? (
-                  <img
-                    src={c.coverImage}
-                    alt={c.title}
-                    style={{
-                      width: "100%",
-                      height: "100%",
-                      objectFit: "cover",
+                🔍 تصفية الدروس
+              </h3>
+              <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap", marginBottom: "1rem" }}>
+                <select
+                  value={filtreNiveau}
+                  onChange={(e) => {
+                    const niv = e.target.value;
+                    setFiltreNiveau(niv);
+                    setFiltreAnnee(""); 
+                    setFiltreMatiere(""); 
+                    fetchCatalogueCourses(niv, "", "");
+                  }}
+                  style={{
+                    padding: "0.6rem 1rem", borderRadius: "10px", border: "2px solid #e2e8f0", outline: "none", fontWeight: "600", color: "#4a5568", backgroundColor: "white", cursor: "pointer", minWidth: "140px"
+                  }}
+                >
+                  <option value="">🏫 جميع المستويات</option>
+                  <option value="college">🏫 المتوسط</option>
+                  <option value="lycee">🎓 الثانوي</option>
+                </select>
+
+                {filtreNiveau && (
+                  <select
+                    value={filtreAnnee}
+                    onChange={(e) => {
+                      const ann = e.target.value;
+                      setFiltreAnnee(ann);
+                      setFiltreMatiere(""); 
+                      fetchCatalogueCourses(filtreNiveau, ann, "");
                     }}
-                  />
-                ) : (
-                  "📚"
-                )}
-                {isEnrolled && (
-                  <span
                     style={{
-                      position: "absolute",
-                      top: "0.5rem",
-                      right: "0.5rem",
-                      background: "#059669",
-                      color: "white",
-                      padding: "0.2rem 0.6rem",
-                      borderRadius: "20px",
-                      fontSize: "0.7rem",
-                      fontWeight: "700",
-                    }}
-                  >
-                    ✅ Inscrit
-                  </span>
-                )}
-                {isPending && (
-                  <span
-                    style={{
-                      position: "absolute",
-                      top: "0.5rem",
-                      right: "0.5rem",
-                      background: "#f59e0b",
-                      color: "white",
-                      padding: "0.2rem 0.6rem",
-                      borderRadius: "20px",
-                      fontSize: "0.7rem",
-                      fontWeight: "700",
+                      padding: "0.6rem 1rem", borderRadius: "10px", border: "2px solid #e2e8f0", outline: "none", fontWeight: "600", color: "#4a5568", backgroundColor: "white", cursor: "pointer", minWidth: "140px"
                     }}
                   >
-                    ⏳ En attente
-                  </span>
+                    <option value="">📅 جميع السنوات</option>
+                    {(filtreNiveau === "college" ? ANNEES_COLLEGE : ANNEES_LYCEE).map((a) => (
+                      <option key={a} value={a}>{a}</option>
+                    ))}
+                  </select>
                 )}
-              </div>
 
-              <div style={{ padding: "1rem" }}>
-                <h3
-                  style={{
-                    margin: "0 0 0.5rem",
-                    fontWeight: "700",
-                    color: "#1f2937",
-                    fontSize: "1rem",
-                  }}
-                >
-                  {c.title}
-                </h3>
-                <div
-                  style={{
-                    display: "flex",
-                    gap: "0.4rem",
-                    flexWrap: "wrap",
-                    marginBottom: "0.5rem",
-                  }}
-                >
-                  {c.niveau && (
-                    <span
-                      style={{
-                        background: "#f0fdf4",
-                        color: "#166534",
-                        padding: "0.15rem 0.5rem",
-                        borderRadius: "20px",
-                        fontSize: "0.7rem",
-                        fontWeight: "600",
-                      }}
-                    >
-                      {c.niveau === "college"
-                        ? "Collège"
-                        : c.niveau === "lycee"
-                        ? "Lycée"
-                        : c.niveau}
-                    </span>
-                  )}
-                  {c.annee && (
-                    <span
-                      style={{
-                        background: "#eff6ff",
-                        color: "#1d4ed8",
-                        padding: "0.15rem 0.5rem",
-                        borderRadius: "20px",
-                        fontSize: "0.7rem",
-                        fontWeight: "600",
-                      }}
-                    >
-                      {c.annee}
-                    </span>
-                  )}
-                  {c.matiere && (
-                    <span
-                      style={{
-                        background: "#fff7ed",
-                        color: "#c2410c",
-                        padding: "0.15rem 0.5rem",
-                        borderRadius: "20px",
-                        fontSize: "0.7rem",
-                        fontWeight: "600",
-                      }}
-                    >
-                      {c.matiere}
-                    </span>
-                  )}
-                </div>
-                <p
-                  style={{
-                    margin: "0 0 0.75rem",
-                    color: "#64748b",
-                    fontSize: "0.8rem",
-                  }}
-                >
-                  📚 {c.chapters?.length || 0} chapitre
-                  {c.chapters?.length !== 1 ? "s" : ""}
-                  {c.teachers?.[0] && (
-                    <>
-                      {" "}
-                      • 👨‍🏫 {c.teachers[0].prenom} {c.teachers[0].nom}
-                    </>
-                  )}
-                </p>
-
-                {/* ✅ SECTION BOUTONS CONDITIONNELLE */}
-                <div style={{ minWidth: "180px" }}>
-                  {/* CAS 1 : Déjà inscrit */}
-                  {isEnrolled && (
-                    <div
-                      style={{
-                        display: "flex",
-                        flexDirection: "column",
-                        gap: "0.5rem",
-                      }}
-                    >
-                      <div
-                        style={{
-                          background: "#ecfdf5",
-                          border: "2px solid #059669",
-                          borderRadius: "8px",
-                          padding: "0.5rem",
-                          textAlign: "center",
-                          color: "#059669",
-                          fontWeight: "600",
-                          fontSize: "0.85rem",
-                        }}
-                      >
-                        ✅ Déjà inscrit
-                      </div>
-                      <button
-                        onClick={() =>
-                          router.push(`/dashboard/student/courses/${c.id}`)
-                        }
-                        style={{
-                          width: "100%",
-                          padding: "0.6rem",
-                          background: COLORS.green.gradient,
-                          color: "white",
-                          border: "none",
-                          borderRadius: "8px",
-                          fontWeight: "700",
-                          cursor: "pointer",
-                          fontSize: "0.85rem",
-                          transition: "transform 0.2s, box-shadow 0.2s",
-                          boxShadow: "0 2px 8px rgba(5, 150, 105, 0.25)",
-                        }}
-                        onMouseEnter={(e) => {
-                          e.target.style.transform = "translateY(-2px)";
-                          e.target.style.boxShadow =
-                            "0 4px 14px rgba(5, 150, 105, 0.35)";
-                        }}
-                        onMouseLeave={(e) => {
-                          e.target.style.transform = "translateY(0)";
-                          e.target.style.boxShadow =
-                            "0 2px 8px rgba(5, 150, 105, 0.25)";
-                        }}
-                      >
-                        📖 Accéder au cours
-                      </button>
-                    </div>
-                  )}
-
-                  {/* CAS 2 : En attente */}
-                  {isPending && (
-                    <div
-                      style={{
-                        display: "flex",
-                        flexDirection: "column",
-                        gap: "0.5rem",
-                      }}
-                    >
-                      <div
-                        style={{
-                          background: "#fffbeb",
-                          border: "2px solid #f59e0b",
-                          borderRadius: "8px",
-                          padding: "0.5rem",
-                          textAlign: "center",
-                          color: "#92400e",
-                          fontWeight: "600",
-                          fontSize: "0.85rem",
-                        }}
-                      >
-                        ⏳ Demande en attente
-                      </div>
-                      <button
-                        onClick={() => handleUnenroll(c.id)}
-                        style={{
-                          width: "100%",
-                          padding: "0.5rem",
-                          background: "none",
-                          border: "1px solid #ef4444",
-                          color: "#ef4444",
-                          borderRadius: "6px",
-                          cursor: "pointer",
-                          fontWeight: "500",
-                          fontSize: "0.8rem",
-                          transition: "all 0.2s",
-                        }}
-                        onMouseEnter={(e) => {
-                          e.target.style.background = "#fef2f2";
-                        }}
-                        onMouseLeave={(e) => {
-                          e.target.style.background = "transparent";
-                        }}
-                      >
-                        Annuler la demande
-                      </button>
-                    </div>
-                  )}
-
-                  {/* CAS 3 : Rejeté */}
-                  {isRejected && (
-                    <div
-                      style={{
-                        background: "#fef2f2",
-                        border: "2px solid #ef4444",
-                        borderRadius: "8px",
-                        padding: "0.5rem",
-                        textAlign: "center",
-                        color: "#dc2626",
-                        fontWeight: "600",
-                        fontSize: "0.85rem",
-                      }}
-                    >
-                      ❌ Demande rejetée
-                    </div>
-                  )}
-
-                  {/* CAS 4 : Pas d'inscription */}
-                  {!enrollment && (
-                    <div
-                      style={{
-                        display: "flex",
-                        flexDirection: "column",
-                        gap: "0.5rem",
-                      }}
-                    >
-                      <select
-                        value={typePaiements[c.id] || "COURS_SEUL"}
-                        onChange={(e) =>
-                          setTypePaiements({
-                            ...typePaiements,
-                            [c.id]: e.target.value,
-                          })
-                        }
-                        style={{
-                          padding: "0.4rem",
-                          borderRadius: "6px",
-                          border: "1px solid #cbd5e0",
-                          fontSize: "0.85rem",
-                          width: "100%",
-                        }}
-                      >
-                        <option value="COURS_SEUL">💳 Ce cours uniquement</option>
-                        <option value="PARCOURS_COMPLET">🎓 Parcours complet</option>
-                      </select>
-                      <button
-                        onClick={() =>
-                          handleEnroll(c.id, typePaiements[c.id] || "COURS_SEUL")
-                        }
-                        style={{
-                          width: "100%",
-                          padding: "0.6rem",
-                          background: COLORS.green.gradient,
-                          color: "white",
-                          border: "none",
-                          borderRadius: "8px",
-                          fontWeight: "700",
-                          cursor: "pointer",
-                          fontSize: "0.85rem",
-                          transition: "transform 0.2s, box-shadow 0.2s",
-                          boxShadow: "0 2px 8px rgba(5, 150, 105, 0.25)",
-                        }}
-                        onMouseEnter={(e) => {
-                          e.target.style.transform = "translateY(-2px)";
-                          e.target.style.boxShadow =
-                            "0 4px 14px rgba(5, 150, 105, 0.35)";
-                        }}
-                        onMouseLeave={(e) => {
-                          e.target.style.transform = "translateY(0)";
-                          e.target.style.boxShadow =
-                            "0 2px 8px rgba(5, 150, 105, 0.25)";
-                        }}
-                      >
-                        ➕ Demander l'accès
-                      </button>
-                    </div>
-                  )}
-                </div>
+                {filtreAnnee && (
+                  <select
+                    value={filtreMatiere}
+                    onChange={(e) => {
+                      const mat = e.target.value;
+                      setFiltreMatiere(mat);
+                      fetchCatalogueCourses(filtreNiveau, filtreAnnee, mat);
+                    }}
+                    style={{
+                      padding: "0.6rem 1rem", borderRadius: "10px", border: "2px solid #e2e8f0", outline: "none", fontWeight: "600", color: "#4a5568", backgroundColor: "white", cursor: "pointer", minWidth: "140px"
+                    }}
+                  >
+                    <option value="">📘 جميع المواد</option>
+                    {MATIERES.map((m) => (
+                      <option key={m.value} value={m.value}>{m.label}</option>
+                    ))}
+                  </select>
+                )}
               </div>
             </div>
-          );
-        })}
-      </div>
-    )}
-  </div>
-)}
+
+            {catalogueLoading ? (
+              <div style={{ textAlign: "center", padding: "3rem", color: "#94a3b8" }}>
+                ⏳ جارٍ تحميل الدروس...
+              </div>
+            ) : catalogue.length === 0 ? (
+              <div style={{ textAlign: "center", padding: "3rem", color: "#94a3b8" }}>
+                <div style={{ fontSize: "3rem", marginBottom: "1rem" }}>📭</div>
+                <p>لا توجد دروس متاحة لهذه المعايير.</p>
+                <button
+                  onClick={handleCatalogueReset}
+                  className="btn-dent-green"
+                  style={{
+                    marginTop: "1rem",
+                    padding: "0.6rem 1.5rem",
+                    background: COLORS.green.gradient,
+                    color: "white",
+                    border: "none",
+                    borderRadius: "8px",
+                    fontWeight: "600",
+                    cursor: "pointer",
+                  }}
+                >
+                  إعادة تعيين الفلاتر
+                </button>
+              </div>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: "3rem" }}>
+                {(() => {
+                  const renderCourseCard = (c) => {
+                    const enrollment = c.enrollments?.[0] || null;
+                    const isEnrolled = enrollment?.statut === "PAYE" || enrollment?.statut === "GRATUIT";
+                    const isPending = enrollment?.statut === "EN_ATTENTE";
+                    const isRejected = enrollment?.statut === "REJETE";
+                    
+                    const subjectTheme = getMatiereStyles ? getMatiereStyles(c.matiere) : { color: "#4A5568", background: "#F7FAFC15" };
+                    const subjectIcon = getSubjectIcon ? getSubjectIcon(c.matiere) : "📘";
+                    const subjectDeco = getSubjectDecorations ? getSubjectDecorations(c.matiere) : "📖  📝  ✏️";
+                    
+                    // Extract colors for the modern UI
+                    const primaryColor = subjectTheme.color || "#4A5568";
+                    const bgColor = `${primaryColor}12`;
+
+                    return (
+                      <div key={c.id} style={{ 
+                        display: "flex", flexDirection: "column",
+                        background: "white", 
+                        border: "2px solid " + primaryColor + "20", 
+                        borderRadius: "20px", 
+                        boxShadow: "0 10px 25px rgba(0,0,0,0.04), 0 4px 6px rgba(0,0,0,0.02)", 
+                        overflow: "hidden",
+                        transition: "transform 0.2s, box-shadow 0.2s",
+                        cursor: "pointer",
+                        minWidth: "320px",
+                        flexShrink: 0
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.transform = "translateY(-4px)";
+                        e.currentTarget.style.boxShadow = "0 15px 35px " + primaryColor + "18";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.transform = "none";
+                        e.currentTarget.style.boxShadow = "0 10px 25px rgba(0,0,0,0.04), 0 4px 6px rgba(0,0,0,0.02)";
+                      }}
+                      >
+                        {/* Banner part */}
+                        <div style={{
+                          height: "120px",
+                          background: "#f8fafc",
+                          display: "flex",
+                          flexDirection: "column",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          padding: "1rem 1.5rem",
+                          position: "relative",
+                          borderBottom: "1px solid #f1f5f9"
+                        }}>
+                          <div style={{ fontSize: "2.8rem", marginBottom: "0.25rem" }}>{subjectIcon}</div>
+                          <div style={{ fontSize: "0.7rem", color: primaryColor, opacity: 0.6, letterSpacing: "3px", fontWeight: "600" }}>{subjectDeco}</div>
+                          <div style={{
+                            position: "absolute", top: "0.5rem", right: "0.5rem",
+                            backgroundColor: "#f1f5f9",
+                            color: "#475569",
+                            padding: "0.25rem 0.7rem",
+                            borderRadius: "12px",
+                            fontWeight: "700",
+                            fontSize: "0.7rem",
+                            letterSpacing: "0.5px",
+                            textTransform: "uppercase"
+                          }}>
+                            {c.niveau === "college" ? "المتوسط" : c.niveau === "lycee" ? "الثانوي" : c.niveau} {c.annee ? ("• " + c.annee) : ""}
+                          </div>
+                        </div>
+
+                        {/* Content part */}
+                        <div style={{ padding: "1.5rem", display: "flex", flexDirection: "column", flexGrow: 1 }}>
+                          <h3 style={{ fontWeight: "800", color: "#1e293b", fontSize: "1.15rem", margin: "0 0 0.5rem", lineHeight: "1.4" }}>{c.title}</h3>
+                          
+                          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "1rem", flexWrap: "wrap" }}>
+                            <span style={{
+                              padding: "0.2rem 0.6rem",
+                              borderRadius: "6px",
+                              backgroundColor: "#f1f5f9",
+                              color: "#475569",
+                              fontWeight: "700",
+                              fontSize: "0.8rem"
+                            }}>{subjectIcon} {MATIERES.find(m => m.value === c.matiere)?.label || c.matiere}</span>
+                            <span style={{
+                              padding: "0.2rem 0.6rem",
+                              borderRadius: "6px",
+                              backgroundColor: "#f1f5f9",
+                              color: "#475569",
+                              fontWeight: "700",
+                              fontSize: "0.8rem"
+                            }}>📖 {c.chapters?.length || 0} ch.</span>
+                          </div>
+                          
+                          <div style={{ marginTop: "auto" }}>
+                            {c.isFreeTrial && (
+                              <p style={{
+                                fontSize: "1rem",
+                                fontWeight: "800",
+                                color: "#10b981",
+                                marginBottom: "0.75rem"
+                              }}>
+                                🎁 مجاني
+                              </p>
+                            )}
+                            <div style={{ minWidth: "180px" }}>
+                              {isEnrolled ? (
+                                <button
+                                  onClick={(e) => { e.stopPropagation(); router.push("/dashboard/student/courses/" + c.id); }}
+                                  className="btn-dent-blue"
+                                  style={btnPrimary}
+                                >
+                                  📖 الدخول إلى الدرس
+                                </button>
+                              ) : isPending ? (
+                                <button onClick={(e) => { e.stopPropagation(); handleUnenroll(c.id); }} className="btn-dent-outline" style={{ width: "100%", padding: "0.6rem" }}>إلغاء الطلب</button>
+                              ) : (
+                                <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }} onClick={(e) => e.stopPropagation()}>
+                                  {c.isFreeTrial ? (
+                                    <button
+                                      onClick={(e) => { e.stopPropagation(); router.push("/dashboard/student/courses/" + c.id); }}
+                                      className="btn-dent-green"
+                                      style={{ ...btnPrimary, width: "100%" }}
+                                    >
+                                      🎁 ابدأ مجاناً
+                                    </button>
+                                  ) : (
+                                    <div>
+                                      <select
+                                        value={typePaiements[c.id] || "COURS_SEUL"}
+                                        onChange={(e) => setTypePaiements({ ...typePaiements, [c.id]: e.target.value })}
+                                        style={{ padding: "0.5rem 1rem", borderRadius: "9999px", border: "1px solid #cbd5e0", fontSize: "0.9rem", width: "100%", fontWeight: "600", color: "#4a5568", marginBottom: "0.5rem" }}
+                                      >
+                                        <option value="COURS_SEUL">💳 هذا الدرس فقط</option>
+                                        <option value="PARCOURS_COMPLET">🎓 المسار الكامل</option>
+                                      </select>
+                                      <button
+                                        onClick={(e) => { e.stopPropagation(); setPaymentModalParams({ course: c, typePaiement: typePaiements[c.id] || "COURS_SEUL" }); }}
+                                        className="btn-dent-blue"
+                                        style={{ ...btnPrimary, width: "100%" }}
+                                      >
+                                        ➕ طلب الوصول
+                                      </button>
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  };
+
+                  return (
+                    <>
+                      {MATIERES.map((matiereDef) => {
+                        const coursesInMatiere = catalogue.filter((c) => c.matiere === matiereDef.value).sort((a, b) => {
+                          const numA = parseInt((a.title || "").match(/\d+/)?.[0] || 0);
+                          const numB = parseInt((b.title || "").match(/\d+/)?.[0] || 0);
+                          if (numA !== numB) return numA - numB;
+                          return (a.title || "").localeCompare(b.title || "", undefined, { numeric: true, sensitivity: 'base' });
+                        });
+                        if (coursesInMatiere.length === 0) return null;
+                        
+                        const subjectTheme = getMatiereStyles ? getMatiereStyles(matiereDef.value) : { color: "#4A5568", background: "#F7FAFC" };
+                        const subjectIcon = getSubjectIcon ? getSubjectIcon(matiereDef.value) : "📘";
+
+                        return (
+                          <div key={matiereDef.value}>
+                            <div style={{
+                              display: "flex", alignItems: "center", gap: "1rem", marginBottom: "1.5rem",
+                              padding: "1rem 1.5rem", borderRadius: "12px", background: subjectTheme.background,
+                              borderLeft: `6px solid ${subjectTheme.color}`
+                            }}>
+                              <span style={{ fontSize: "2rem" }}>{subjectIcon}</span>
+                              <h2 style={{ margin: 0, color: subjectTheme.color, fontSize: "1.5rem", fontWeight: "800" }}>
+                                {matiereDef.label}
+                              </h2>
+                            </div>
+                            <div style={{ display: "flex", overflowX: "auto", gap: "1.5rem", paddingBottom: "1rem" }}>
+                              {coursesInMatiere.map((c) => renderCourseCard(c))}
+                            </div>
+                          </div>
+                        );
+                      })}
+
+                      {(() => {
+                        const unknownCourses = catalogue.filter((c) => !MATIERES.some((m) => m.value === c.matiere)).sort((a, b) => {
+                          const numA = parseInt((a.title || "").match(/\d+/)?.[0] || 0);
+                          const numB = parseInt((b.title || "").match(/\d+/)?.[0] || 0);
+                          if (numA !== numB) return numA - numB;
+                          return (a.title || "").localeCompare(b.title || "", undefined, { numeric: true, sensitivity: 'base' });
+                        });
+                        if (unknownCourses.length === 0) return null;
+                        return (
+                          <div key="unknown">
+                            <div style={{
+                              display: "flex", alignItems: "center", gap: "1rem", marginBottom: "1.5rem",
+                              padding: "1rem 1.5rem", borderRadius: "12px", background: "#F7FAFC",
+                              borderLeft: `6px solid #4A5568`
+                            }}>
+                              <span style={{ fontSize: "2rem" }}>📘</span>
+                              <h2 style={{ margin: 0, color: "#4A5568", fontSize: "1.5rem", fontWeight: "800" }}>
+                                مواد أخرى
+                              </h2>
+                            </div>
+                            <div style={{ display: "flex", overflowX: "auto", gap: "1.5rem", paddingBottom: "1rem" }}>
+                              {unknownCourses.map((c) => renderCourseCard(c))}
+                            </div>
+                          </div>
+                        );
+                      })()}
+                    </>
+                  );
+                })()}
+              </div>
+            )}
+            <CataloguePaymentModal
+              isOpen={!!paymentModalParams}
+              onClose={() => setPaymentModalParams(null)}
+              course={paymentModalParams?.course}
+              typePaiement={paymentModalParams?.typePaiement}
+              onConfirm={handleEnroll}
+            />
+          </div>
+        )}
 
         {/* ── Tab : Messages ── */}
         {tab === "messages" && (
@@ -1229,10 +1029,10 @@ export default function StudentDashboard() {
                 marginBottom: "1.5rem",
               }}
             >
-              <h3 style={{ margin: "0 0 1rem" }}>✉️ Contacter un enseignant</h3>
+              <h3 style={{ margin: "0 0 1rem" }}>✉️ التواصل مع أستاذ</h3>
               {teachers.length === 0 ? (
                 <p style={{ color: "#718096" }}>
-                  Inscrivez-vous à un cours pour contacter son enseignant.
+                  سجّل في درس للتواصل مع أستاذه.
                 </p>
               ) : (
                 <>
@@ -1243,7 +1043,7 @@ export default function StudentDashboard() {
                     }
                     style={inputStyle}
                   >
-                    <option value="">Choisir un enseignant...</option>
+                    <option value="">اختر أستاذاً...</option>
                     {teachers.map((t) => (
                       <option key={t.id} value={t.id}>
                         {t.prenom} {t.nom}
@@ -1251,7 +1051,7 @@ export default function StudentDashboard() {
                     ))}
                   </select>
                   <textarea
-                    placeholder="Votre message..."
+                    placeholder="رسالتك..."
                     value={newMsg.content}
                     onChange={(e) =>
                       setNewMsg({ ...newMsg, content: e.target.value })
@@ -1272,15 +1072,15 @@ export default function StudentDashboard() {
                       opacity: sendingMsg ? 0.7 : 1,
                     }}
                   >
-                    {sendingMsg ? "Envoi..." : "📤 Envoyer"}
+                    {sendingMsg ? "جارٍ الإرسال..." : "📤 إرسال"}
                   </button>
                 </>
               )}
             </div>
 
-            <h3>💬 Conversations</h3>
+            <h3>💬 المحادثات</h3>
             {Object.keys(conversations).length === 0 ? (
-              <p style={{ color: "#718096" }}>Aucune conversation.</p>
+              <p style={{ color: "#718096" }}>لا توجد محادثات.</p>
             ) : (
               Object.entries(conversations).map(([otherId, conv]) => (
                 <div
@@ -1328,7 +1128,7 @@ export default function StudentDashboard() {
                           conv.messages.filter((m) => m.receiverId === user?.id && !m.lu)
                             .length
                         }{" "}
-                        non lu
+                        رسالة غير مقروءة
                       </span>
                     )}
                   </div>
@@ -1366,7 +1166,7 @@ export default function StudentDashboard() {
                                 marginTop: "0.2rem",
                               }}
                             >
-                              {new Date(m.createdAt).toLocaleDateString("fr-FR")}
+                              {new Date(m.createdAt).toLocaleDateString("ar-DZ")}
                               {m.receiverId === user?.id && !m.lu && (
                                 <button
                                   onClick={() => handleMarkRead(m.id)}
@@ -1379,7 +1179,7 @@ export default function StudentDashboard() {
                                     fontSize: "0.7rem",
                                   }}
                                 >
-                                  ✓ Lu
+                                  ✓ تمت القراءة
                                 </button>
                               )}
                             </div>
@@ -1396,7 +1196,7 @@ export default function StudentDashboard() {
         {/* ── Tab : Chat ── */}
         {tab === "chat" && (
           <div>
-            <h3>💬 Chat</h3>
+            <h3>💬 الدردشة</h3>
             <Chat />
           </div>
         )}

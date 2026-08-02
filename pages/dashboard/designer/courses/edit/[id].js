@@ -27,7 +27,7 @@ export default function EditCourse() {
     try {
       const res  = await fetch(`/api/courses/${id}`, { credentials: "include" });
       const data = await res.json();
-      if (!res.ok) return setError(data.error || "Erreur chargement");
+      if (!res.ok) return setError(data.error || "خطأ في التحميل");
       setForm({
         title:       data.title       || "",
         description: data.description || "",
@@ -36,7 +36,7 @@ export default function EditCourse() {
         niveau:      data.niveau      || "",
         annee:       data.annee       || "",
       });
-    } catch { setError("Erreur serveur"); }
+    } catch { setError("خطأ في الخادم"); }
     finally { setLoading(false); }
   };
 
@@ -53,22 +53,22 @@ export default function EditCourse() {
       });
       const data = await res.json();
       if (res.ok) {
-        setSuccess("✅ Cours mis à jour !");
+        setSuccess("✅ تم تحديث الدرس!");
         setTimeout(() => router.push(`/dashboard/designer/courses/${id}`), 1000);
       } else {
-        setError(data.error || "Erreur sauvegarde");
+        setError(data.error || "خطأ في الحفظ");
       }
-    } catch { setError("Erreur serveur"); }
+    } catch { setError("خطأ في الخادم"); }
     finally { setSaving(false); }
   };
 
   const anneesCollege = ["6eme", "5eme", "4eme", "3eme"];
   const anneesLycee   = ["1AS", "2AS", "Terminale"];
 
-  if (loading) return <p>Chargement...</p>;  const DASHBOARD_TABS = [
-    { key: "overview", label: "Espace Designer", icon: "🎨" },
-    { key: "courses",  label: "Mes cours",       icon: "📚" },
-    { key: "messages", label: "Messages",        icon: "✉️" },
+  if (loading) return <p>جاري التحميل...</p>;  const DASHBOARD_TABS = [
+    { key: "overview", label: "فضاء المصمم", icon: "🎨" },
+    { key: "courses",  label: "دروسي",       icon: "📚" },
+    { key: "messages", label: "الرسائل",        icon: "✉️" },
   ];
 
   return (
@@ -76,16 +76,16 @@ export default function EditCourse() {
       <DashboardLayout
         user={user}
         roleIcon="🎨"
-        customTitle="Édition de Cours"
+        customTitle="تعديل الدرس"
         tabs={DASHBOARD_TABS}
         activeTab="courses"
         onTabChange={(tab) => router.push("/dashboard/designer")}
       >
-        <div style={{ maxWidth: "800px", margin: "0 auto" }}>
+        <div style={{ maxWidth: "800px", margin: "0 auto" }} dir="rtl">
           
           <button onClick={() => router.push(`/dashboard/designer/courses/${id}`)} style={btnBack}>
-            <span style={{ fontSize: "1.2rem", marginRight: "0.5rem" }}>←</span> 
-            Retour au cours
+            <span style={{ fontSize: "1.2rem", marginLeft: "0.5rem" }}>←</span> 
+            العودة إلى الدرس
           </button>
 
           <div style={{ 
@@ -104,9 +104,9 @@ export default function EditCourse() {
                 WebkitBackgroundClip: "text",
                 WebkitTextFillColor: "transparent"
               }}>
-                ✏️ Modifier le cours
+                ✏️ تعديل الدرس
               </h1>
-              <p style={{ color: "#718096", marginTop: "0.5rem" }}>Ajustez les informations principales de votre programme</p>
+              <p style={{ color: "#718096", marginTop: "0.5rem" }}>قم بتعديل المعلومات الأساسية لبرنامجك</p>
             </div>
 
             {error && (
@@ -139,42 +139,42 @@ export default function EditCourse() {
               
               <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: "1.5rem" }}>
                 <div>
-                  <label style={labelStyle}>Titre du cours *</label>
+                  <label style={labelStyle}>عنوان الدرس *</label>
                   <input name="title" value={form.title} onChange={handleChange} style={inputStyle} />
                 </div>
 
                 <div>
-                  <label style={labelStyle}>Matière</label>
+                  <label style={labelStyle}>المادة</label>
                   <select name="matiere" value={form.matiere} onChange={handleChange} style={inputStyle}>
-                    <option value="">Choisir...</option>
-                    <option value="math">Mathématiques</option>
-                    <option value="physique">Physique & Chimie</option>
-                    <option value="svt">SVT</option>
-                    <option value="informatique">Informatique</option>
-                    <option value="education_islamique">Éducation Islamique</option>
-                    <option value="histoire">Histoire & Géo</option>
-                    <option value="francais">Français</option>
-                    <option value="anglais">Anglais</option>
-                    <option value="arabe">Langue Arabe</option>
-                    <option value="philosophie">Philosophie</option>
+                    <option value="">اختر...</option>
+                    <option value="math">رياضيات</option>
+                    <option value="physique">فيزياء وكيمياء</option>
+                    <option value="svt">علوم طبيعية</option>
+                    <option value="informatique">إعلام آلي</option>
+                    <option value="education_islamique">تربية إسلامية</option>
+                    <option value="histoire">تاريخ وجغرافيا</option>
+                    <option value="francais">لغة فرنسية</option>
+                    <option value="anglais">لغة إنجليزية</option>
+                    <option value="arabe">لغة عربية</option>
+                    <option value="philosophie">فلسفة</option>
                   </select>
                 </div>
               </div>
 
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1.5rem" }}>
                 <div>
-                  <label style={labelStyle}>Niveau scolaire</label>
+                  <label style={labelStyle}>المستوى الدراسي</label>
                   <select name="niveau" value={form.niveau} onChange={handleChange} style={inputStyle}>
-                    <option value="">Choisir un niveau</option>
-                    <option value="college">Collège</option>
-                    <option value="lycee">Lycée</option>
+                    <option value="">اختر مستوى</option>
+                    <option value="college">متوسط</option>
+                    <option value="lycee">ثانوي</option>
                   </select>
                 </div>
 
                 <div>
-                  <label style={labelStyle}>Année / Classe</label>
+                  <label style={labelStyle}>السنة / القسم</label>
                   <select name="annee" value={form.annee} onChange={handleChange} style={inputStyle} disabled={!form.niveau}>
-                    <option value="">Choisir une année</option>
+                    <option value="">اختر سنة</option>
                     {form.niveau === "college" && anneesCollege.map((a) => <option key={a} value={a}>{a}</option>)}
                     {form.niveau === "lycee"   && anneesLycee.map((a)   => <option key={a} value={a}>{a}</option>)}
                   </select>
@@ -182,12 +182,12 @@ export default function EditCourse() {
               </div>
 
               <div>
-                <label style={labelStyle}>Description courte</label>
+                <label style={labelStyle}>وصف قصير</label>
                 <textarea name="description" value={form.description} onChange={handleChange} style={{ ...inputStyle, height: "120px", resize: "vertical" }} />
               </div>
 
               <div>
-                <label style={labelStyle}>Objectifs pédagogiques (séparez par | )</label>
+                <label style={labelStyle}>الأهداف البيداغوجية (افصل بينها بـ | )</label>
                 <textarea name="objectifs" value={form.objectifs} onChange={handleChange} style={{ ...inputStyle, height: "120px", resize: "vertical" }} />
               </div>
 
@@ -205,7 +205,7 @@ export default function EditCourse() {
                     opacity: saving ? 0.7 : 1 
                   }}
                 >
-                  {saving ? "Sauvegarde..." : "💾 Enregistrer les modifications"}
+                  {saving ? "جاري الحفظ..." : "💾 حفظ التعديلات"}
                 </button>
               </div>
 

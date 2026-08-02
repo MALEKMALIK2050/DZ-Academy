@@ -50,6 +50,7 @@ interface Course {
   matiere?: string;
   niveau?: string;
   annee?: string;
+  prix?: number;
   chapters?: { id: number }[];
   teachers?: { id: number; nom: string; prenom: string }[];
   enrollments?: { id: number; statut: string; typePaiement: string }[];
@@ -59,6 +60,22 @@ interface Course {
 interface EnrollmentItem {
   id: number; statut: string; typePaiement: string;
   progression?: number; completed?: boolean; course: Course;
+}
+
+// ── Subject style helper ──
+function getSubjectStyle(mat?: string) {
+  const m = mat?.toLowerCase() || '';
+  if (m.includes('math') || m === 'math') return { primary: '#3182CE', secondary: '#2B6CB0', bg: '#EBF8FF', icon: '📐' };
+  if (m.includes('physique') || m === 'physique') return { primary: '#805AD5', secondary: '#6B46C1', bg: '#FAF5FF', icon: '⚛️' };
+  if (m.includes('svt') || m === 'svt') return { primary: '#38A169', secondary: '#2F855A', bg: '#F0FFF4', icon: '🧬' };
+  if (m.includes('info') || m.includes('tech') || m === 'informatique') return { primary: '#00B5D8', secondary: '#0097A7', bg: '#E6FFFA', icon: '💻' };
+  if (m.includes('fran') || m === 'francais') return { primary: '#DD6B20', secondary: '#C05621', bg: '#FFFAF0', icon: '📚' };
+  if (m.includes('anglais') || m === 'anglais') return { primary: '#E53E3E', secondary: '#C53030', bg: '#FFF5F5', icon: '🌍' };
+  if (m.includes('arabe') || m === 'arabe') return { primary: '#059669', secondary: '#047857', bg: '#ECFDF5', icon: '📖' };
+  if (m.includes('histoire') || m === 'histoire') return { primary: '#D69E2E', secondary: '#B7791F', bg: '#FFFFF0', icon: '🏺' };
+  if (m.includes('philo') || m === 'philosophie') return { primary: '#4A5568', secondary: '#2D3748', bg: '#F7FAFC', icon: '💭' };
+  if (m.includes('islam') || m === 'education_islamique') return { primary: '#059669', secondary: '#047857', bg: '#ECFDF5', icon: '🕌' };
+  return { primary: '#4A5568', secondary: '#2D3748', bg: '#F7FAFC', icon: '✨' };
 }
 
 // ── PickerModal ─────────────────────────────────────────
@@ -191,6 +208,14 @@ export default function CatalogueScreen() {
     return (c.title || '').toLowerCase().includes(q) || (c.description || '').toLowerCase().includes(q);
   });
 
+  const isFirstCourseOfSubject = (courseId: number, matiere?: string, annee?: string) => {
+    if (!matiere || !annee) return false;
+    const subjectCourses = courses.filter(c => c.matiere === matiere && c.annee === annee);
+    if (subjectCourses.length === 0) return false;
+    const minId = Math.min(...subjectCourses.map(c => c.id));
+    return courseId === minId;
+  };
+
   const hasFilters = !!(niveau || annee || matiere);
 
   return (
@@ -205,29 +230,29 @@ export default function CatalogueScreen() {
           <ThemedText type="small" style={s.subtitle}>{courses.length} cours disponibles</ThemedText>
         </View>
 
-        {/* Recherche */}
-        <View style={s.searchBar}>
-          <TextInput style={s.searchInput} placeholder="Rechercher un cours..." placeholderTextColor={Colors.darkGray} value={searchQuery} onChangeText={setSearchQuery} />
-          <ThemedText style={s.searchIcon}>🔍</ThemedText>
-        </View>
-
         {/* Filtres */}
         <View style={s.filtersRow}>
-          <Pressable style={[s.filterBtn, niveau && s.filterBtnActive]} onPress={() => setShowNiveauPicker(true)}>
-            <ThemedText style={[s.filterBtnTxt, niveau && s.filterBtnTxtActive]} numberOfLines={1}>
-              {niveau ? (niveau === 'college' ? '🏫 Collège' : '🎓 Lycée') : '🏫 Niveau ▾'}
+          <Pressable style={[s.filterBtn, niveau ? s.filterBtnActive : null]} onPress={() => setShowNiveauPicker(true)}>
+            <ThemedText style={[s.filterBtnTxt, niveau ? s.filterBtnTxtActive : null]} numberOfLines={1}>
+              {niveau ? (niveau === 'college' ? '🏫 المتوسط' : '🎓 الثانوي') : '🏫 المستوى ▾'}
             </ThemedText>
           </Pressable>
-          <Pressable style={[s.filterBtn, annee && s.filterBtnActive]} onPress={() => setShowAnneePicker(true)}>
-            <ThemedText style={[s.filterBtnTxt, annee && s.filterBtnTxtActive]} numberOfLines={1}>
-              {annee ? `📅 ${annee}` : '📅 Année ▾'}
-            </ThemedText>
-          </Pressable>
-          <Pressable style={[s.filterBtn, matiere && s.filterBtnActive]} onPress={() => setShowMatierePicker(true)}>
-            <ThemedText style={[s.filterBtnTxt, matiere && s.filterBtnTxtActive]} numberOfLines={1}>
-              {matiere ? `📘 ${MATIERES.find(m => m.value === matiere)?.label.replace(/^[^\s]+\s/, '') || matiere}` : '📘 Matière ▾'}
-            </ThemedText>
-          </Pressable>
+          
+          {!!niveau && (
+            <Pressable style={[s.filterBtn, annee ? s.filterBtnActive : null]} onPress={() => setShowAnneePicker(true)}>
+              <ThemedText style={[s.filterBtnTxt, annee ? s.filterBtnTxtActive : null]} numberOfLines={1}>
+                {annee ? `📅 ${anneeOptions.find(a => a.value === annee)?.label || annee}` : '📅 القسم ▾'}
+              </ThemedText>
+            </Pressable>
+          )}
+
+          {!!annee && (
+            <Pressable style={[s.filterBtn, matiere ? s.filterBtnActive : null]} onPress={() => setShowMatierePicker(true)}>
+              <ThemedText style={[s.filterBtnTxt, matiere ? s.filterBtnTxtActive : null]} numberOfLines={1}>
+                {matiere ? `📘 ${MATIERES.find(m => m.value === matiere)?.label.replace(/^[^\s]+\s/, '') || matiere}` : '📘 المادة ▾'}
+              </ThemedText>
+            </Pressable>
+          )}
         </View>
 
         {hasFilters && (
@@ -263,9 +288,9 @@ export default function CatalogueScreen() {
         ) : filteredCourses.length === 0 ? (
           <View style={s.center}>
             <ThemedText type="subtitle" style={{ color: '#374151', marginBottom: 12 }}>
-              {searchQuery || hasFilters ? '🔎 Aucun cours trouvé' : '📚 Aucun cours disponible'}
+              {hasFilters ? '🔎 Aucun cours trouvé' : '📚 Aucun cours disponible'}
             </ThemedText>
-            {(searchQuery || hasFilters) && <Pressable style={s.resetBtn} onPress={resetFilters}><ThemedText style={s.resetBtnTxt}>Effacer les filtres</ThemedText></Pressable>}
+            {hasFilters && <Pressable style={s.resetBtn} onPress={resetFilters}><ThemedText style={s.resetBtnTxt}>Effacer les filtres</ThemedText></Pressable>}
           </View>
         ) : (
           <View style={s.list}>
@@ -275,8 +300,11 @@ export default function CatalogueScreen() {
               const isPending  = status === 'EN_ATTENTE';
               const chapCount  = course.chapters?.length ?? 0;
               const teacher    = course.teachers?.[0];
-              const color = course.id % 3 === 0 ? Colors.primary : course.id % 3 === 1 ? Colors.secondary : Colors.accent;
-              const icon  = course.id % 3 === 0 ? '🌱' : course.id % 3 === 1 ? '🔥' : '⚡';
+              
+              const subjectStyle = getSubjectStyle(course.matiere);
+              const color = subjectStyle.primary;
+              const bgColor = subjectStyle.bg;
+              const icon = subjectStyle.icon;
 
               return (
                 <Pressable key={course.id}
@@ -290,28 +318,34 @@ export default function CatalogueScreen() {
                       );
                       return;
                     }
-                    if (isEnrolled) router.push({ pathname: '/course/[id]', params: { id: course.id } });
-                    else if (!isPending) setSelectedCourseForPayment(course.id);
+                    if (isEnrolled) {
+                      router.push({ pathname: '/course/[id]', params: { id: course.id } });
+                    } else if (!isPending) {
+                      if (isFirstCourseOfSubject(course.id, course.matiere, course.annee)) {
+                        router.push({ pathname: '/course/[id]', params: { id: course.id } });
+                      } else {
+                        setSelectedCourseForPayment(course.id);
+                      }
+                    }
                   }}
                 >
-                  <View style={s.cardContent}>
-                    <View style={[s.banner, { backgroundColor: color }]}>
-                      <ThemedText style={s.bannerIcon}>{icon}</ThemedText>
+                  <View style={[s.cardContent, { borderColor: '#E2E8F0', borderWidth: 1 }]}>
+                    <View style={[s.banner, { backgroundColor: bgColor }]}>
+                      <ThemedText style={[s.bannerIcon, { fontSize: 48 }]}>{icon}</ThemedText>
                       {(course.niveau || course.annee) && (
-                        <View style={s.bannerBadge}>
-                          <ThemedText style={s.bannerBadgeTxt}>
-                            {course.niveau === 'college' ? 'Collège' : course.niveau === 'lycee' ? 'Lycée' : course.niveau}
+                        <View style={[s.bannerBadge, { backgroundColor: color }]}>
+                          <ThemedText style={[s.bannerBadgeTxt, { color: 'white' }]}>
+                            {course.niveau === 'college' ? 'المتوسط' : course.niveau === 'lycee' ? 'الثانوي' : course.niveau}
                             {course.annee ? ` • ${course.annee}` : ''}
                           </ThemedText>
                         </View>
                       )}
                     </View>
                     <View style={s.info}>
-                      <ThemedText type="subtitle" style={s.cardTitle} numberOfLines={2}>{course.title}</ThemedText>
-                      {course.description && <ThemedText type="small" style={s.cardDesc} numberOfLines={2}>{course.description}</ThemedText>}
+                      <ThemedText type="subtitle" style={[s.cardTitle, { color: '#1E293B', fontSize: 18 }]} numberOfLines={2}>{course.title}</ThemedText>
                       <View style={s.tags}>
-                        {course.matiere && <View style={s.tag}><ThemedText style={s.tagTxt}>📘 {course.matiere}</ThemedText></View>}
-                        {chapCount > 0 && <View style={s.tag}><ThemedText style={s.tagTxt}>📖 {chapCount} ch.</ThemedText></View>}
+                        {course.matiere && <View style={[s.tag, { backgroundColor: bgColor }]}><ThemedText style={[s.tagTxt, { color: color }]}>📘 {MATIERES.find(m => m.value === course.matiere)?.label || course.matiere}</ThemedText></View>}
+                        {chapCount > 0 && <View style={s.tag}><ThemedText style={s.tagTxt}>📖 {chapCount} فصل</ThemedText></View>}
                       </View>
                       {teacher && <ThemedText type="small" style={s.teacher}>👨‍🏫 {teacher.prenom} {teacher.nom}</ThemedText>}
                     </View>
@@ -319,10 +353,12 @@ export default function CatalogueScreen() {
                       s.accessBtn, 
                       course.cooldownLocked && s.accessBtnLocked,
                       isPending && !course.cooldownLocked && s.accessBtnPending, 
-                      isEnrolled && !course.cooldownLocked && s.accessBtnEnrolled
+                      isEnrolled && !course.cooldownLocked && s.accessBtnEnrolled,
+                      !isEnrolled && !isPending && !course.cooldownLocked && isFirstCourseOfSubject(course.id, course.matiere, course.annee) && { backgroundColor: '#F97316' },
+                      !isEnrolled && !isPending && !course.cooldownLocked && !isFirstCourseOfSubject(course.id, course.matiere, course.annee) && { backgroundColor: color }
                     ]}>
                       <ThemedText style={s.accessBtnTxt}>
-                        {course.cooldownLocked ? '🔒 Cours verrouillé' : isEnrolled ? '📖 Accéder au cours' : isPending ? '⏳ En attente' : "📝 Demander l'accès"}
+                        {course.cooldownLocked ? '🔒 دورة مقفلة' : isEnrolled ? '📖 الدخول إلى الدورة' : isPending ? '⏳ قيد الانتظار' : isFirstCourseOfSubject(course.id, course.matiere, course.annee) ? '🚀 حاول مجانا' : "📝 طلب الوصول"}
                       </ThemedText>
                     </View>
                   </View>

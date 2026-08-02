@@ -86,14 +86,14 @@ export default function TeacherDashboard() {
     }
   };
 
-  if (loading) return <p>Chargement...</p>;
+  if (loading) return <p dir="rtl" lang="ar">جارٍ التحميل...</p>;
 
   const DASHBOARD_TABS = [
-    { key: "overview", label: "Espace Teacher", icon: "👨‍🏫" },
-    { key: "courses", label: "Mes cours", icon: "📚", badge: courses.length },
-    { key: "students", label: "Mes élèves", icon: "👨‍🎓", badge: studentStats.length },
-    { key: "messages", label: "Messages", icon: "✉️", badge: messages.filter(m => m.receiverId === user?.id && !m.lu).length },
-    { key: "chat", label: "Chat", icon: "💬" },
+    { key: "overview", label: "فضاء الأستاذ", icon: "👨‍🏫" },
+    { key: "courses", label: "دروسي", icon: "📚", badge: courses.length },
+    { key: "students", label: "تلاميذي", icon: "👨‍🎓", badge: studentStats.length },
+    { key: "messages", label: "الرسائل", icon: "✉️", badge: messages.filter(m => m.receiverId === user?.id && !m.lu).length },
+    { key: "chat", label: "الدردشة", icon: "💬" },
   ];
 
   return (
@@ -101,17 +101,18 @@ export default function TeacherDashboard() {
       <DashboardLayout
         user={user}
         roleIcon="👨‍🏫"
-        customTitle="Espace Enseignant"
+        customTitle="فضاء الأستاذ"
         tabs={DASHBOARD_TABS}
         activeTab={tab}
         onTabChange={setTab}
       >
+        <div dir="rtl" lang="ar">
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "2.5rem" }}>
           <div>
             <h1 style={{ margin: 0, fontSize: "2.5rem", fontWeight: "800", color: "#059669" }}>
-              👨‍🏫 Dashboard Enseignant
+              👨‍🏫 لوحة تحكم الأستاذ
             </h1>
-            <p style={{ color: "#718096" }}>Gérez vos cours et élèves</p>
+            <p style={{ color: "#718096" }}>أدر دروسك وتلاميذك</p>
           </div>
           <div style={{ display: "flex", gap: "0.75rem", alignItems: "center" }}>
             <div style={{ position: "relative" }}>
@@ -119,9 +120,9 @@ export default function TeacherDashboard() {
                 🔔 {notifications.filter(n => !n.lu).length}
               </button>
               {showNotifs && (
-                <div style={{ position: "absolute", right: 0, top: "110%", width: "300px", background: "white", border: "1px solid #e2e8f0", borderRadius: "10px", boxShadow: "0 4px 20px rgba(0,0,0,0.1)", zIndex: 100 }}>
+                <div style={{ position: "absolute", left: 0, top: "110%", width: "300px", background: "white", border: "1px solid #e2e8f0", borderRadius: "10px", boxShadow: "0 4px 20px rgba(0,0,0,0.1)", zIndex: 100 }}>
                   <div style={{ padding: "1rem", maxHeight: "300px", overflowY: "auto" }}>
-                    {notifications.length === 0 ? <p style={{ color: "#718096" }}>Aucune notification</p> : notifications.map(n => (
+                    {notifications.length === 0 ? <p style={{ color: "#718096" }}>لا توجد إشعارات</p> : notifications.map(n => (
                       <div key={n.id} style={{ padding: "0.5rem", borderBottom: "1px solid #f0f0f0", fontSize: "0.9rem" }}>{n.contenu}</div>
                     ))}
                   </div>
@@ -135,10 +136,10 @@ export default function TeacherDashboard() {
         {tab === "overview" && (
           <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "1rem" }}>
             {[
-              { label: "📚 Cours", count: courses.length, color: "#3182ce" },
-              { label: "👨‍🎓 Élèves", count: studentStats.length, color: "#059669" },
-              { label: "💬 Messages", count: messages.length, color: "#dd6b20" },
-              { label: "🔔 Notifications", count: notifications.length, color: "#805ad5" },
+              { label: "📚 الدروس", count: courses.length, color: "#3182ce" },
+              { label: "👨‍🎓 التلاميذ", count: studentStats.length, color: "#059669" },
+              { label: "💬 الرسائل", count: messages.length, color: "#dd6b20" },
+              { label: "🔔 الإشعارات", count: notifications.length, color: "#805ad5" },
             ].map((s) => (
               <div key={s.label} style={{ background: s.color, color: "white", padding: "1.5rem", borderRadius: "10px", textAlign: "center" }}>
                 <div style={{ fontSize: "2rem", fontWeight: "bold" }}>{s.count}</div>
@@ -151,7 +152,7 @@ export default function TeacherDashboard() {
         {tab === "courses" && (
           <div>
             {courses.length === 0 ? (
-              <p style={{ color: "#718096" }}>Aucun cours assigné</p>
+              <p style={{ color: "#718096" }}>لا يوجد أي درس مُسنَد إليك</p>
             ) : (
               <div style={{ display: "grid", gap: "1rem" }}>
                 {courses.map((c) => (
@@ -159,11 +160,11 @@ export default function TeacherDashboard() {
                     <div>
                       <strong style={{ fontSize: "1.1rem" }}>{c.title}</strong>
                       <div style={{ fontSize: "0.85rem", color: "#718096", marginTop: "0.25rem" }}>
-                        {c.matiere} • {c.niveau} • {c.enrollments?.length || 0} élèves
+                        {c.matiere} • {c.niveau} • {c.enrollments?.length || 0} تلميذ
                       </div>
                     </div>
                     <button onClick={() => router.push(`/dashboard/teacher/courses/${c.id}`)} style={{ background: "#059669", color: "white", border: "none", padding: "0.5rem 1rem", borderRadius: "6px", cursor: "pointer" }}>
-                      👁 Voir
+                      👁 عرض
                     </button>
                   </div>
                 ))}
@@ -175,7 +176,7 @@ export default function TeacherDashboard() {
         {tab === "students" && (
           <div>
             {studentStats.length === 0 ? (
-              <p style={{ color: "#718096" }}>Aucun élève</p>
+              <p style={{ color: "#718096" }}>لا يوجد أي تلميذ</p>
             ) : (
               <div style={{ display: "grid", gap: "1rem" }}>
                 {studentStats.map((s) => (
@@ -185,7 +186,7 @@ export default function TeacherDashboard() {
                       <div style={{ fontSize: "0.85rem", color: "#718096" }}>{s.student?.email}</div>
                     </div>
                     <button onClick={() => setSelectedStudent(s)} style={{ background: "#059669", color: "white", border: "none", padding: "0.5rem 1rem", borderRadius: "6px", cursor: "pointer" }}>
-                      👁 Fiche
+                      👁 الملف
                     </button>
                   </div>
                 ))}
@@ -196,19 +197,20 @@ export default function TeacherDashboard() {
 
         {tab === "messages" && (
           <div>
-            <h3>✉️ Nouveau message</h3>
+            <h3>✉️ رسالة جديدة</h3>
             <select value={newMsg.receiverId} onChange={(e) => setNewMsg({ ...newMsg, receiverId: e.target.value })} style={{ width: "100%", padding: "0.75rem", marginBottom: "1rem", borderRadius: "6px", border: "1px solid #cbd5e0" }}>
-              <option value="">Choisir un contact...</option>
+              <option value="">اختر جهة اتصال...</option>
               {studentStats.map((s) => <option key={s.student?.id} value={s.student?.id}>{s.student?.prenom} {s.student?.nom}</option>)}
             </select>
-            <textarea placeholder="Message..." value={newMsg.content} onChange={(e) => setNewMsg({ ...newMsg, content: e.target.value })} style={{ width: "100%", padding: "0.75rem", minHeight: "100px", borderRadius: "6px", border: "1px solid #cbd5e0", marginBottom: "1rem" }} />
+            <textarea placeholder="الرسالة..." value={newMsg.content} onChange={(e) => setNewMsg({ ...newMsg, content: e.target.value })} style={{ width: "100%", padding: "0.75rem", minHeight: "100px", borderRadius: "6px", border: "1px solid #cbd5e0", marginBottom: "1rem" }} />
             <button onClick={handleSendMessage} disabled={sendingMsg} style={{ background: "#059669", color: "white", padding: "0.75rem 1.5rem", border: "none", borderRadius: "6px", cursor: "pointer", fontWeight: "600" }}>
-              {sendingMsg ? "Envoi..." : "📤 Envoyer"}
+              {sendingMsg ? "جارٍ الإرسال..." : "📤 إرسال"}
             </button>
           </div>
         )}
 
         {tab === "chat" && <Chat />}
+        </div>
       </DashboardLayout>
     </ProtectedRoute>
   );

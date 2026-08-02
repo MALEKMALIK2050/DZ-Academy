@@ -47,7 +47,7 @@ export default function FinalExamPage() {
       }
     } catch (err) {
       console.error("Erreur:", err);
-      setError("Erreur lors du chargement du test");
+      setError("خطأ أثناء تحميل الاختبار");
     } finally {
       setLoading(false);
     }
@@ -76,7 +76,7 @@ export default function FinalExamPage() {
       const data = await res.json();
       setResult(data);
     } catch (err) {
-      setError("Erreur lors de la soumission");
+      setError("خطأ أثناء الإرسال");
     } finally {
       setSubmitting(false);
     }
@@ -85,7 +85,7 @@ export default function FinalExamPage() {
   if (loading) {
     return (
       <ProtectedRoute allowedRoles={["STUDENT"]}>
-        <div style={{ padding: "2rem", textAlign: "center" }}>⏳ Chargement...</div>
+        <div dir="rtl" lang="ar" style={{ padding: "2rem", textAlign: "center" }}>⏳ جارٍ التحميل...</div>
       </ProtectedRoute>
     );
   }
@@ -93,13 +93,13 @@ export default function FinalExamPage() {
   if (error || !quiz) {
     return (
       <ProtectedRoute allowedRoles={["STUDENT"]}>
-        <div style={{ padding: "2rem", color: "#e53e3e" }}>❌ {error || "Pas de test final"}</div>
+        <div dir="rtl" lang="ar" style={{ padding: "2rem", color: "#e53e3e" }}>❌ {error || "لا يوجد اختبار نهائي"}</div>
       </ProtectedRoute>
     );
   }
 
   const DASHBOARD_TABS = [
-    { key: "overview", label: "Mes cours", icon: "📚" },
+    { key: "overview", label: "دروسي", icon: "📚" },
   ];
 
   // Résultat affiché
@@ -109,12 +109,12 @@ export default function FinalExamPage() {
         <DashboardLayout
           user={user}
           roleIcon="👨‍🎓"
-          customTitle={`${course?.title} — Résultat`}
+          customTitle={`${course?.title} — النتيجة`}
           tabs={DASHBOARD_TABS}
           activeTab="overview"
           onTabChange={() => router.push("/dashboard/student")}
         >
-          <div style={{ maxWidth: "800px", margin: "0 auto" }}>
+          <div dir="rtl" lang="ar" style={{ maxWidth: "800px", margin: "0 auto" }}>
             <div
               style={{
                 background: result.reussi ? "#dcfce7" : "#fee2e2",
@@ -135,7 +135,7 @@ export default function FinalExamPage() {
                   color: result.reussi ? "#166534" : "#991b1b",
                 }}
               >
-                {result.reussi ? "Félicitations!" : "Résultat insuffisant"}
+                {result.reussi ? "تهانينا!" : "نتيجة غير كافية"}
               </h1>
 
               <div style={{ fontSize: "3rem", fontWeight: "bold", margin: "1rem 0" }}>
@@ -151,13 +151,13 @@ export default function FinalExamPage() {
                 }}
               >
                 <p style={{ margin: "0 0 0.5rem", color: "#718096" }}>
-                  <strong>Questions correctes:</strong> {result.correct}/{result.total}
+                  <strong>الإجابات الصحيحة:</strong> {result.correct}/{result.total}
                 </p>
                 <p style={{ margin: "0 0 0.5rem", color: "#718096" }}>
-                  <strong>Tentative:</strong> {result.tentatives}/{info?.maxTentatives}
+                  <strong>المحاولة:</strong> {result.tentatives}/{info?.maxTentatives}
                 </p>
                 <p style={{ margin: "0", color: "#718096" }}>
-                  <strong>Seuil de réussite:</strong> {info?.seuil}%
+                  <strong>نسبة النجاح المطلوبة:</strong> {info?.seuil}%
                 </p>
               </div>
 
@@ -193,14 +193,14 @@ export default function FinalExamPage() {
                     fontSize: "1rem",
                   }}
                 >
-                  🔄 Réessayer ({result.tentativesRestantes} restantes)
+                  🔄 إعادة المحاولة ({result.tentativesRestantes} متبقية)
                 </button>
               )}
 
               <button
                 onClick={() => router.push(`/dashboard/student/courses/${courseId}`)}
                 style={{
-                  marginLeft: "1rem",
+                  marginRight: "1rem",
                   padding: "0.75rem 1.5rem",
                   background: "#718096",
                   color: "white",
@@ -211,7 +211,7 @@ export default function FinalExamPage() {
                   fontSize: "1rem",
                 }}
               >
-                ← Retour au cours
+                → العودة إلى الدورة
               </button>
             </div>
           </div>
@@ -229,12 +229,12 @@ export default function FinalExamPage() {
       <DashboardLayout
         user={user}
         roleIcon="👨‍🎓"
-        customTitle={`${course?.title} — Test Final`}
+        customTitle={`${course?.title} — الاختبار النهائي`}
         tabs={DASHBOARD_TABS}
         activeTab="overview"
         onTabChange={() => router.push("/dashboard/student")}
       >
-        <div style={{ maxWidth: "900px", margin: "0 auto" }}>
+        <div dir="rtl" lang="ar" style={{ maxWidth: "900px", margin: "0 auto" }}>
           {/* Header */}
           <div
             style={{
@@ -255,22 +255,22 @@ export default function FinalExamPage() {
                 WebkitTextFillColor: "transparent",
               }}
             >
-              🏁 Test Final
+              🏁 الاختبار النهائي
             </h1>
 
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <p style={{ margin: 0, color: "#718096" }}>
-                Seuil de réussite: <strong>{info?.seuil}%</strong>
+                نسبة النجاح المطلوبة: <strong>{info?.seuil}%</strong>
               </p>
               <p style={{ margin: 0, color: "#718096" }}>
-                Tentatives: <strong>{info?.tentatives || 0}/{info?.maxTentatives}</strong>
+                المحاولات: <strong>{info?.tentatives || 0}/{info?.maxTentatives}</strong>
               </p>
             </div>
 
             {/* Progress bar */}
             <div style={{ marginTop: "1.5rem" }}>
               <div style={{ fontSize: "0.9rem", color: "#718096", marginBottom: "0.5rem" }}>
-                Question {currentQuestion + 1} / {quiz.questions.length}
+                السؤال {currentQuestion + 1} / {quiz.questions.length}
               </div>
               <div
                 style={{
@@ -313,15 +313,15 @@ export default function FinalExamPage() {
                   borderRadius: "20px",
                   fontSize: "0.75rem",
                   fontWeight: "600",
-                  marginRight: "0.5rem",
+                  marginLeft: "0.5rem",
                 }}
               >
-                Q{currentQuestion + 1}
+                س{currentQuestion + 1}
               </span>
               <strong style={{ fontSize: "1.1rem" }}>{question.texte}</strong>
               {question.points && (
-                <span style={{ marginLeft: "1rem", color: "#718096", fontSize: "0.9rem" }}>
-                  ({question.points} points)
+                <span style={{ marginRight: "1rem", color: "#718096", fontSize: "0.9rem" }}>
+                  ({question.points} نقطة)
                 </span>
               )}
             </div>
@@ -381,7 +381,7 @@ export default function FinalExamPage() {
                 fontWeight: "600",
               }}
             >
-              ← Précédent
+              → السابق
             </button>
 
             {currentQuestion < quiz.questions.length - 1 ? (
@@ -397,7 +397,7 @@ export default function FinalExamPage() {
                   fontWeight: "600",
                 }}
               >
-                Suivant →
+                ← التالي
               </button>
             ) : (
               <button
@@ -415,7 +415,7 @@ export default function FinalExamPage() {
                   fontWeight: "600",
                 }}
               >
-                {submitting ? "⏳..." : `✅ Terminer (${answered}/${quiz.questions.length})`}
+                {submitting ? "⏳..." : `✅ إنهاء (${answered}/${quiz.questions.length})`}
               </button>
             )}
           </div>
@@ -430,7 +430,7 @@ export default function FinalExamPage() {
             }}
           >
             <h4 style={{ margin: "0 0 1rem", color: "#2d3748" }}>
-              Vos réponses ({answered}/{quiz.questions.length})
+              إجاباتك ({answered}/{quiz.questions.length})
             </h4>
             <div
               style={{

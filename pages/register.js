@@ -1,92 +1,92 @@
 // ======================================================
-// FICHIER : pages/register.js (STYLISÉ VERT & ORANGE)
+// FICHIER : pages/register.js — DZ ACADEMY (عربي / RTL)
 // ======================================================
 
 import { useState } from "react";
 import { useRouter } from "next/router";
 import PolicyModal from "@/components/PolicyModal";
 
-// ✅ CONTENU DES POLITIQUES (inchangé)
+// ✅ محتوى الشروط والأحكام بالعربية
 const CGU_CONTENT = `
-<h3 style="font-size:1.25rem;font-weight:700;margin-bottom:1rem;">📜 CONDITIONS GÉNÉRALES D'UTILISATION</h3>
+<h3 style="font-size:1.25rem;font-weight:700;margin-bottom:1rem;" dir="rtl">📜 الشروط العامة للاستخدام</h3>
 
-<h4 style="font-weight:600;margin-top:1rem;margin-bottom:0.5rem;">Article 1 - Champ d'application</h4>
-<p>Les présentes conditions générales d'utilisation (CGU) régissent l'accès et l'utilisation de la plateforme CB ACADEMY, accessible à l'adresse cb-academy-dz.vercel.app.</p>
+<h4 style="font-weight:600;margin-top:1rem;margin-bottom:0.5rem;" dir="rtl">المادة 1 – نطاق التطبيق</h4>
+<p dir="rtl">تنظّم هذه الشروط العامة للاستخدام الوصولَ إلى منصة دزأكاديمي والاستفادة منها، المتاحة على الرابط dzacademy.dz.</p>
 
-<h4 style="font-weight:600;margin-top:1rem;margin-bottom:0.5rem;">Article 2 - Acceptation des conditions</h4>
-<p>L'inscription sur la plateforme implique l'acceptation pleine et entière des présentes CGU. L'utilisateur déclare avoir pris connaissance des conditions générales d'utilisation, de vente et de la politique de protection des données à caractère personnel et les accepte sans réserve.</p>
+<h4 style="font-weight:600;margin-top:1rem;margin-bottom:0.5rem;" dir="rtl">المادة 2 – قبول الشروط</h4>
+<p dir="rtl">يعني التسجيل في المنصة القبولَ الكاملَ وغير المشروط لهذه الشروط العامة للاستخدام. يُقرّ المستخدم بأنه اطّلع على شروط الاستخدام وسياسة حماية البيانات الشخصية وقبلها دون تحفظ.</p>
 
-<h4 style="font-weight:600;margin-top:1rem;margin-bottom:0.5rem;">Article 3 - Protection des données personnelles</h4>
-<p>Conformément à la loi algérienne n°18-07 du 10 juin 2018 relative à la protection des personnes physiques dans le traitement des données à caractère personnel :</p>
-<ul style="list-style:disc;padding-left:1.5rem;margin-top:0.5rem;space-y:0.25rem;">
-  <li>Les données collectées sont strictement nécessaires à la gestion des inscriptions, du suivi pédagogique et des communications.</li>
-  <li>L'utilisateur dispose d'un droit d'accès, de rectification et d'opposition sur ses données.</li>
-  <li>Les données sont conservées pour une durée maximale de 5 ans après la dernière activité.</li>
-  <li>Des mesures de sécurité sont mises en œuvre pour protéger les données.</li>
+<h4 style="font-weight:600;margin-top:1rem;margin-bottom:0.5rem;" dir="rtl">المادة 3 – حماية البيانات الشخصية</h4>
+<p dir="rtl">وفقًا للقانون الجزائري رقم 18-07 المؤرخ في 10 يونيو 2018 المتعلق بحماية الأشخاص الطبيعيين في معالجة البيانات الشخصية:</p>
+<ul style="list-style:disc;padding-right:1.5rem;margin-top:0.5rem;" dir="rtl">
+  <li>البيانات المجمَّعة ضرورية حصرًا لإدارة التسجيل والمتابعة التربوية والتواصل.</li>
+  <li>يحق للمستخدم الاطلاع على بياناته وتصحيحها والاعتراض عليها.</li>
+  <li>تُحفظ البيانات لمدة أقصاها 5 سنوات بعد آخر نشاط.</li>
+  <li>تُتّخذ تدابير أمنية لحماية البيانات.</li>
 </ul>
 
-<h4 style="font-weight:600;margin-top:1rem;margin-bottom:0.5rem;">Article 4 - Propriété intellectuelle</h4>
-<p>Les contenus mis à disposition sur la plateforme (cours, exercices, vidéos) sont protégés par le droit d'auteur. Toute reproduction ou diffusion est interdite sans autorisation.</p>
+<h4 style="font-weight:600;margin-top:1rem;margin-bottom:0.5rem;" dir="rtl">المادة 4 – الملكية الفكرية</h4>
+<p dir="rtl">المحتويات المتاحة على المنصة (دروس، تمارين، مقاطع فيديو) محمية بحقوق المؤلف. يُحظر أي نسخ أو نشر دون إذن مسبق.</p>
 
-<h4 style="font-weight:600;margin-top:1rem;margin-bottom:0.5rem;">Article 5 - Charte des enseignants</h4>
-<p>L'enseignant s'engage à :</p>
-<ul style="list-style:disc;padding-left:1.5rem;margin-top:0.5rem;space-y:0.25rem;">
-  <li>Utiliser la plateforme conformément à sa destination pédagogique.</li>
-  <li>Respecter la confidentialité des informations relatives aux élèves.</li>
-  <li>Garantir l'exactitude et la licéité des contenus déposés.</li>
+<h4 style="font-weight:600;margin-top:1rem;margin-bottom:0.5rem;" dir="rtl">المادة 5 – ميثاق الأساتذة</h4>
+<p dir="rtl">يلتزم الأستاذ بما يلي:</p>
+<ul style="list-style:disc;padding-right:1.5rem;margin-top:0.5rem;" dir="rtl">
+  <li>استخدام المنصة وفق أهدافها التربوية.</li>
+  <li>احترام سرية المعلومات المتعلقة بالتلاميذ.</li>
+  <li>ضمان دقة المحتويات المنشورة ومشروعيتها.</li>
 </ul>
 
-<h4 style="font-weight:600;margin-top:1rem;margin-bottom:0.5rem;">Article 6 - Charte des étudiants et parents</h4>
-<p>L'étudiant et ses parents s'engagent à :</p>
-<ul style="list-style:disc;padding-left:1.5rem;margin-top:0.5rem;space-y:0.25rem;">
-  <li>Utiliser leurs identifiants de manière personnelle et confidentielle.</li>
-  <li>Adopter un comportement respectueux dans les espaces d'échange.</li>
-  <li>Ne pas tenter de contourner les mesures de sécurité.</li>
+<h4 style="font-weight:600;margin-top:1rem;margin-bottom:0.5rem;" dir="rtl">المادة 6 – ميثاق التلاميذ وأولياء الأمور</h4>
+<p dir="rtl">يلتزم التلميذ وأولياء أموره بما يلي:</p>
+<ul style="list-style:disc;padding-right:1.5rem;margin-top:0.5rem;" dir="rtl">
+  <li>استخدام بيانات الدخول بصفة شخصية وسرية.</li>
+  <li>التحلّي باحترام في فضاءات التواصل.</li>
+  <li>عدم محاولة تجاوز إجراءات الأمان.</li>
 </ul>
 
-<h4 style="font-weight:600;margin-top:1rem;margin-bottom:0.5rem;">Article 7 - Droit applicable</h4>
-<p>Les présentes CGU sont régies par le droit algérien. Tout litige relève de la compétence des tribunaux d'Alger.</p>
+<h4 style="font-weight:600;margin-top:1rem;margin-bottom:0.5rem;" dir="rtl">المادة 7 – القانون المطبّق</h4>
+<p dir="rtl">تخضع هذه الشروط للقانون الجزائري. يختص القضاء الجزائري بالفصل في أي نزاع.</p>
 `;
 
 const PREREQ_CONTENT = `
-<h3 style="font-size:1.25rem;font-weight:700;margin-bottom:1rem;">💻 PRÉREQUIS TECHNIQUES</h3>
+<h3 style="font-size:1.25rem;font-weight:700;margin-bottom:1rem;" dir="rtl">💻 المتطلبات التقنية</h3>
 
-<p style="margin-bottom:1rem;">Pour suivre les formations sur la plateforme CB ACADEMY, l'utilisateur doit disposer des équipements et logiciels suivants :</p>
+<p style="margin-bottom:1rem;" dir="rtl">لمتابعة الدروس على منصة دزأكاديمي، يجب أن يمتلك المستخدم المعدات والبرامج التالية:</p>
 
-<h4 style="font-weight:600;margin-top:1rem;margin-bottom:0.5rem;">1. Connexion Internet</h4>
-<ul style="list-style:disc;padding-left:1.5rem;margin-top:0.5rem;space-y:0.25rem;">
-  <li>Connexion internet stable avec un débit minimum recommandé de <strong>2 Mbps en réception</strong> et <strong>1 Mbps en émission</strong>.</li>
-  <li>Pour les sessions en visioconférence : débit recommandé de <strong>5 Mbps</strong>.</li>
+<h4 style="font-weight:600;margin-top:1rem;margin-bottom:0.5rem;" dir="rtl">1. اتصال بالإنترنت</h4>
+<ul style="list-style:disc;padding-right:1.5rem;margin-top:0.5rem;" dir="rtl">
+  <li>اتصال مستقر بسرعة استقبال لا تقل عن <strong>2 ميغابت/ث</strong> وإرسال لا تقل عن <strong>1 ميغابت/ث</strong>.</li>
+  <li>لجلسات الفيديو التفاعلية: يُنصح بسرعة <strong>5 ميغابت/ث</strong>.</li>
 </ul>
 
-<h4 style="font-weight:600;margin-top:1rem;margin-bottom:0.5rem;">2. Navigateur Web récent</h4>
-<ul style="list-style:disc;padding-left:1.5rem;margin-top:0.5rem;space-y:0.25rem;">
-  <li><strong>Google Chrome</strong> : version 80 ou supérieure</li>
-  <li><strong>Mozilla Firefox</strong> : version 75 ou supérieure</li>
-  <li><strong>Microsoft Edge</strong> : version 80 ou supérieure</li>
-  <li><strong>Safari</strong> : version 13 ou supérieure</li>
+<h4 style="font-weight:600;margin-top:1rem;margin-bottom:0.5rem;" dir="rtl">2. متصفح حديث</h4>
+<ul style="list-style:disc;padding-right:1.5rem;margin-top:0.5rem;" dir="rtl">
+  <li><strong>Google Chrome</strong>: الإصدار 80 أو أحدث</li>
+  <li><strong>Mozilla Firefox</strong>: الإصدار 75 أو أحدث</li>
+  <li><strong>Microsoft Edge</strong>: الإصدار 80 أو أحدث</li>
+  <li><strong>Safari</strong>: الإصدار 13 أو أحدث</li>
 </ul>
 
-<h4 style="font-weight:600;margin-top:1rem;margin-bottom:0.5rem;">3. Logiciels requis</h4>
-<ul style="list-style:disc;padding-left:1.5rem;margin-top:0.5rem;space-y:0.25rem;">
-  <li><strong>Lecteur PDF</strong> : Adobe Acrobat Reader ou équivalent (gratuit)</li>
-  <li><strong>Lecteur vidéo</strong> : VLC Media Player ou équivalent</li>
+<h4 style="font-weight:600;margin-top:1rem;margin-bottom:0.5rem;" dir="rtl">3. البرامج المطلوبة</h4>
+<ul style="list-style:disc;padding-right:1.5rem;margin-top:0.5rem;" dir="rtl">
+  <li><strong>قارئ PDF</strong>: Adobe Acrobat Reader أو ما يعادله (مجاني)</li>
+  <li><strong>مشغّل فيديو</strong>: VLC Media Player أو ما يعادله</li>
 </ul>
 
-<h4 style="font-weight:600;margin-top:1rem;margin-bottom:0.5rem;">4. Adresse email</h4>
-<ul style="list-style:disc;padding-left:1.5rem;margin-top:0.5rem;space-y:0.25rem;">
-  <li>Une adresse email valide est obligatoire pour recevoir les communications de la plateforme.</li>
+<h4 style="font-weight:600;margin-top:1rem;margin-bottom:0.5rem;" dir="rtl">4. البريد الإلكتروني</h4>
+<ul style="list-style:disc;padding-right:1.5rem;margin-top:0.5rem;" dir="rtl">
+  <li>عنوان بريد إلكتروني صالح إلزامي لاستقبال مراسلات المنصة.</li>
 </ul>
 
-<h4 style="font-weight:600;margin-top:1rem;margin-bottom:0.5rem;">5. Matériel pour visioconférence</h4>
-<ul style="list-style:disc;padding-left:1.5rem;margin-top:0.5rem;space-y:0.25rem;">
-  <li><strong>Microphone</strong> : fonctionnel pour participer aux échanges audio.</li>
-  <li><strong>Webcam</strong> : recommandée pour les sessions interactives.</li>
+<h4 style="font-weight:600;margin-top:1rem;margin-bottom:0.5rem;" dir="rtl">5. معدات الفيديو التفاعلي</h4>
+<ul style="list-style:disc;padding-right:1.5rem;margin-top:0.5rem;" dir="rtl">
+  <li><strong>ميكروفون</strong>: يشترط أن يكون سليمًا للمشاركة الصوتية.</li>
+  <li><strong>كاميرا ويب</strong>: مُستحسَنة للجلسات التفاعلية.</li>
 </ul>
 
-<div style="margin-top:1.5rem;padding:1rem;background:#fffbeb;border-left:4px solid #f59e0b;border-radius:0.25rem;">
+<div style="margin-top:1.5rem;padding:1rem;background:#fffbeb;border-right:4px solid #f59e0b;border-radius:0.25rem;" dir="rtl">
   <p style="font-size:0.875rem;color:#92400e;">
-    ⚠️ <strong>Important :</strong> L'utilisateur reconnaît que l'insuffisance de ses équipements techniques ne pourra en aucun cas engager la responsabilité de CB ACADEMY.
+    ⚠️ <strong>تنبيه:</strong> يُقرّ المستخدم بأن قصور معداته التقنية لا يمكن بأي حال أن يُعدّ مسؤولية المنصة.
   </p>
 </div>
 `;
@@ -130,24 +130,24 @@ export default function RegisterStudent() {
     setError("");
 
     if (!cguAccepted) {
-      setError("Vous devez accepter les conditions générales d'utilisation.");
+      setError("يجب قبول الشروط العامة للاستخدام.");
       return;
     }
     if (!prereqAccepted) {
-      setError("Vous devez accepter les prérequis techniques.");
+      setError("يجب قبول المتطلبات التقنية.");
       return;
     }
 
     if (form.password !== form.confirmPassword) {
-      return setError("Les mots de passe ne correspondent pas");
+      return setError("كلمتا المرور غير متطابقتين");
     }
 
     if (form.password.length < 6) {
-      return setError("Mot de passe trop court (min 6 caractères)");
+      return setError("كلمة المرور قصيرة جدًا (6 أحرف على الأقل)");
     }
 
     if (!form.niveau || !form.classe) {
-      return setError("Choisir le cycle et la classe");
+      return setError("يرجى اختيار الطور والسنة الدراسية");
     }
 
     try {
@@ -180,18 +180,18 @@ export default function RegisterStudent() {
       const data = await res.json();
 
       if (!res.ok) {
-        return setError(data.error || "Erreur inscription");
+        return setError(data.error || "خطأ في التسجيل");
       }
 
       router.push("/login?registered=true");
     } catch {
-      setError("Erreur serveur");
+      setError("خطأ في الخادم");
     } finally {
       setLoading(false);
     }
   };
 
-  // 🎨 STYLES
+  // 🎨 الألوان
   const colors = {
     green: {
       light: "#ecfdf5",
@@ -222,6 +222,8 @@ export default function RegisterStudent() {
     transition: "border-color 0.2s, box-shadow 0.2s",
     outline: "none",
     boxSizing: "border-box",
+    direction: "rtl",
+    textAlign: "right",
   };
 
   const inputFocusStyle = {
@@ -231,6 +233,8 @@ export default function RegisterStudent() {
 
   return (
     <div
+      dir="rtl"
+      lang="ar"
       style={{
         minHeight: "100vh",
         background: "linear-gradient(135deg, #ecfdf5, #fef3c7)",
@@ -238,6 +242,7 @@ export default function RegisterStudent() {
         alignItems: "center",
         justifyContent: "center",
         padding: "1.5rem",
+        fontFamily: "'Cairo', 'Tajawal', system-ui, sans-serif",
       }}
     >
       <div
@@ -250,7 +255,7 @@ export default function RegisterStudent() {
           padding: "2rem",
         }}
       >
-        {/* En-tête */}
+        {/* الترويسة */}
         <div style={{ textAlign: "center", marginBottom: "2rem" }}>
           <h1
             style={{
@@ -262,17 +267,17 @@ export default function RegisterStudent() {
               margin: 0,
             }}
           >
-            🎓 CB ACADEMY
+            🎓 دزأكاديمي
           </h1>
           <p style={{ color: colors.orange.DEFAULT, fontWeight: "500", margin: "0.25rem 0 0" }}>
-            Cheikh Bouamama Academy
+            الأكاديمية الجزائرية للتعليم
           </p>
           <p style={{ color: colors.text.secondary, fontSize: "0.875rem", marginTop: "0.5rem" }}>
-            Créer votre compte
+            إنشاء حسابك
           </p>
         </div>
 
-        {/* Erreur / Succès */}
+        {/* رسالة خطأ */}
         {error && (
           <div
             style={{
@@ -283,6 +288,7 @@ export default function RegisterStudent() {
               borderRadius: "0.5rem",
               marginBottom: "1.25rem",
               fontSize: "0.875rem",
+              textAlign: "right",
             }}
           >
             {error}
@@ -290,22 +296,24 @@ export default function RegisterStudent() {
         )}
 
         <form onSubmit={handleSubmit}>
+          {/* قسم التلميذ */}
           <h3
             style={{
               fontSize: "0.875rem",
               fontWeight: "600",
               color: colors.text.primary,
               marginBottom: "0.75rem",
+              textAlign: "right",
             }}
           >
-            👨‍🎓 Élève
+            👨‍🎓 بيانات التلميذ
           </h3>
 
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem" }}>
             <input
               name="eleveNom"
               onChange={handleChange}
-              placeholder="Nom de l'élève"
+              placeholder="اللقب"
               required
               style={inputStyle}
               onFocus={(e) => Object.assign(e.target.style, inputFocusStyle)}
@@ -317,7 +325,7 @@ export default function RegisterStudent() {
             <input
               name="elevePrenom"
               onChange={handleChange}
-              placeholder="Prénom de l'élève"
+              placeholder="الاسم"
               required
               style={inputStyle}
               onFocus={(e) => Object.assign(e.target.style, inputFocusStyle)}
@@ -328,61 +336,65 @@ export default function RegisterStudent() {
             />
           </div>
 
+          {/* اختيار الطور */}
           <select
             name="niveau"
             onChange={handleChange}
             required
-            style={inputStyle}
+            style={{ ...inputStyle, marginTop: "0.75rem" }}
             onFocus={(e) => Object.assign(e.target.style, inputFocusStyle)}
             onBlur={(e) => {
               e.target.style.borderColor = colors.border;
               e.target.style.boxShadow = "none";
             }}
           >
-            <option value="">Choisir niveau</option>
-            <option value="college">Collège</option>
-            <option value="lycee">Lycée</option>
+            <option value="">اختر الطور التعليمي</option>
+            <option value="college">التعليم المتوسط</option>
+            <option value="lycee">التعليم الثانوي</option>
           </select>
 
+          {/* سنوات المتوسط */}
           {form.niveau === "college" && (
             <select
               name="classe"
               onChange={handleChange}
               required
-              style={inputStyle}
+              style={{ ...inputStyle, marginTop: "0.75rem" }}
               onFocus={(e) => Object.assign(e.target.style, inputFocusStyle)}
               onBlur={(e) => {
                 e.target.style.borderColor = colors.border;
                 e.target.style.boxShadow = "none";
               }}
             >
-              <option value="">Classe</option>
-              <option value="6eme">6ème</option>
-              <option value="5eme">5ème</option>
-              <option value="4eme">4ème</option>
-              <option value="3eme">3ème</option>
+              <option value="">اختر السنة الدراسية</option>
+              <option value="السنة الأولى متوسط">السنة الأولى متوسط</option>
+              <option value="السنة الثانية متوسط">السنة الثانية متوسط</option>
+              <option value="السنة الثالثة متوسط">السنة الثالثة متوسط</option>
+              <option value="السنة الرابعة متوسط">السنة الرابعة متوسط</option>
             </select>
           )}
 
+          {/* سنوات الثانوي */}
           {form.niveau === "lycee" && (
             <select
               name="classe"
               onChange={handleChange}
               required
-              style={inputStyle}
+              style={{ ...inputStyle, marginTop: "0.75rem" }}
               onFocus={(e) => Object.assign(e.target.style, inputFocusStyle)}
               onBlur={(e) => {
                 e.target.style.borderColor = colors.border;
                 e.target.style.boxShadow = "none";
               }}
             >
-              <option value="">Classe</option>
-              <option value="1AS">1AS</option>
-              <option value="2AS">2AS</option>
-              <option value="Terminale">Terminale</option>
+              <option value="">اختر السنة الدراسية</option>
+              <option value="السنة الأولى ثانوي">السنة الأولى ثانوي</option>
+              <option value="السنة الثانية ثانوي">السنة الثانية ثانوي</option>
+              <option value="السنة الثالثة ثانوي">السنة الثالثة ثانوي (بكالوريا)</option>
             </select>
           )}
 
+          {/* قسم الولي */}
           <h3
             style={{
               fontSize: "0.875rem",
@@ -390,16 +402,17 @@ export default function RegisterStudent() {
               color: colors.text.primary,
               marginTop: "1.25rem",
               marginBottom: "0.75rem",
+              textAlign: "right",
             }}
           >
-            👨‍👩‍👦 Tuteur
+            👨‍👩‍👦 بيانات ولي الأمر
           </h3>
 
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem" }}>
             <input
               name="tuteurNom"
               onChange={handleChange}
-              placeholder="Nom tuteur"
+              placeholder="لقب الولي"
               style={inputStyle}
               onFocus={(e) => Object.assign(e.target.style, inputFocusStyle)}
               onBlur={(e) => {
@@ -410,7 +423,7 @@ export default function RegisterStudent() {
             <input
               name="tuteurPrenom"
               onChange={handleChange}
-              placeholder="Prénom tuteur"
+              placeholder="اسم الولي"
               style={inputStyle}
               onFocus={(e) => Object.assign(e.target.style, inputFocusStyle)}
               onBlur={(e) => {
@@ -424,8 +437,8 @@ export default function RegisterStudent() {
             name="telephone"
             type="tel"
             onChange={handleChange}
-            placeholder="Téléphone"
-            style={inputStyle}
+            placeholder="رقم الهاتف"
+            style={{ ...inputStyle, marginTop: "0.75rem" }}
             onFocus={(e) => Object.assign(e.target.style, inputFocusStyle)}
             onBlur={(e) => {
               e.target.style.borderColor = colors.border;
@@ -437,9 +450,9 @@ export default function RegisterStudent() {
             name="email"
             type="email"
             onChange={handleChange}
-            placeholder="Email"
+            placeholder="البريد الإلكتروني"
             required
-            style={inputStyle}
+            style={{ ...inputStyle, marginTop: "0.75rem" }}
             onFocus={(e) => Object.assign(e.target.style, inputFocusStyle)}
             onBlur={(e) => {
               e.target.style.borderColor = colors.border;
@@ -451,10 +464,10 @@ export default function RegisterStudent() {
             name="password"
             type="password"
             onChange={handleChange}
-            placeholder="Mot de passe (min 6 caractères)"
+            placeholder="كلمة المرور (6 أحرف على الأقل)"
             required
             minLength="6"
-            style={inputStyle}
+            style={{ ...inputStyle, marginTop: "0.75rem" }}
             onFocus={(e) => Object.assign(e.target.style, inputFocusStyle)}
             onBlur={(e) => {
               e.target.style.borderColor = colors.border;
@@ -466,9 +479,9 @@ export default function RegisterStudent() {
             name="confirmPassword"
             type="password"
             onChange={handleChange}
-            placeholder="Confirmer mot de passe"
+            placeholder="تأكيد كلمة المرور"
             required
-            style={inputStyle}
+            style={{ ...inputStyle, marginTop: "0.75rem" }}
             onFocus={(e) => Object.assign(e.target.style, inputFocusStyle)}
             onBlur={(e) => {
               e.target.style.borderColor = colors.border;
@@ -476,7 +489,7 @@ export default function RegisterStudent() {
             }}
           />
 
-          {/* 🎨 POLITIQUES - STYLISÉES VERT & ORANGE */}
+          {/* 📋 الشروط والمتطلبات */}
           <div
             style={{
               marginTop: "1.5rem",
@@ -487,13 +500,14 @@ export default function RegisterStudent() {
               borderRadius: "0.75rem",
             }}
           >
-            {/* CGU */}
+            {/* الشروط العامة */}
             <div
               style={{
                 display: "flex",
                 alignItems: "flex-start",
                 gap: "0.75rem",
                 marginBottom: "0.75rem",
+                flexDirection: "row-reverse",
               }}
             >
               <input
@@ -518,9 +532,10 @@ export default function RegisterStudent() {
                   fontSize: "0.8rem",
                   color: colors.text.primary,
                   lineHeight: "1.5",
+                  textAlign: "right",
                 }}
               >
-                Je déclare avoir pris connaissance des{" "}
+                أُقرّ بأنني اطّلعت على{" "}
                 <button
                   type="button"
                   onClick={() => setShowCguModal(true)}
@@ -539,10 +554,10 @@ export default function RegisterStudent() {
                   onMouseEnter={(e) => (e.target.style.color = colors.green.hover)}
                   onMouseLeave={(e) => (e.target.style.color = colors.green.DEFAULT)}
                 >
-                  conditions générales d'utilisation, de vente et de la politique de protection des données
+                  الشروط العامة للاستخدام وسياسة حماية البيانات الشخصية
                 </button>{" "}
-                à caractère personnel du CB ACADEMY et les accepte sans réserve.
-                <span style={{ color: colors.error, marginLeft: "0.25rem" }}>*</span>
+                لمنصة دزأكاديمي وأقبلها دون تحفظ.
+                <span style={{ color: colors.error, marginRight: "0.25rem" }}>*</span>
               </label>
             </div>
             {submitted && !cguAccepted && (
@@ -550,21 +565,23 @@ export default function RegisterStudent() {
                 style={{
                   color: colors.error,
                   fontSize: "0.75rem",
-                  marginLeft: "2rem",
+                  marginRight: "2rem",
                   marginTop: "-0.25rem",
+                  textAlign: "right",
                 }}
               >
-                Vous devez accepter les conditions générales d'utilisation.
+                يجب قبول الشروط العامة للاستخدام.
               </p>
             )}
 
-            {/* Prérequis techniques */}
+            {/* المتطلبات التقنية */}
             <div
               style={{
                 display: "flex",
                 alignItems: "flex-start",
                 gap: "0.75rem",
                 marginBottom: "0.75rem",
+                flexDirection: "row-reverse",
               }}
             >
               <input
@@ -589,9 +606,10 @@ export default function RegisterStudent() {
                   fontSize: "0.8rem",
                   color: colors.text.primary,
                   lineHeight: "1.5",
+                  textAlign: "right",
                 }}
               >
-                Je déclare avoir pris connaissance des{" "}
+                أُقرّ بأنني اطّلعت على{" "}
                 <button
                   type="button"
                   onClick={() => setShowPrereqModal(true)}
@@ -610,10 +628,10 @@ export default function RegisterStudent() {
                   onMouseEnter={(e) => (e.target.style.color = colors.green.hover)}
                   onMouseLeave={(e) => (e.target.style.color = colors.green.DEFAULT)}
                 >
-                  prérequis techniques
+                  المتطلبات التقنية
                 </button>{" "}
-                liés à l'enseignement à distance et les accepte sans réserve.
-                <span style={{ color: colors.error, marginLeft: "0.25rem" }}>*</span>
+                للتعليم عن بُعد وأقبلها دون تحفظ.
+                <span style={{ color: colors.error, marginRight: "0.25rem" }}>*</span>
               </label>
             </div>
             {submitted && !prereqAccepted && (
@@ -621,16 +639,17 @@ export default function RegisterStudent() {
                 style={{
                   color: colors.error,
                   fontSize: "0.75rem",
-                  marginLeft: "2rem",
+                  marginRight: "2rem",
                   marginTop: "-0.25rem",
+                  textAlign: "right",
                 }}
               >
-                Vous devez accepter les prérequis techniques.
+                يجب قبول المتطلبات التقنية.
               </p>
             )}
           </div>
 
-          {/* 🎨 BOUTON D'INSCRIPTION */}
+          {/* 🚀 زر التسجيل */}
           <button
             type="submit"
             disabled={loading || !cguAccepted || !prereqAccepted}
@@ -654,6 +673,7 @@ export default function RegisterStudent() {
                 !cguAccepted || !prereqAccepted
                   ? "none"
                   : "0 4px 14px rgba(5, 150, 105, 0.35)",
+              fontFamily: "inherit",
             }}
             onMouseEnter={(e) => {
               if (cguAccepted && prereqAccepted && !loading) {
@@ -668,11 +688,11 @@ export default function RegisterStudent() {
               }
             }}
           >
-            {loading ? "⏳ Création en cours..." : "🚀 S'inscrire"}
+            {loading ? "⏳ جارٍ إنشاء الحساب..." : "🚀 التسجيل"}
           </button>
         </form>
 
-        {/* Lien connexion */}
+        {/* رابط تسجيل الدخول */}
         <p
           style={{
             textAlign: "center",
@@ -681,7 +701,7 @@ export default function RegisterStudent() {
             marginTop: "1.5rem",
           }}
         >
-          Déjà un compte ?{" "}
+          لديك حساب بالفعل؟{" "}
           <a
             href="/login"
             style={{
@@ -693,23 +713,23 @@ export default function RegisterStudent() {
             onMouseEnter={(e) => (e.target.style.color = colors.green.hover)}
             onMouseLeave={(e) => (e.target.style.color = colors.green.DEFAULT)}
           >
-            Se connecter
+            تسجيل الدخول
           </a>
         </p>
       </div>
 
-      {/* Modales */}
+      {/* النوافذ المنبثقة */}
       <PolicyModal
         isOpen={showCguModal}
         onClose={() => setShowCguModal(false)}
-        title="📜 Conditions Générales d'Utilisation"
+        title="📜 الشروط العامة للاستخدام"
         content={CGU_CONTENT}
       />
 
       <PolicyModal
         isOpen={showPrereqModal}
         onClose={() => setShowPrereqModal(false)}
-        title="💻 Prérequis Techniques"
+        title="💻 المتطلبات التقنية"
         content={PREREQ_CONTENT}
       />
     </div>

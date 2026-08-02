@@ -24,6 +24,8 @@ export default async function handler(req, res) {
     return res.status(403).json({ error: "Accès refusé" });
   }
 
+  const studentIdInt = parseInt(user.id);
+
   try {
     // GET — infos quiz + tentatives
     if (req.method === "GET") {
@@ -40,7 +42,7 @@ export default async function handler(req, res) {
       if (!quiz) return res.status(404).json({ error: "Quiz introuvable" });
 
       const existing = await prisma.quizResult.findUnique({
-        where: { studentId_quizId: { studentId: user.id, quizId: parseInt(quizId) } },
+        where: { studentId_quizId: { studentId: studentIdInt, quizId: parseInt(quizId) } },
       });
 
       let nextChapterId = null;
@@ -136,15 +138,15 @@ export default async function handler(req, res) {
 
       // Upsert QuizResult
       const existing = await prisma.quizResult.findUnique({
-        where: { studentId_quizId: { studentId: user.id, quizId: parseInt(quizId) } },
+        where: { studentId_quizId: { studentId: studentIdInt, quizId: parseInt(quizId) } },
       });
 
       const tentatives = (existing?.tentatives || 0) + 1;
 
       const result = await prisma.quizResult.upsert({
-        where:  { studentId_quizId: { studentId: user.id, quizId: parseInt(quizId) } },
+        where:  { studentId_quizId: { studentId: studentIdInt, quizId: parseInt(quizId) } },
         update: { score, reponses: details, tentatives },
-        create: { studentId: user.id, quizId: parseInt(quizId), score, reponses: details, tentatives: 1 },
+        create: { studentId: studentIdInt, quizId: parseInt(quizId), score, reponses: details, tentatives: 1 },
       });
 
       const maxAttempts = quiz.type === "FORMATIF" ? MAX_TENTATIVES_FORMATIF : MAX_TENTATIVES_SOMMATIF;
@@ -178,9 +180,9 @@ export default async function handler(req, res) {
           
           // Marquer le chapitre actuel comme lu et mettre à jour la progression de l'enrollment
           await prisma.chapterProgress.upsert({
-            where:  { studentId_chapterId: { studentId: user.id, chapterId: quiz.chapter.id } },
+            where:  { studentId_chapterId: { studentId: studentIdInt, chapterId: quiz.chapter.id } },
             update: { lu: true, luAt: new Date() },
-            create: { studentId: user.id, chapterId: quiz.chapter.id, lu: true, luAt: new Date() },
+            create: { studentId: studentIdInt, chapterId: quiz.chapter.id, lu: true, luAt: new Date() },
           });
           
           const courseData = await prisma.course.findUnique({
@@ -191,13 +193,13 @@ export default async function handler(req, res) {
           if (courseData && courseData.chapters.length > 0) {
             const totalChapters = courseData.chapters.length;
             const doneChapters  = await prisma.chapterProgress.count({
-              where: { studentId: user.id, chapterId: { in: courseData.chapters.map((c) => c.id) }, lu: true },
+              where: { studentId: studentIdInt, chapterId: { in: courseData.chapters.map((c) => c.id) }, lu: true },
             });
             const progression = Math.round((doneChapters / totalChapters) * 100);
             const completed   = progression === 100;
             
             await prisma.enrollment.updateMany({
-              where: { studentId: user.id, courseId: quiz.chapter.courseId },
+              where: { studentId: studentIdInt, courseId: quiz.chapter.courseId },
               data:  { progression, completed },
             });
           }
@@ -210,12 +212,12 @@ export default async function handler(req, res) {
           if (quiz.chapter) {
             // Remise à zéro de la progression du chapitre
             await prisma.chapterProgress.updateMany({
-              where: { studentId: user.id, chapterId: quiz.chapter.id },
+              where: { studentId: studentIdInt, chapterId: quiz.chapter.id },
               data: { lu: false }
             });
             // Supprimer le QuizResult pour réinitialiser les tentatives
             await prisma.quizResult.delete({
-              where: { studentId_quizId: { studentId: user.id, quizId: parseInt(quizId) } }
+              where: { studentId_quizId: { studentId: studentIdInt, quizId: parseInt(quizId) } }
             });
             // Optionnel: On pourrait aussi supprimer les VideoProgress pour les supports de ce chapitre
             const supports = await prisma.support.findMany({
@@ -225,7 +227,7 @@ export default async function handler(req, res) {
             if (supports.length > 0) {
               await prisma.videoProgress.deleteMany({
                 where: { 
-                  studentId: user.id, 
+                  studentId: studentIdInt, 
                   supportId: { in: supports.map(s => s.id) } 
                 }
               });

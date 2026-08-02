@@ -10,7 +10,7 @@ export default function PasswordSettings() {
 
   const handleSave = async () => {
     if (newPassword !== confirmPassword) {
-      return setMsg("❌ Les nouveaux mots de passe ne correspondent pas");
+      return setMsg("❌ كلمتا المرور غير متطابقتين");
     }
 
     setLoading(true);
@@ -23,28 +23,28 @@ export default function PasswordSettings() {
       });
       const data = await res.json();
       if (res.ok) {
-        setMsg("✅ Mot de passe mis à jour !");
+        setMsg("✅ تم تحديث كلمة المرور!");
         setCurrentPassword("");
         setNewPassword("");
         setConfirmPassword("");
       } else {
-        setMsg(`❌ ${data.error || "Erreur lors de la mise à jour"}`);
+        setMsg(`❌ ${data.error || "خطأ أثناء التحديث"}`);
       }
     } catch {
-      setMsg("❌ Erreur serveur");
+      setMsg("❌ خطأ في الخادم");
     }
     setLoading(false);
   };
 
   return (
     <ProtectedRoute>
-      <div style={{ maxWidth: "600px", margin: "3rem auto", background: "white", padding: "2rem", borderRadius: "15px", boxShadow: "0 10px 30px rgba(0,0,0,0.05)" }}>
-        <h1 style={{ marginBottom: "2rem", color: "#2d3748" }}>🔑 Changer le mot de passe</h1>
+      <div dir="rtl" lang="ar" style={{ maxWidth: "600px", margin: "3rem auto", background: "white", padding: "2rem", borderRadius: "15px", boxShadow: "0 10px 30px rgba(0,0,0,0.05)" }}>
+        <h1 style={{ marginBottom: "2rem", color: "#2d3748" }}>🔑 تغيير كلمة المرور</h1>
         
         {msg && <p style={{ padding: "1rem", background: msg.includes("✅") ? "#f0fff4" : "#fff5f5", color: msg.includes("✅") ? "green" : "red", borderRadius: "8px" }}>{msg}</p>}
 
         <div style={{ marginBottom: "1.5rem" }}>
-          <label style={{ display: "block", marginBottom: "0.5rem", fontWeight: "bold", color: "#4a5568" }}>Mot de passe actuel</label>
+          <label style={{ display: "block", marginBottom: "0.5rem", fontWeight: "bold", color: "#4a5568" }}>كلمة المرور الحالية</label>
           <input 
             type="password"
             value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} 
@@ -53,7 +53,7 @@ export default function PasswordSettings() {
         </div>
 
         <div style={{ marginBottom: "1.5rem" }}>
-          <label style={{ display: "block", marginBottom: "0.5rem", fontWeight: "bold", color: "#4a5568" }}>Nouveau mot de passe</label>
+          <label style={{ display: "block", marginBottom: "0.5rem", fontWeight: "bold", color: "#4a5568" }}>كلمة المرور الجديدة</label>
           <input 
             type="password"
             value={newPassword} onChange={(e) => setNewPassword(e.target.value)} 
@@ -62,7 +62,7 @@ export default function PasswordSettings() {
         </div>
 
         <div style={{ marginBottom: "1.5rem" }}>
-          <label style={{ display: "block", marginBottom: "0.5rem", fontWeight: "bold", color: "#4a5568" }}>Confirmer le nouveau mot de passe</label>
+          <label style={{ display: "block", marginBottom: "0.5rem", fontWeight: "bold", color: "#4a5568" }}>تأكيد كلمة المرور الجديدة</label>
           <input 
             type="password"
             value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} 
@@ -74,7 +74,7 @@ export default function PasswordSettings() {
           onClick={handleSave} disabled={loading || !currentPassword || !newPassword || !confirmPassword}
           style={{ width: "100%", background: "linear-gradient(135deg, #17a9f1, #0ea5e9)", color: "white", padding: "1rem", border: "none", borderRadius: "8px", fontSize: "1.1rem", fontWeight: "bold", cursor: (loading || !currentPassword || !newPassword || !confirmPassword) ? "not-allowed" : "pointer", opacity: (loading || !currentPassword || !newPassword || !confirmPassword) ? 0.7 : 1 }}
         >
-          {loading ? "Enregistrement..." : "Changer le mot de passe"}
+          {loading ? "جارٍ الحفظ..." : "تغيير كلمة المرور"}
         </button>
       </div>
     </ProtectedRoute>

@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as SecureStore from 'expo-secure-store';
 import { API_ENDPOINTS } from '@/constants/api';
 
 interface User {
@@ -39,7 +39,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const loadStoredSession = async () => {
     try {
-      const storedToken = await AsyncStorage.getItem('auth_token');
+      const storedToken = await SecureStore.getItemAsync('auth_token');
       if (storedToken) {
         // Verify token with backend
           console.log('Loading session from', API_ENDPOINTS.me, 'with token', storedToken);
@@ -97,7 +97,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           return false;
         }
 
-        await AsyncStorage.setItem('auth_token', data.token);
+        await SecureStore.setItemAsync('auth_token', data.token);
         setToken(data.token);
         setUser(data.user);
         setLoading(false);
@@ -132,7 +132,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const logout = async () => {
     try {
-      await AsyncStorage.removeItem('auth_token');
+      await SecureStore.deleteItemAsync('auth_token');
       setUser(null);
       setToken(null);
       setError(null);

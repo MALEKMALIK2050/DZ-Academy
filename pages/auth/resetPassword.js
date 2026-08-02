@@ -1,41 +1,47 @@
 import crypto from 'crypto';
 
 
-// Génère un token sécurisé
+// توليد رمز تحقق آمن
 function generateResetToken() {
-  return crypto.randomBytes(32).toString('hex'); // 64 caractères hexadécimaux
+  return crypto.randomBytes(32).toString('hex'); // 64 حرف بالنظام الست عشري
 }
 
-// Fonction pour envoyer le mail de reset
+// دالة إرسال بريد إعادة التعيين
 export async function resetPassword(email) {
   try {
-    // 1. Générer un token unique
+    // 1. توليد رمز فريد
     const token = generateResetToken();
 
-    // 2. Construire le lien de reset (local pour l’instant)
+    // 2. بناء رابط إعادة التعيين
     const resetLink = `http://localhost:3000/auth/reset?token=${token}`;
 
-    // 3. Envoyer le mail
+    // 3. إرسال البريد الإلكتروني
     await sendMail(
       email,
-      'Réinitialisation de votre mot de passe',
-      `<p>Vous avez demandé à réinitialiser votre mot de passe.</p>
-       <p>Cliquez sur ce lien pour continuer : <a href="${resetLink}">${resetLink}</a></p>`
+      'إعادة تعيين كلمة المرور - دزأكاديمي',
+      `<div dir="rtl" style="font-family: Arial, sans-serif; text-align: right;">
+         <h2>طلب إعادة تعيين كلمة المرور</h2>
+         <p>تلقّينا طلبًا لإعادة تعيين كلمة المرور الخاصة بحسابك على منصة دزأكاديمي.</p>
+         <p>انقر على الرابط أدناه لمتابعة العملية:</p>
+         <p><a href="${resetLink}" style="color:#059669;">${resetLink}</a></p>
+         <p style="color:#888; font-size:0.85rem;">إذا لم تطلب إعادة تعيين كلمة المرور، يمكنك تجاهل هذا البريد.</p>
+       </div>`
     );
 
-    console.log('Mail de réinitialisation envoyé avec succès');
-    return token; // tu peux stocker ce token en BDD pour vérifier plus tard
+    console.log('تم إرسال بريد إعادة التعيين بنجاح');
+    return token;
   } catch (error) {
-    console.error('Erreur lors de l’envoi du mail de réinitialisation:', error);
+    console.error('خطأ في إرسال بريد إعادة التعيين:', error);
   }
 }
+
 export default function ResetPasswordPage() {
   return (
-    <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
+    <div dir="rtl" lang="ar" style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
       <div>
-        <h1>Réinitialisation du mot de passe</h1>
-        <p>Cette fonctionnalité sera bientôt disponible.</p>
-        <a href="/auth/login">← Retour à la connexion</a>
+        <h1>إعادة تعيين كلمة المرور</h1>
+        <p>هذه الصفحة ستكون متاحة قريبًا</p>
+        <a href="/login">العودة إلى تسجيل الدخول</a>
       </div>
     </div>
   );

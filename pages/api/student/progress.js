@@ -31,7 +31,7 @@ export default async function handler(req, res) {
 
       const progress = await prisma.chapterProgress.findMany({
         where: {
-          studentId: user.id,
+          studentId: parseInt(user.id),
           chapterId: { in: course.chapters.map((c) => c.id) },
         },
       });
@@ -55,9 +55,9 @@ export default async function handler(req, res) {
       if (!chapterId || !courseId) return res.status(400).json({ error: "chapterId et courseId obligatoires" });
 
       await prisma.chapterProgress.upsert({
-        where:  { studentId_chapterId: { studentId: user.id, chapterId: parseInt(chapterId) } },
+        where:  { studentId_chapterId: { studentId: parseInt(user.id), chapterId: parseInt(chapterId) } },
         update: { lu: true, luAt: new Date() },
-        create: { studentId: user.id, chapterId: parseInt(chapterId), lu: true, luAt: new Date() },
+        create: { studentId: parseInt(user.id), chapterId: parseInt(chapterId), lu: true, luAt: new Date() },
       });
 
       const course = await prisma.course.findUnique({
@@ -67,14 +67,14 @@ export default async function handler(req, res) {
 
       const totalChapters = course.chapters.length;
       const doneChapters  = await prisma.chapterProgress.count({
-        where: { studentId: user.id, chapterId: { in: course.chapters.map((c) => c.id) }, lu: true },
+        where: { studentId: parseInt(user.id), chapterId: { in: course.chapters.map((c) => c.id) }, lu: true },
       });
 
       const progression = totalChapters > 0 ? Math.round((doneChapters / totalChapters) * 100) : 0;
       const completed   = progression === 100;
 
       await prisma.enrollment.updateMany({
-        where: { studentId: user.id, courseId: parseInt(courseId) },
+        where: { studentId: parseInt(user.id), courseId: parseInt(courseId) },
         data:  { progression, completed },
       });
 

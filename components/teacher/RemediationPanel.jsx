@@ -2,9 +2,9 @@
 import { useEffect, useState } from "react";
 
 const STATUT_LABEL = {
-  EN_ATTENTE: { label: "En attente", color: "#b7791f", bg: "#fffff0", border: "#f6e05e" },
-  REPONDU:    { label: "Répondu",    color: "#2b6cb0", bg: "#ebf8ff", border: "#90cdf4" },
-  DEBLOQUE:   { label: "Débloqué",  color: "#276749", bg: "#f0fff4", border: "#9ae6b4" },
+  EN_ATTENTE: { label: "قيد الانتظار", color: "#b7791f", bg: "#fffff0", border: "#f6e05e" },
+  REPONDU:    { label: "تم الرد",    color: "#2b6cb0", bg: "#ebf8ff", border: "#90cdf4" },
+  DEBLOQUE:   { label: "تم الفتح",  color: "#276749", bg: "#f0fff4", border: "#9ae6b4" },
 };
 
 export default function RemediationPanel({ courseId }) {
@@ -55,7 +55,7 @@ export default function RemediationPanel({ courseId }) {
         setFeedback((p) => ({ ...p, [remediationId]: { ok: false, msg: data.error } }));
       }
     } catch {
-      setFeedback((p) => ({ ...p, [remediationId]: { ok: false, msg: "Erreur serveur" } }));
+      setFeedback((p) => ({ ...p, [remediationId]: { ok: false, msg: "خطأ في الخادم" } }));
     } finally {
       setEnvoi(null);
     }
@@ -65,21 +65,21 @@ export default function RemediationPanel({ courseId }) {
   const statutCfg = STATUT_LABEL[filtreStatut];
 
   return (
-    <div style={{ background: "white", borderRadius: "12px", border: "1px solid #e2e8f0", overflow: "hidden" }}>
+    <div style={{ background: "white", borderRadius: "12px", border: "1px solid #e2e8f0", overflow: "hidden" }} dir="rtl">
 
       {/* ── Header ── */}
       <div style={{ background: "#f7fafc", borderBottom: "1px solid #e2e8f0", padding: "1.25rem 1.5rem" }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "1rem" }}>
           <div>
             <h3 style={{ margin: 0, color: "#2d3748", fontSize: "1.1rem" }}>
-              🩺 Remédiation pédagogique
+              🩺 المعالجة البيداغوجية
             </h3>
             <p style={{ margin: "0.2rem 0 0", color: "#718096", fontSize: "0.85rem" }}>
-              Demandes des étudiants bloqués après 3 tentatives
+              طلبات التلاميذ المحظورين بعد 3 محاولات
             </p>
           </div>
           <button onClick={fetchRemediations} style={{ background: "none", border: "1px solid #e2e8f0", color: "#4a5568", padding: "0.4rem 0.8rem", borderRadius: "6px", cursor: "pointer", fontSize: "0.85rem" }}>
-            🔄 Actualiser
+            🔄 تحديث
           </button>
         </div>
 
@@ -108,11 +108,11 @@ export default function RemediationPanel({ courseId }) {
 
       {/* ── Liste ── */}
       {loading ? (
-        <div style={{ padding: "3rem", textAlign: "center", color: "#718096" }}>Chargement...</div>
+        <div style={{ padding: "3rem", textAlign: "center", color: "#718096" }}>جارٍ التحميل...</div>
       ) : nbTotal === 0 ? (
         <div style={{ padding: "3rem", textAlign: "center", color: "#718096" }}>
           <div style={{ fontSize: "2.5rem", marginBottom: "0.5rem" }}>✅</div>
-          <p style={{ margin: 0 }}>Aucune demande "{STATUT_LABEL[filtreStatut].label.toLowerCase()}".</p>
+          <p style={{ margin: 0 }}>لا توجد طلبات "{STATUT_LABEL[filtreStatut].label}".</p>
         </div>
       ) : (
         remediations.map((r) => {
@@ -139,10 +139,10 @@ export default function RemediationPanel({ courseId }) {
                 {/* Quiz */}
                 <div>
                   <div style={{ fontWeight: "600", color: "#4a5568", fontSize: "0.9rem" }}>
-                    📝 {r.quiz?.chapter?.title || "Quiz final"}
+                    📝 {r.quiz?.chapter?.title || "الاختبار النهائي"}
                   </div>
                   <div style={{ fontSize: "0.82rem", color: "#718096" }}>
-                    {new Date(r.createdAt).toLocaleDateString("fr-FR", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
+                    {new Date(r.createdAt).toLocaleDateString("ar-DZ", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
                   </div>
                 </div>
 
@@ -156,7 +156,7 @@ export default function RemediationPanel({ courseId }) {
                   <span style={{ background: cfg.bg, color: cfg.color, border: `1px solid ${cfg.border}`, padding: "0.2rem 0.6rem", borderRadius: "12px", fontSize: "0.78rem", fontWeight: "600" }}>
                     {cfg.label}
                   </span>
-                  <span style={{ color: "#a0aec0", fontSize: "1rem" }}>{isOpen ? "▼" : "▶"}</span>
+                  <span style={{ color: "#a0aec0", fontSize: "1rem", transform: isOpen ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s" }}>▼</span>
                 </div>
               </div>
 
@@ -166,7 +166,7 @@ export default function RemediationPanel({ courseId }) {
 
                   {/* Message de l'étudiant */}
                   <div style={{ background: "white", border: "1px solid #e2e8f0", borderRadius: "8px", padding: "1rem", marginBottom: "1rem" }}>
-                    <div style={{ fontSize: "0.78rem", fontWeight: "700", color: "#718096", marginBottom: "0.5rem" }}>MESSAGE DE L'ÉTUDIANT</div>
+                    <div style={{ fontSize: "0.78rem", fontWeight: "700", color: "#718096", marginBottom: "0.5rem" }}>رسالة التلميذ</div>
                     <p style={{ margin: 0, color: "#2d3748", lineHeight: "1.6", fontSize: "0.95rem", whiteSpace: "pre-wrap" }}>
                       {r.messageEtudiant}
                     </p>
@@ -176,7 +176,7 @@ export default function RemediationPanel({ courseId }) {
                   {erreurs.length > 0 && (
                     <div style={{ marginBottom: "1rem" }}>
                       <div style={{ fontSize: "0.78rem", fontWeight: "700", color: "#c53030", marginBottom: "0.5rem" }}>
-                        ❌ ERREURS DE L'ÉTUDIANT ({erreurs.length} question{erreurs.length > 1 ? "s" : ""} fausse{erreurs.length > 1 ? "s" : ""})
+                        ❌ أخطاء التلميذ ({erreurs.length} أسئلة خاطئة)
                       </div>
                       <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
                         {erreurs.map((e, i) => (
@@ -186,10 +186,10 @@ export default function RemediationPanel({ courseId }) {
                             </p>
                             <div style={{ display: "flex", gap: "1.5rem", fontSize: "0.85rem", flexWrap: "wrap" }}>
                               <span style={{ color: "#e53e3e" }}>
-                                ✗ Répondu : <strong>{String(e.repEtudiant ?? "—")}</strong>
+                                ✗ إجابته: <strong>{String(e.repEtudiant ?? "—")}</strong>
                               </span>
                               <span style={{ color: "#276749" }}>
-                                ✓ Correct : <strong>{String(e.bonneReponse ?? "—")}</strong>
+                                ✓ الصحيحة: <strong>{String(e.bonneReponse ?? "—")}</strong>
                               </span>
                             </div>
                           </div>
@@ -201,7 +201,7 @@ export default function RemediationPanel({ courseId }) {
                   {/* Réponse existante */}
                   {r.reponseEnseignant && (
                     <div style={{ background: "#ebf8ff", border: "1px solid #90cdf4", borderRadius: "8px", padding: "1rem", marginBottom: "1rem" }}>
-                      <div style={{ fontSize: "0.78rem", fontWeight: "700", color: "#2b6cb0", marginBottom: "0.5rem" }}>VOTRE RÉPONSE PRÉCÉDENTE</div>
+                      <div style={{ fontSize: "0.78rem", fontWeight: "700", color: "#2b6cb0", marginBottom: "0.5rem" }}>ردك السابق</div>
                       <p style={{ margin: 0, color: "#1e3a5f", fontSize: "0.9rem", lineHeight: "1.6", whiteSpace: "pre-wrap" }}>
                         {r.reponseEnseignant}
                       </p>
@@ -212,12 +212,12 @@ export default function RemediationPanel({ courseId }) {
                   {r.statut !== "DEBLOQUE" && (
                     <div>
                       <div style={{ fontSize: "0.78rem", fontWeight: "700", color: "#4a5568", marginBottom: "0.5rem" }}>
-                        VOTRE RÉPONSE PÉDAGOGIQUE
+                        ردك البيداغوجي
                       </div>
                       <textarea
                         value={reponses[r.id] || ""}
                         onChange={(e) => setReponses((p) => ({ ...p, [r.id]: e.target.value }))}
-                        placeholder="Expliquez l'erreur, donnez des pistes de compréhension, des ressources à revoir..."
+                        placeholder="اشرح الخطأ، قدم توجيهات للفهم، موارد للمراجعة..."
                         style={{ width: "100%", minHeight: "110px", padding: "0.75rem", border: "1.5px solid #e2e8f0", borderRadius: "8px", fontSize: "0.9rem", resize: "vertical", boxSizing: "border-box", fontFamily: "inherit", lineHeight: "1.6" }}
                         onFocus={(e) => (e.target.style.borderColor = "#3182ce")}
                         onBlur={(e) => (e.target.style.borderColor = "#e2e8f0")}
@@ -246,7 +246,7 @@ export default function RemediationPanel({ courseId }) {
                             opacity: !reponses[r.id]?.trim() ? 0.5 : 1,
                           }}
                         >
-                          💬 Répondre sans débloquer
+                          💬 الرد دون فتح
                         </button>
 
                         {/* Répondre ET débloquer */}
@@ -266,7 +266,7 @@ export default function RemediationPanel({ courseId }) {
                             fontSize: "0.9rem",
                           }}
                         >
-                          {envoi === r.id ? "⏳ Envoi..." : "🔓 Répondre et débloquer"}
+                          {envoi === r.id ? "⏳ جاري الإرسال..." : "🔓 الرد والفتح"}
                         </button>
                       </div>
                     </div>
@@ -275,7 +275,7 @@ export default function RemediationPanel({ courseId }) {
                   {r.statut === "DEBLOQUE" && (
                     <div style={{ background: "#f0fff4", border: "1px solid #9ae6b4", borderRadius: "8px", padding: "0.75rem 1rem", textAlign: "center" }}>
                       <span style={{ color: "#276749", fontWeight: "700" }}>
-                        ✅ Étudiant débloqué — peut repasser le quiz avec 3 nouvelles tentatives
+                        ✅ تم فتح الاختبار للتلميذ — يمكنه إعادته بـ 3 محاولات جديدة
                       </span>
                     </div>
                   )}

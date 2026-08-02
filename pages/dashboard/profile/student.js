@@ -68,7 +68,7 @@ export default function StudentProfile() {
 
       if (!res1.ok) {
         const data = await res1.json();
-        setError(data.error || "Erreur infos");
+        setError(data.error || "خطأ في المعلومات");
         setLoading(false);
         return;
       }
@@ -87,16 +87,16 @@ export default function StudentProfile() {
 
         if (!res2.ok) {
           const data = await res2.json();
-          setError(data.error || "Erreur photo");
+          setError(data.error || "خطأ في الصورة");
           setLoading(false);
           return;
         }
       }
 
-      setSuccess("✅ Profil mis à jour!");
+      setSuccess("✅ تم تحديث الملف الشخصي!");
       loadProfile();
     } catch (err) {
-      setError("Erreur serveur");
+      setError("خطأ في الخادم");
     } finally {
       setLoading(false);
     }
@@ -105,8 +105,8 @@ export default function StudentProfile() {
   if (!user || user.role !== "STUDENT") return null;
 
   return (
-    <div style={{ maxWidth: "500px", margin: "2rem auto", padding: "0 1rem" }}>
-      <h1 style={{ color: "#3b82f6" }}>👨‍🎓 Mon Profil</h1>
+    <div dir="rtl" lang="ar" style={{ maxWidth: "500px", margin: "2rem auto", padding: "0 1rem" }}>
+      <h1 style={{ color: "#3b82f6" }}>👨‍🎓 ملفي الشخصي</h1>
 
       {error && <div style={{ color: "#dc2626", background: "#fee2e2", padding: "1rem", borderRadius: "8px", marginBottom: "1rem" }}>{error}</div>}
       {success && <div style={{ color: "#059669", background: "#d1fae5", padding: "1rem", borderRadius: "8px", marginBottom: "1rem" }}>{success}</div>}
@@ -114,38 +114,38 @@ export default function StudentProfile() {
       <form onSubmit={handleSubmit} style={{ background: "white", padding: "2rem", borderRadius: "12px", boxShadow: "0 1px 3px rgba(0,0,0,0.1)" }}>
         {/* Photo */}
         <div style={{ marginBottom: "1.5rem" }}>
-          <label style={{ display: "block", fontWeight: "600", marginBottom: "0.5rem" }}>📸 Photo</label>
+          <label style={{ display: "block", fontWeight: "600", marginBottom: "0.5rem" }}>📸 الصورة</label>
           <input id="photoInput" type="file" accept="image/*" onChange={handlePhotoChange} style={{ width: "100%", padding: "0.75rem", border: "1px solid #cbd5e0", borderRadius: "6px", boxSizing: "border-box" }} />
-          {photoPreview && <img src={photoPreview} alt="Preview" style={{ width: "80px", height: "80px", borderRadius: "50%", marginTop: "1rem", objectFit: "cover" }} />}
+          {photoPreview && <img src={photoPreview} alt="معاينة" style={{ width: "80px", height: "80px", borderRadius: "50%", marginTop: "1rem", objectFit: "cover" }} />}
         </div>
 
         <div style={{ marginBottom: "1.5rem" }}>
-          <label style={{ display: "block", fontWeight: "600", marginBottom: "0.5rem" }}>📅 Date de Naissance</label>
+          <label style={{ display: "block", fontWeight: "600", marginBottom: "0.5rem" }}>📅 تاريخ الميلاد</label>
           <input type="date" name="dateNaissance" value={form.dateNaissance} onChange={handleChange} style={{ width: "100%", padding: "0.75rem", border: "1px solid #cbd5e0", borderRadius: "6px", boxSizing: "border-box" }} />
         </div>
 
         <div style={{ marginBottom: "1.5rem" }}>
-          <label style={{ display: "block", fontWeight: "600", marginBottom: "0.5rem" }}>📍 Lieu de Naissance</label>
-          <input type="text" name="lieuNaissance" value={form.lieuNaissance} onChange={handleChange} placeholder="Ville" style={{ width: "100%", padding: "0.75rem", border: "1px solid #cbd5e0", borderRadius: "6px", boxSizing: "border-box" }} />
+          <label style={{ display: "block", fontWeight: "600", marginBottom: "0.5rem" }}>📍 مكان الميلاد</label>
+          <input type="text" name="lieuNaissance" value={form.lieuNaissance} onChange={handleChange} placeholder="المدينة" style={{ width: "100%", padding: "0.75rem", border: "1px solid #cbd5e0", borderRadius: "6px", boxSizing: "border-box" }} />
         </div>
 
         <div style={{ marginBottom: "1.5rem" }}>
-          <label style={{ display: "block", fontWeight: "600", marginBottom: "0.5rem" }}>🏫 Établissement</label>
-          <input type="text" name="ecole" value={form.ecole} onChange={handleChange} placeholder="Nom" style={{ width: "100%", padding: "0.75rem", border: "1px solid #cbd5e0", borderRadius: "6px", boxSizing: "border-box" }} />
+          <label style={{ display: "block", fontWeight: "600", marginBottom: "0.5rem" }}>🏫 المؤسسة</label>
+          <input type="text" name="ecole" value={form.ecole} onChange={handleChange} placeholder="الاسم" style={{ width: "100%", padding: "0.75rem", border: "1px solid #cbd5e0", borderRadius: "6px", boxSizing: "border-box" }} />
         </div>
 
         <div style={{ marginBottom: "1.5rem" }}>
-          <label style={{ display: "block", fontWeight: "600", marginBottom: "0.5rem" }}>🏠 Adresse</label>
-          <input type="text" name="adresse" value={form.adresse} onChange={handleChange} placeholder="Rue" style={{ width: "100%", padding: "0.75rem", border: "1px solid #cbd5e0", borderRadius: "6px", boxSizing: "border-box" }} />
+          <label style={{ display: "block", fontWeight: "600", marginBottom: "0.5rem" }}>🏠 العنوان</label>
+          <input type="text" name="adresse" value={form.adresse} onChange={handleChange} placeholder="الشارع" style={{ width: "100%", padding: "0.75rem", border: "1px solid #cbd5e0", borderRadius: "6px", boxSizing: "border-box" }} />
         </div>
 
         <div style={{ marginBottom: "1.5rem" }}>
-          <label style={{ display: "block", fontWeight: "600", marginBottom: "0.5rem" }}>🏙️ Ville</label>
-          <input type="text" name="ville" value={form.ville} onChange={handleChange} placeholder="Ville" style={{ width: "100%", padding: "0.75rem", border: "1px solid #cbd5e0", borderRadius: "6px", boxSizing: "border-box" }} />
+          <label style={{ display: "block", fontWeight: "600", marginBottom: "0.5rem" }}>🏙️ المدينة</label>
+          <input type="text" name="ville" value={form.ville} onChange={handleChange} placeholder="المدينة" style={{ width: "100%", padding: "0.75rem", border: "1px solid #cbd5e0", borderRadius: "6px", boxSizing: "border-box" }} />
         </div>
 
         <button type="submit" disabled={loading} style={{ width: "100%", padding: "0.75rem", background: loading ? "#cbd5e0" : "linear-gradient(135deg, #3b82f6, #2563eb)", color: "white", border: "none", borderRadius: "8px", fontWeight: "600", cursor: loading ? "not-allowed" : "pointer" }}>
-          {loading ? "⏳ Enregistrement..." : "✅ Enregistrer"}
+          {loading ? "⏳ جارٍ الحفظ..." : "✅ حفظ"}
         </button>
       </form>
     </div>

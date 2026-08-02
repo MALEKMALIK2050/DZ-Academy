@@ -34,10 +34,10 @@ export default function RemediationRequest({ quiz, quizResult, score }) {
         setDemande({ statut: "EN_ATTENTE", messageEtudiant: message, createdAt: new Date() });
         setFeedback("success");
       } else {
-        setFeedback(data.error || "Erreur envoi");
+        setFeedback(data.error || "خطأ في الإرسال");
       }
     } catch {
-      setFeedback("Erreur serveur");
+      setFeedback("خطأ في الخادم");
     } finally {
       setSending(false);
     }
@@ -50,13 +50,13 @@ export default function RemediationRequest({ quiz, quizResult, score }) {
   if (loadingDemande) return null;
 
   return (
-    <div style={{ marginTop: "1.5rem" }}>
+    <div style={{ marginTop: "1.5rem" }} dir="rtl">
 
       {/* ── Récapitulatif des erreurs ── */}
       {erreurs.length > 0 && quiz?.questions && (
         <div style={{ background: "#fff5f5", border: "1.5px solid #feb2b2", borderRadius: "12px", padding: "1.25rem", marginBottom: "1.5rem" }}>
           <h4 style={{ margin: "0 0 1rem", color: "#c53030", fontSize: "1rem" }}>
-            ❌ Vos erreurs ({erreurs.length} / {totalQuestions} questions)
+            ❌ أخطاؤك ({erreurs.length} / {totalQuestions} أسئلة)
           </h4>
           <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
             {erreurs.map((r) => {
@@ -69,10 +69,10 @@ export default function RemediationRequest({ quiz, quizResult, score }) {
                   </p>
                   <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap", fontSize: "0.85rem" }}>
                     <span style={{ color: "#e53e3e" }}>
-                      Votre réponse : <strong>{String(r.repEtudiant ?? "—")}</strong>
+                      إجابتك: <strong>{String(r.repEtudiant ?? "—")}</strong>
                     </span>
                     <span style={{ color: "#276749" }}>
-                      Bonne réponse : <strong>{String(q.reponse ?? "—")}</strong>
+                      الإجابة الصحيحة: <strong>{String(q.reponse ?? "—")}</strong>
                     </span>
                   </div>
                 </div>
@@ -100,20 +100,20 @@ export default function RemediationRequest({ quiz, quizResult, score }) {
             <div>
               <div style={{ fontWeight: "700", color: "#2d3748" }}>
                 {demande.statut === "DEBLOQUE"
-                  ? "Quiz débloqué ! Vous pouvez repasser le quiz."
+                  ? "تم فتح الاختبار! يمكنك إعادة الاختبار."
                   : demande.statut === "REPONDU"
-                  ? "Votre enseignant a répondu"
-                  : "Demande envoyée — en attente de votre enseignant"}
+                  ? "لقد أجاب أستاذك"
+                  : "تم إرسال الطلب — في انتظار أستاذك"}
               </div>
               <div style={{ fontSize: "0.8rem", color: "#718096" }}>
-                Envoyée le {new Date(demande.createdAt).toLocaleDateString("fr-FR", { day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" })}
+                أُرسلت في {new Date(demande.createdAt).toLocaleDateString("ar-DZ", { day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" })}
               </div>
             </div>
           </div>
 
           {/* Message étudiant */}
           <div style={{ padding: "1rem 1.25rem", background: "white", borderBottom: "1px solid #f7fafc" }}>
-            <div style={{ fontSize: "0.8rem", fontWeight: "600", color: "#718096", marginBottom: "0.4rem" }}>VOTRE MESSAGE</div>
+            <div style={{ fontSize: "0.8rem", fontWeight: "600", color: "#718096", marginBottom: "0.4rem" }}>رسالتك</div>
             <p style={{ margin: 0, color: "#4a5568", fontSize: "0.95rem", lineHeight: "1.6" }}>
               {demande.messageEtudiant}
             </p>
@@ -123,9 +123,9 @@ export default function RemediationRequest({ quiz, quizResult, score }) {
           {demande.reponseEnseignant && (
             <div style={{ padding: "1rem 1.25rem", background: "#f0f9ff", borderBottom: "1px solid #bfdbfe" }}>
               <div style={{ fontSize: "0.8rem", fontWeight: "600", color: "#1d4ed8", marginBottom: "0.4rem" }}>
-                💬 RÉPONSE DE VOTRE ENSEIGNANT
+                💬 رد أستاذك
                 {demande.teacher && (
-                  <span style={{ fontWeight: "400", marginLeft: "0.5rem" }}>
+                  <span style={{ fontWeight: "400", marginRight: "0.5rem" }}>
                     — {demande.teacher.prenom} {demande.teacher.nom}
                   </span>
                 )}
@@ -139,7 +139,7 @@ export default function RemediationRequest({ quiz, quizResult, score }) {
           {demande.statut === "DEBLOQUE" && (
             <div style={{ padding: "1rem 1.25rem", background: "#f0fff4", textAlign: "center" }}>
               <p style={{ margin: 0, color: "#276749", fontWeight: "700" }}>
-                🎉 Vous avez 3 nouvelles tentatives. Bonne chance !
+                🎉 لديك 3 محاولات جديدة. حظا موفقا!
               </p>
             </div>
           )}
@@ -149,17 +149,17 @@ export default function RemediationRequest({ quiz, quizResult, score }) {
         <div style={{ background: "white", border: "1.5px solid #e2e8f0", borderRadius: "12px", overflow: "hidden" }}>
           <div style={{ background: "#f7fafc", borderBottom: "1px solid #e2e8f0", padding: "1rem 1.25rem" }}>
             <h4 style={{ margin: 0, color: "#2d3748", fontSize: "1rem" }}>
-              ✉️ Contacter votre enseignant
+              ✉️ اتصل بأستاذك
             </h4>
             <p style={{ margin: "0.25rem 0 0", fontSize: "0.85rem", color: "#718096" }}>
-              Expliquez vos difficultés. Votre enseignant verra vos erreurs et vous aidera à progresser.
+              اشرح الصعوبات التي تواجهها. سيرى أستاذك أخطاءك وسيساعدك على التقدم.
             </p>
           </div>
           <div style={{ padding: "1.25rem" }}>
             <textarea
               value={message}
               onChange={(e) => setMessage(e.target.value)}
-              placeholder="Ex: J'ai du mal à comprendre la partie sur les fractions. Les questions 2 et 4 m'ont posé problème car..."
+              placeholder="مثال: أواجه صعوبة في فهم الجزء الخاص بالكسور. الأسئلة 2 و 4 كانت صعبة لأن..."
               style={{
                 width: "100%",
                 minHeight: "120px",
@@ -197,7 +197,7 @@ export default function RemediationRequest({ quiz, quizResult, score }) {
                 fontWeight: "700",
               }}
             >
-              {sending ? "⏳ Envoi en cours..." : "📨 Envoyer à mon enseignant"}
+              {sending ? "⏳ جاري الإرسال..." : "📨 إرسال إلى أستاذي"}
             </button>
           </div>
         </div>

@@ -10,7 +10,7 @@ export default function Pretest({ questions, onSubmit }) {
 
   return (
     <div className="max-w-2xl mx-auto p-6 bg-white shadow-lg rounded-lg">
-      <h1 className="text-2xl font-bold mb-4">Prétest</h1>
+      <h1 className="text-2xl font-bold mb-4">تقييم المستوى الاولي</h1>
       <div className="mb-6">
         <p className="text-gray-600">
           Question {current + 1} / {questions.length}
