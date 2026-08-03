@@ -65,3 +65,5 @@ testMail.js
 tmp-*.js
 backup.sql
 
+
+*.sql
