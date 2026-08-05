@@ -24,6 +24,9 @@ export default function ManageChapter() {
   const [scormFile, setScormFile] = useState(null);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploading, setUploading] = useState(false);
+  // Physical file upload state
+  const [supportFile, setSupportFile] = useState(null);
+  const [fileUploadMode, setFileUploadMode] = useState(false); // false = URL mode, true = file upload mode
 
   // Devoirs
   const [devoirs,      setDevoirs]      = useState([]);
@@ -110,18 +113,78 @@ export default function ManageChapter() {
   fetchChapter();
 };
 
-  // ── Supports ─────────────────────────────────────────────
+  // ── Supports ────────────────────────────────────────────────────────
 const isScormType = (type) => type === "SCORM" || type === "ARTICULATE";
 
+// Types that support physical file upload
+const isFileUploadType = (type) => ["PDF", "IMAGE", "PPT", "WORD"].includes(type);
+
+const handleAddSupportWithFile = async () => {
+  if (!newSupport.nom) return setError("اسم الملحق إلزامي");
+  if (!supportFile) return setError("يرجى اختيار ملف");
+  setError(""); setSuccess("");
+
+  setUploading(true);
+  setUploadProgress(0);
+
+  const formData = new FormData();
+  formData.append("supportFile", supportFile);
+  formData.append("chapterId", chapterId);
+  formData.append("type", newSupport.type);
+  formData.append("nom", newSupport.nom);
+
+  try {
+    const result = await new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open("POST", "/api/supports/upload-file");
+      xhr.withCredentials = true;
+
+      xhr.upload.onprogress = (e) => {
+        if (e.lengthComputable) {
+          setUploadProgress(Math.round((e.loaded / e.total) * 100));
+        }
+      };
+
+      xhr.onload = () => {
+        try {
+          const data = JSON.parse(xhr.responseText);
+          if (xhr.status >= 200 && xhr.status < 300) resolve(data);
+          else reject(new Error(data.error || "خطأ في الرفع"));
+        } catch { reject(new Error("استجابة غير صالحة")); }
+      };
+
+      xhr.onerror = () => reject(new Error("خطأ في الشبكة"));
+      xhr.send(formData);
+    });
+
+    setSuccess(`✅ تم استيراد ملف ${newSupport.type} بنجاح !`);
+    setNewSupport({ type: "PDF", url: "", nom: "", contenu: "" });
+    setSupportFile(null);
+    setFileUploadMode(false);
+    setAddingSupport(false);
+    fetchChapter();
+  } catch (err) {
+    setError(err.message || "خطأ في رفع الملف");
+  } finally {
+    setUploading(false);
+    setUploadProgress(0);
+  }
+};
+
+
 const handleAddSupport = async () => {
+  if (!newSupport.nom) return setError("اسم الملحق إلزامي");
+
   // Validation spécifique selon le type
   if (isScormType(newSupport.type)) {
-    if (!scormFile) return setError("Fichier ZIP obligatoire");
-    if (!newSupport.nom) return setError("Nom affiché obligatoire");
+    if (!scormFile) return setError("ملف ZIP إلزامي");
+  } else if (fileUploadMode && isFileUploadType(newSupport.type)) {
+    // Handled by handleAddSupportWithFile
+    return handleAddSupportWithFile();
   } else if (newSupport.type !== "TEXTE" && newSupport.type !== "FORUM" && !newSupport.url) {
-    return setError("URL obligatoire");
+    return setError("الرابط (URL) إلزامي");
   }
-  if ((newSupport.type === "TEXTE" || newSupport.type === "FORUM") && !newSupport.contenu) return setError("Contenu obligatoire");
+  if ((newSupport.type === "TEXTE" || newSupport.type === "FORUM") && !newSupport.contenu) return setError("المحتوى إلزامي");
   setError(""); setSuccess("");
 
   // ── Upload SCORM/ARTICULATE via multipart ──
@@ -570,11 +633,17 @@ const handleAddSupport = async () => {
                 <label style={labelStyle}>نوع الملحق</label>
                 <select
                   value={newSupport.type}
-                  onChange={(e) => { setNewSupport({ type: e.target.value, url: "", nom: "", contenu: "" }); setScormFile(null); setUploadProgress(0); }}
+                  onChange={(e) => {
+                    setNewSupport({ type: e.target.value, url: "", nom: "", contenu: "" });
+                    setScormFile(null);
+                    setSupportFile(null);
+                    setFileUploadMode(false);
+                    setUploadProgress(0);
+                  }}
                   style={inputStyle}
                   disabled={uploading}
                 >
-                  {["PDF", "VIDEO", "IMAGE", "PPT", "SCORM", "ARTICULATE", "TEXTE", "FORUM"].map((t) => (
+                  {["PDF", "VIDEO", "IMAGE", "PPT", "WORD", "SCORM", "ARTICULATE", "TEXTE", "FORUM"].map((t) => (
                     <option key={t} value={t}>{t}</option>
                   ))}
                 </select>
@@ -685,8 +754,152 @@ const handleAddSupport = async () => {
                   </div>
                 )}
 
-                {/* ── Autres types : URL classique ── */}
-                {!isScormType(newSupport.type) && newSupport.type !== "TEXTE" && newSupport.type !== "FORUM" && (
+                {/* ── الملفات القابلة للرفع (PDF, IMAGE, PPT, WORD) ── */}
+                {!isScormType(newSupport.type) && isFileUploadType(newSupport.type) && (
+                  <div style={{ marginTop: "0.75rem" }}>
+                    {/* زر التبديل بين URL / رفع ملف */}
+                    <div style={{ display: "flex", gap: "0.5rem", marginBottom: "0.75rem" }}>
+                      <button
+                        type="button"
+                        onClick={() => { setFileUploadMode(false); setSupportFile(null); }}
+                        style={{
+                          padding: "0.4rem 1rem", border: "none", borderRadius: "8px", cursor: "pointer", fontWeight: "600", fontSize: "0.85rem",
+                          background: !fileUploadMode ? "#1e40af" : "#e2e8f0",
+                          color: !fileUploadMode ? "white" : "#4a5568",
+                        }}
+                      >
+                        🔗 رابط URL
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => { setFileUploadMode(true); setNewSupport({ ...newSupport, url: "" }); }}
+                        style={{
+                          padding: "0.4rem 1rem", border: "none", borderRadius: "8px", cursor: "pointer", fontWeight: "600", fontSize: "0.85rem",
+                          background: fileUploadMode ? "#059669" : "#e2e8f0",
+                          color: fileUploadMode ? "white" : "#4a5568",
+                        }}
+                      >
+                        📁 رفع ملف
+                      </button>
+                    </div>
+
+                    {/* URL mode */}
+                    {!fileUploadMode && (
+                      <>
+                        <label style={{ ...labelStyle, marginTop: "0.75rem" }}>الرابط (URL) *</label>
+                        <input
+                          placeholder="https://..."
+                          value={newSupport.url}
+                          onChange={(e) => setNewSupport({ ...newSupport, url: e.target.value })}
+                          style={{ ...inputStyle, textAlign: "left" }}
+                          disabled={uploading}
+                        />
+                      </>
+                    )}
+
+                    {/* File upload mode */}
+                    {fileUploadMode && (
+                      <>
+                        <label style={labelStyle}>
+                          {newSupport.type === "PDF" && "ملف PDF * (الحد الأقصى 50 ميجا)"}
+                          {newSupport.type === "IMAGE" && "صورة * (JPG, PNG, GIF, WebP, SVG — 50 ميجا)"}
+                          {newSupport.type === "PPT" && "عرض تقديمي * (PPT, PPTX — 50 ميجا)"}
+                          {newSupport.type === "WORD" && "وثيقة Word * (DOC, DOCX — 50 ميجا)"}
+                        </label>
+                        <div
+                          onDragOver={(e) => { e.preventDefault(); e.currentTarget.style.borderColor = "#3b82f6"; e.currentTarget.style.background = "#dbeafe"; }}
+                          onDragLeave={(e) => { e.preventDefault(); e.currentTarget.style.borderColor = "#059669"; e.currentTarget.style.background = "#f8fafc"; }}
+                          onDrop={(e) => {
+                            e.preventDefault();
+                            e.currentTarget.style.borderColor = "#059669";
+                            e.currentTarget.style.background = "#f8fafc";
+                            const file = e.dataTransfer.files?.[0];
+                            if (file) setSupportFile(file);
+                          }}
+                          style={{
+                            border: "2px dashed #059669",
+                            borderRadius: "12px",
+                            padding: "1.5rem",
+                            textAlign: "center",
+                            background: "#f8fafc",
+                            cursor: uploading ? "not-allowed" : "pointer",
+                            transition: "all 0.2s",
+                          }}
+                          onClick={() => !uploading && document.getElementById("supportFileInput")?.click()}
+                        >
+                          <input
+                            id="supportFileInput"
+                            type="file"
+                            accept={
+                              newSupport.type === "PDF" ? ".pdf" :
+                              newSupport.type === "IMAGE" ? ".jpg,.jpeg,.png,.gif,.webp,.svg" :
+                              newSupport.type === "PPT" ? ".ppt,.pptx" :
+                              newSupport.type === "WORD" ? ".doc,.docx" : "*"
+                            }
+                            style={{ display: "none" }}
+                            onChange={(e) => { const file = e.target.files?.[0]; if (file) setSupportFile(file); }}
+                            disabled={uploading}
+                          />
+                          {supportFile ? (
+                            <div>
+                              <div style={{ fontSize: "2rem", marginBottom: "0.5rem" }}>
+                                {newSupport.type === "PDF" ? "📄" : newSupport.type === "IMAGE" ? "🖼️" : newSupport.type === "PPT" ? "📊" : "📝"}
+                              </div>
+                              <div style={{ fontWeight: "700", color: "#1e293b", fontSize: "1rem" }}>{supportFile.name}</div>
+                              <div style={{ fontSize: "0.85rem", color: "#64748b", marginTop: "0.25rem" }}>
+                                {(supportFile.size / (1024 * 1024)).toFixed(2)} ميجا
+                              </div>
+                              {!uploading && (
+                                <button
+                                  onClick={(e) => { e.stopPropagation(); setSupportFile(null); }}
+                                  style={{ marginTop: "0.5rem", background: "#ef4444", color: "white", border: "none", borderRadius: "6px", padding: "0.3rem 0.8rem", cursor: "pointer", fontSize: "0.8rem" }}
+                                >
+                                  ✕ إزالة
+                                </button>
+                              )}
+                            </div>
+                          ) : (
+                            <div>
+                              <div style={{ fontSize: "2.5rem", marginBottom: "0.5rem" }}>
+                                {newSupport.type === "PDF" ? "📄" : newSupport.type === "IMAGE" ? "🖼️" : newSupport.type === "PPT" ? "📊" : "📝"}
+                              </div>
+                              <div style={{ fontWeight: "600", color: "#475569" }}>اسحب ملفك هنا</div>
+                              <div style={{ fontSize: "0.85rem", color: "#94a3b8", marginTop: "0.25rem" }}>أو اضغط للاختيار</div>
+                              <div style={{ fontSize: "0.75rem", color: "#cbd5e1", marginTop: "0.5rem" }}>
+                                {newSupport.type === "PDF" && "مقبول: .pdf"}
+                                {newSupport.type === "IMAGE" && "مقبول: .jpg .png .gif .webp .svg"}
+                                {newSupport.type === "PPT" && "مقبول: .ppt .pptx"}
+                                {newSupport.type === "WORD" && "مقبول: .doc .docx"}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* شريط تقدم الرفع */}
+                        {uploading && (
+                          <div style={{ marginTop: "0.75rem" }}>
+                            <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.85rem", color: "#475569", marginBottom: "0.3rem" }}>
+                              <span>{uploadProgress < 100 ? "⏳ جاري إرسال الملف..." : "✅ جاري المعالجة..."}</span>
+                              <span style={{ fontWeight: "700" }}>{uploadProgress}%</span>
+                            </div>
+                            <div style={{ background: "#e2e8f0", borderRadius: "8px", height: "8px", overflow: "hidden" }}>
+                              <div style={{
+                                height: "100%",
+                                borderRadius: "8px",
+                                width: `${uploadProgress}%`,
+                                background: "linear-gradient(90deg, #059669, #10b981)",
+                                transition: "width 0.3s ease",
+                              }} />
+                            </div>
+                          </div>
+                        )}
+                      </>
+                    )}
+                  </div>
+                )}
+
+                {/* ── الأنواع الأخرى : URL فقط ── */}
+                {!isScormType(newSupport.type) && !isFileUploadType(newSupport.type) && newSupport.type !== "TEXTE" && newSupport.type !== "FORUM" && (
                   <>
                     <label style={{ ...labelStyle, marginTop: "0.75rem" }}>الرابط (URL) *</label>
                     <input
@@ -712,9 +925,12 @@ const handleAddSupport = async () => {
 
                 <div style={{ display: "flex", gap: "0.5rem", marginTop: "1rem" }}>
                   <button onClick={handleAddSupport} disabled={uploading} style={{ ...btnSuccess, opacity: uploading ? 0.6 : 1, cursor: uploading ? "not-allowed" : "pointer" }}>
-                    {uploading ? "⏳ جاري الرفع..." : isScormType(newSupport.type) ? "📦 استيراد الحزمة" : "✅ إضافة"}
+                    {uploading ? "⏳ جاري الرفع..."
+                      : isScormType(newSupport.type) ? "📦 استيراد الحزمة"
+                      : (fileUploadMode && isFileUploadType(newSupport.type)) ? "📁 رفع الملف"
+                      : "✅ إضافة"}
                   </button>
-                  <button onClick={() => { setAddingSupport(false); setNewSupport({ type: "PDF", url: "", nom: "", contenu: "" }); setScormFile(null); setUploadProgress(0); }} disabled={uploading} style={{ ...btnWarning, opacity: uploading ? 0.6 : 1 }}>إلغاء</button>
+                  <button onClick={() => { setAddingSupport(false); setNewSupport({ type: "PDF", url: "", nom: "", contenu: "" }); setScormFile(null); setSupportFile(null); setFileUploadMode(false); setUploadProgress(0); }} disabled={uploading} style={{ ...btnWarning, opacity: uploading ? 0.6 : 1 }}>إلغاء</button>
                 </div>
               </div>
             ) : (
@@ -1022,7 +1238,7 @@ const handleAddSupport = async () => {
 }
 
 function typeColor(type) {
-  const colors = { PDF: "#dc2626", VIDEO: "#1e40af", IMAGE: "#059669", PPT: "#d97706", SCORM: "#7c3aed", ARTICULATE: "#0d9488", TEXTE: "#0ea5e9", FORUM: "#8b5cf6" };
+  const colors = { PDF: "#dc2626", VIDEO: "#1e40af", IMAGE: "#059669", PPT: "#d97706", WORD: "#2563eb", SCORM: "#7c3aed", ARTICULATE: "#0d9488", TEXTE: "#0ea5e9", FORUM: "#8b5cf6" };
   return colors[type] || "#475569";
 }
 

@@ -50,6 +50,7 @@ enum SupportType {
   VIDEO
   IMAGE
   PPT
+  WORD
   SCORM
   ARTICULATE
   TEXTE
