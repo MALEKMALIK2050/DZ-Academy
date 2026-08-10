@@ -24,7 +24,8 @@ export default async function handler(req, res) {
     const { niveau, annee, matiere } = req.query;
 
     // ✅ Construire les filtres dynamiquement avec correspondance souple et universelle
-    const where = {};
+    // ✅ Ne montrer que les cours publiés
+    const where = { status: "PUBLISHED" };
 
     if (niveau) {
       const nNorm = niveau.trim().toLowerCase();

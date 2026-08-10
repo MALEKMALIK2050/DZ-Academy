@@ -7,7 +7,7 @@ export default async function handler(req, res) {
 
   try {
     const [coursesCount, studentsCount, teachersCount] = await Promise.all([
-      prisma.course.count(),
+      prisma.course.count({ where: { status: "PUBLISHED" } }),
       prisma.user.count({ where: { role: "STUDENT" } }),
       prisma.user.count({ where: { role: "TEACHER" } })
     ]);
