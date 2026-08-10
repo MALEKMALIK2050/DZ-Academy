@@ -1,8 +1,11 @@
 import { useEffect, useState } from "react";
+import dynamic from "next/dynamic";
 import { useRouter } from "next/router";
 import { useAuth } from "@/context/AuthContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import DashboardLayout from "@/components/layout/DashboardLayout";
+
+const RichEditor = dynamic(() => import("@/components/RichEditor"), { ssr: false });
 
 const QUESTION_TYPES = [
   { value: "QCM", label: "QCM — إجابة واحدة صحيحة" },
@@ -464,10 +467,10 @@ useEffect(() => {
                 <InfoBlock label="المستوى الدراسي" value={course?.niveau} />
                 <InfoBlock label="الحالة" value={course?.status} />
                 <div style={{ gridColumn: "span 2" }}>
-                  <InfoBlock label="الوصف" value={course?.description} />
+                  <InfoBlockHtml label="الوصف" value={course?.description} />
                 </div>
                 <div style={{ gridColumn: "span 2" }}>
-                  <InfoBlock label="الأهداف البيداغوجية" value={course?.objectifs} />
+                  <InfoBlockHtml label="الأهداف البيداغوجية" value={course?.objectifs} />
                 </div>
               </div>
             )}
@@ -504,7 +507,13 @@ useEffect(() => {
                           الفصل {index + 1}
                         </span>
                         <strong style={{ fontSize: "1.1rem" }}>{ch.title}</strong>
-                        {ch.objectifs && <p style={{ margin: "0.5rem 0 0", color: "#718096", fontSize: "0.9rem" }}>{ch.objectifs}</p>}
+                        {ch.objectifs && (
+                          <div
+                            className="rich-content"
+                            dangerouslySetInnerHTML={{ __html: ch.objectifs }}
+                            style={{ margin: "0.5rem 0 0", color: "#718096", fontSize: "0.9rem", lineHeight: "1.5" }}
+                          />
+                        )}
                       </div>
                       <div style={{ display: "flex", gap: "0.4rem", alignItems: "center" }}>
                         <div style={{ display: "flex", flexDirection: "column", gap: "0.2rem" }}>
@@ -544,12 +553,14 @@ useEffect(() => {
                       style={inputStyle}
                     />
 
-                    <textarea
-                      placeholder="الأهداف الخاصة للفصل..."
-                      value={newChapter.objectifs}
-                      onChange={(e) => setNewChapter({ ...newChapter, objectifs: e.target.value })}
-                      style={{ ...inputStyle, height: "80px", marginTop: "0.75rem", resize: "vertical" }}
-                    />
+                    <label style={{ ...labelStyle, marginTop: "0.75rem" }}>الأهداف الخاصة للفصل</label>
+                    <div style={{ border: "1px solid #e2e8f0", borderRadius: "8px", overflow: "hidden", marginTop: "0.75rem" }}>
+                      <RichEditor
+                        value={newChapter.objectifs}
+                        onChange={(val) => setNewChapter({ ...newChapter, objectifs: val })}
+                        placeholder="الأهداف الخاصة للفصل..."
+                      />
+                    </div>
 
                     <label style={{ ...labelStyle, marginTop: "0.75rem" }}>الموضع</label>
                     <select
@@ -887,7 +898,24 @@ function InfoBlock({ label, value }) {
   return (
     <div style={{ background: "#f8fafc", padding: "1.25rem", borderRadius: "12px", border: "1px solid #edf2f7" }}>
       <div style={{ fontWeight: "700", color: "#059669", marginBottom: "0.5rem", fontSize: "0.9rem", textTransform: "uppercase", letterSpacing: "0.05em" }}>{label}</div>
-      <div style={{ color: value ? "#2d3748" : "#a0aec0", fontSize: "1.05rem", lineHeight: "1.5" }}>{value || "Non renseigné"}</div>
+      <div style={{ color: value ? "#2d3748" : "#a0aec0", fontSize: "1.05rem", lineHeight: "1.5" }}>{value || "غير محدد"}</div>
+    </div>
+  );
+}
+
+function InfoBlockHtml({ label, value }) {
+  return (
+    <div style={{ background: "#f8fafc", padding: "1.25rem", borderRadius: "12px", border: "1px solid #edf2f7" }}>
+      <div style={{ fontWeight: "700", color: "#059669", marginBottom: "0.5rem", fontSize: "0.9rem", textTransform: "uppercase", letterSpacing: "0.05em" }}>{label}</div>
+      {value ? (
+        <div
+          className="rich-content"
+          dangerouslySetInnerHTML={{ __html: value }}
+          style={{ color: "#2d3748", fontSize: "1.05rem", lineHeight: "1.6" }}
+        />
+      ) : (
+        <div style={{ color: "#a0aec0", fontSize: "1.05rem", fontStyle: "italic" }}>غير محدد</div>
+      )}
     </div>
   );
 }

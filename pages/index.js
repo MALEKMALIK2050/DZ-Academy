@@ -1,12 +1,12 @@
 // ======================================================
 // FICHIER : pages/index.js
-// MODIFICATION : Ajout des enrollments pour l'utilisateur connecté
+// Organisé par matière / niveau / année
 // ======================================================
 
 import Link from "next/link";
 import { useState, useEffect, useRef } from "react";
 import AnimatedLogo from "../components/AnimatedLogo";
-import { getMatiereStyles, getSubjectIcon, getSubjectDecorations } from "@/lib/constants";
+import { getMatiereLabel, getNiveauLabel, getMatiereStyles, getSubjectIcon, getSubjectDecorations } from "@/lib/constants";
 
 const AnimatedCounter = ({ target, label, icon }) => {
   const [count, setCount] = useState(0);
@@ -317,170 +317,206 @@ export default function Home() {
               <p>لا توجد دورات متاحة لهذه المعايير.</p>
             </div>
           ) : (
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", gap: "1.5rem" }}>
-                {[...courses].sort((a, b) => {
+            <div>
+              {(() => {
+                const groups = {};
+                const sortedCourses = [...courses].sort((a, b) => {
                   const numA = parseInt((a.title || "").match(/\d+/)?.[0] || 0);
                   const numB = parseInt((b.title || "").match(/\d+/)?.[0] || 0);
                   if (numA !== numB) return numA - numB;
                   return (a.title || "").localeCompare(b.title || "", undefined, { numeric: true, sensitivity: "base" });
-                }).map((course) => {
-                  const subjectTheme = getMatiereStyles ? getMatiereStyles(course.matiere) : { color: "#4A5568", background: "#F7FAFC15" };
-                  const subjectIcon = getSubjectIcon ? getSubjectIcon(course.matiere) : "📘";
-                  const subjectDeco = getSubjectDecorations ? getSubjectDecorations(course.matiere) : "📖  📝  ✏️";
-                  
-                  // Extract colors for the modern UI
-                  const primaryColor = subjectTheme.color || "#4A5568";
-                  const bgColor = primaryColor + "12";
+                });
+                sortedCourses.forEach(c => {
+                  const key = `${c.niveau}|${c.annee}|${c.matiere}`;
+                  if (!groups[key]) groups[key] = [];
+                  groups[key].push(c);
+                });
 
-                  const displayNiveau = course.niveau === "college" ? "المتوسط" : course.niveau === "lycee" ? "الثانوي" : course.niveau;
-                  const displayMatiere = MATIERES.find(m => m.value === course.matiere)?.label || course.matiere;
+                return Object.keys(groups).map((key) => {
+                  const groupCourses = groups[key];
+                  const firstCourse = groupCourses[0];
+                  const subjectTheme = getMatiereStyles ? getMatiereStyles(firstCourse.matiere) : { color: "#4A5568", background: "#F7FAFC" };
+                  const subjectIcon = getSubjectIcon ? getSubjectIcon(firstCourse.matiere) : "📘";
 
-                  const enrollment = course.enrollments?.[0] || null;
-                  const isEnrolled = enrollment && (enrollment.statut === "VALIDE" || enrollment.statut === "PAYE" || enrollment.statut === "GRATUIT");
-                  const isPending = enrollment && enrollment.statut === "EN_ATTENTE";
+                  const nv = firstCourse.niveau ? getNiveauLabel(firstCourse.niveau) : "";
+                  const an = firstCourse.annee ? firstCourse.annee : "";
+                  const mat = getMatiereLabel(firstCourse.matiere) || firstCourse.matiere;
+                  const headerLabel = (an ? [an, mat] : [nv, mat]).filter(Boolean).join(" • ");
 
                   return (
-                    <div key={course.id} className="course-card-item" style={{ 
-                      display: "flex", flexDirection: "column",
-                      background: "white", 
-                      border: "2px solid " + primaryColor + "20", 
-                      borderRadius: "20px", 
-                      boxShadow: "0 10px 25px rgba(0,0,0,0.04), 0 4px 6px rgba(0,0,0,0.02)", 
-                      position: "relative",
-                      cursor: "pointer"
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.transform = "translateY(-4px)";
-                      e.currentTarget.style.boxShadow = "0 15px 35px " + primaryColor + "18";
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.transform = "none";
-                      e.currentTarget.style.boxShadow = "0 10px 25px rgba(0,0,0,0.04), 0 4px 6px rgba(0,0,0,0.02)";
-                    }}
-                    >
-                      {/* Banner part */}
+                    <div key={key} style={{ marginBottom: "3rem", overflow: "visible" }}>
                       <div style={{
-                        height: "110px",
-                        background: "linear-gradient(135deg, " + primaryColor + "15, " + primaryColor + "08)",
-                        display: "flex",
-                        flexDirection: "column",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        padding: "1rem 1.5rem",
-                        position: "relative",
-                        borderBottom: "3px solid " + primaryColor + "30",
-                        borderRadius: "18px 18px 0 0",
-                        overflow: "hidden"
+                        display: "flex", alignItems: "center", gap: "1rem", marginBottom: "1.5rem",
+                        padding: "1rem 1.5rem", borderRadius: "12px", background: subjectTheme.background,
+                        borderRight: `6px solid ${subjectTheme.color}`
                       }}>
-                        <div style={{ fontSize: "2.8rem", marginBottom: "0.25rem" }}>{subjectIcon}</div>
-                        <div style={{ fontSize: "0.7rem", color: primaryColor, opacity: 0.6, letterSpacing: "3px", fontWeight: "600" }}>{subjectDeco}</div>
-                        <div style={{
-                          position: "absolute", top: "0.5rem", right: "0.5rem",
-                          backgroundColor: primaryColor,
-                          color: "white",
-                          padding: "0.25rem 0.7rem",
-                          borderRadius: "12px",
-                          fontWeight: "700",
-                          fontSize: "0.7rem",
-                          letterSpacing: "0.5px",
-                          textTransform: "uppercase"
-                        }}>
-                          {displayNiveau} {course.annee ? ("• " + course.annee) : ""}
-                        </div>
+                        <span style={{ fontSize: "2rem" }}>{subjectIcon}</span>
+                        <h2 style={{ margin: 0, color: subjectTheme.color, fontSize: "1.5rem", fontWeight: "800" }}>
+                          {headerLabel}
+                        </h2>
                       </div>
+                      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", gap: "2rem", overflow: "visible" }}>
+                        {groupCourses.map((course) => {
+                          const primaryColor = subjectTheme.color || "#4A5568";
+                          const bgColor = primaryColor + "12";
+                          const subjectDeco = getSubjectDecorations ? getSubjectDecorations(course.matiere) : "📖  📝  ✏️";
 
-                      {/* Content part */}
-                      <div style={{ padding: "1.5rem", display: "flex", flexDirection: "column", flexGrow: 1 }}>
-                        <div className="course-title-container">
-                          <div className="course-title-hoverable">
-                            <h3 style={{ fontWeight: "800", color: "#1e293b", fontSize: "1.2rem", margin: 0, lineHeight: "1.4" }}>
-                              {course.title}
-                            </h3>
-                            <span className="course-title-hint">💡 وصف</span>
-                          </div>
-                          <div className="course-title-tooltip">
-                            <div className="course-title-tooltip-header">
-                              <span>💡</span> <span>وصف الدرس :</span>
-                            </div>
-                            <div style={{ color: "#e2e8f0", fontSize: "0.88rem", lineHeight: "1.7" }}>
-                              {course.description || "لا يوجد وصف محدد لهذا الدرس."}
-                            </div>
-                          </div>
-                        </div>
-                        
-                        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "1rem", flexWrap: "wrap" }}>
-                          <span style={{
-                            padding: "0.2rem 0.6rem",
-                            borderRadius: "6px",
-                            backgroundColor: bgColor,
-                            color: primaryColor,
-                            fontWeight: "700",
-                            fontSize: "0.8rem"
-                          }}>{subjectIcon} {displayMatiere}</span>
-                        </div>
-                        
-                        <p style={{ color: "#64748b", fontSize: "0.95rem", lineHeight: "1.6", flexGrow: 1 }}>
-                          {course.description ? course.description.substring(0, 80) + "..." : "لا يوجد وصف."}
-                        </p>
-                        
-                        <div style={{ marginTop: "1rem", textAlign: "center" }}>
-                          {isEnrolled ? (
-                            <Link 
-                              href={`/dashboard/student/courses/${course.id}`}
-                              style={{
-                                display: "inline-block",
-                                width: "100%",
-                                padding: "0.65rem",
-                                background: "linear-gradient(135deg, #059669, #10b981)",
-                                color: "white",
-                                borderRadius: "8px",
-                                textDecoration: "none",
-                                fontWeight: "700",
-                                fontSize: "0.9rem",
-                                boxShadow: "0 4px 12px rgba(5, 150, 105, 0.25)"
-                              }}
+                          const displayNiveau = course.niveau === "college" ? "المتوسط" : course.niveau === "lycee" ? "الثانوي" : course.niveau;
+                          const badgeLabel = course.annee || displayNiveau;
+                          const displayMatiere = getMatiereLabel(course.matiere);
+
+                          const enrollment = course.enrollments?.[0] || null;
+                          const isEnrolled = enrollment && (enrollment.statut === "VALIDE" || enrollment.statut === "PAYE" || enrollment.statut === "GRATUIT");
+                          const isPending = enrollment && enrollment.statut === "EN_ATTENTE";
+
+                          return (
+                            <div key={course.id} className="course-card-item" style={{ 
+                              display: "flex", flexDirection: "column",
+                              background: "white", 
+                              border: "2px solid " + primaryColor + "20", 
+                              borderRadius: "20px", 
+                              boxShadow: "0 10px 25px rgba(0,0,0,0.04), 0 4px 6px rgba(0,0,0,0.02)", 
+                              position: "relative",
+                              cursor: "pointer"
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.transform = "translateY(-4px)";
+                              e.currentTarget.style.boxShadow = "0 15px 35px " + primaryColor + "18";
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.transform = "none";
+                              e.currentTarget.style.boxShadow = "0 10px 25px rgba(0,0,0,0.04), 0 4px 6px rgba(0,0,0,0.02)";
+                            }}
                             >
-                              ✅ تم التسجيل
-                            </Link>
-                          ) : isPending ? (
-                            <div 
-                              style={{
-                                display: "inline-block",
-                                width: "100%",
-                                padding: "0.65rem",
-                                background: "#fef3c7",
-                                color: "#d97706",
-                                borderRadius: "8px",
-                                fontWeight: "700",
-                                fontSize: "0.9rem",
-                                border: "1px solid #fde68a"
-                              }}
-                            >
-                              ⏳ قيد الانتظار
+                              {/* Banner part */}
+                              <div style={{
+                                height: "110px",
+                                background: "linear-gradient(135deg, " + primaryColor + "15, " + primaryColor + "08)",
+                                display: "flex",
+                                flexDirection: "column",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                padding: "1rem 1.5rem",
+                                position: "relative",
+                                borderBottom: "3px solid " + primaryColor + "30",
+                                borderRadius: "18px 18px 0 0",
+                                overflow: "hidden"
+                              }}>
+                                <div style={{ fontSize: "2.8rem", marginBottom: "0.25rem" }}>{subjectIcon}</div>
+                                <div style={{ fontSize: "0.7rem", color: primaryColor, opacity: 0.6, letterSpacing: "3px", fontWeight: "600" }}>{subjectDeco}</div>
+                                <div style={{
+                                  position: "absolute", top: "0.5rem", right: "0.5rem",
+                                  backgroundColor: primaryColor,
+                                  color: "white",
+                                  padding: "0.25rem 0.7rem",
+                                  borderRadius: "12px",
+                                  fontWeight: "700",
+                                  fontSize: "0.7rem",
+                                  letterSpacing: "0.5px",
+                                  textTransform: "uppercase"
+                                }}>
+                                  {badgeLabel}
+                                </div>
+                              </div>
+
+                              {/* Content part */}
+                              <div style={{ padding: "1.5rem", display: "flex", flexDirection: "column", flexGrow: 1 }}>
+                                <div className="course-title-container">
+                                  <div className="course-title-hoverable">
+                                    <h3 style={{ fontWeight: "800", color: "#1e293b", fontSize: "1.2rem", margin: 0, lineHeight: "1.4" }}>
+                                      {course.title}
+                                    </h3>
+                                    <span className="course-title-hint">💡 وصف</span>
+                                  </div>
+                                  <div className="course-title-tooltip">
+                                    <div className="course-title-tooltip-header">
+                                      <span>💡</span> <span>وصف الدرس :</span>
+                                    </div>
+                                    <div style={{ color: "#e2e8f0", fontSize: "0.88rem", lineHeight: "1.7" }}>
+                                      {course.description ? course.description.replace(/<[^>]*>/g, '') : "لا يوجد وصف محدد لهذا الدرس."}
+                                    </div>
+                                  </div>
+                                </div>
+                                
+                                <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "1rem", flexWrap: "wrap" }}>
+                                  <span style={{
+                                    padding: "0.2rem 0.6rem",
+                                    borderRadius: "6px",
+                                    backgroundColor: bgColor,
+                                    color: primaryColor,
+                                    fontWeight: "700",
+                                    fontSize: "0.8rem"
+                                  }}>{subjectIcon} {displayMatiere}</span>
+                                </div>
+                                
+                                <p style={{ color: "#64748b", fontSize: "0.95rem", lineHeight: "1.6", flexGrow: 1 }}>
+                                  {course.description ? course.description.replace(/<[^>]*>/g, '').substring(0, 80) + "..." : "لا يوجد وصف."}
+                                </p>
+                                
+                                <div style={{ marginTop: "1rem", textAlign: "center" }}>
+                                  {isEnrolled ? (
+                                    <Link 
+                                      href={`/dashboard/student/courses/${course.id}`}
+                                      style={{
+                                        display: "inline-block",
+                                        width: "100%",
+                                        padding: "0.65rem",
+                                        background: "linear-gradient(135deg, #059669, #10b981)",
+                                        color: "white",
+                                        borderRadius: "8px",
+                                        textDecoration: "none",
+                                        fontWeight: "700",
+                                        fontSize: "0.9rem",
+                                        boxShadow: "0 4px 12px rgba(5, 150, 105, 0.25)"
+                                      }}
+                                    >
+                                      ✅ تم التسجيل
+                                    </Link>
+                                  ) : isPending ? (
+                                    <div 
+                                      style={{
+                                        display: "inline-block",
+                                        width: "100%",
+                                        padding: "0.65rem",
+                                        background: "#fef3c7",
+                                        color: "#d97706",
+                                        borderRadius: "8px",
+                                        fontWeight: "700",
+                                        fontSize: "0.9rem",
+                                        border: "1px solid #fde68a"
+                                      }}
+                                    >
+                                      ⏳ قيد الانتظار
+                                    </div>
+                                  ) : (
+                                    <Link 
+                                      href="/register"
+                                      style={{
+                                        display: "inline-block",
+                                        width: "100%",
+                                        padding: "0.65rem",
+                                        background: "linear-gradient(135deg, #1e40af, #3b82f6)",
+                                        color: "white",
+                                        borderRadius: "8px",
+                                        textDecoration: "none",
+                                        fontWeight: "700",
+                                        fontSize: "0.9rem",
+                                        boxShadow: "0 4px 12px rgba(59, 130, 246, 0.25)"
+                                      }}
+                                    >
+                                      🚀 التسجيل في الدرس
+                                    </Link>
+                                  )}
+                                </div>
+                              </div>
                             </div>
-                          ) : (
-                            <Link 
-                              href={`/courses/${course.id}`}
-                              style={{
-                                display: "inline-block",
-                                width: "100%",
-                                padding: "0.65rem",
-                                background: "linear-gradient(135deg, #059669, #10b981)",
-                                color: "white",
-                                borderRadius: "8px",
-                                textDecoration: "none",
-                                fontWeight: "700",
-                                fontSize: "0.9rem",
-                              }}
-                            >
-                              🚀 سجّل للوصول
-                            </Link>
-                          )}
-                        </div>
+                          );
+                        })}
                       </div>
                     </div>
                   );
-              })}
+                });
+              })()}
             </div>
           )}
         </div>

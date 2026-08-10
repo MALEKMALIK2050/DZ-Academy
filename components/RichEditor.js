@@ -5,11 +5,16 @@ import TextAlign from "@tiptap/extension-text-align";
 import Link from "@tiptap/extension-link";
 import Superscript from "@tiptap/extension-superscript";
 import Subscript from "@tiptap/extension-subscript";
-import Table from "@tiptap/extension-table";
-import TableRow from "@tiptap/extension-table-row";
-import TableCell from "@tiptap/extension-table-cell";
-import TableHeader from "@tiptap/extension-table-header";
+import * as TableExt from "@tiptap/extension-table";
+import * as TableRowExt from "@tiptap/extension-table-row";
+import * as TableCellExt from "@tiptap/extension-table-cell";
+import * as TableHeaderExt from "@tiptap/extension-table-header";
 import { useEffect } from "react";
+
+const Table = TableExt.Table || TableExt.default;
+const TableRow = TableRowExt.TableRow || TableRowExt.default;
+const TableCell = TableCellExt.TableCell || TableCellExt.default;
+const TableHeader = TableHeaderExt.TableHeader || TableHeaderExt.default;
 
 export default function RichEditor({ value, onChange, placeholder }) {
   const editor = useEditor({

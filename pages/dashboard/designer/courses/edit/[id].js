@@ -1,8 +1,11 @@
 import { useEffect, useState } from "react";
+import dynamic from "next/dynamic";
 import { useRouter } from "next/router";
 import { useAuth } from "@/context/AuthContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import DashboardLayout from "@/components/layout/DashboardLayout";
+
+const RichEditor = dynamic(() => import("@/components/RichEditor"), { ssr: false });
 
 export default function EditCourse() {
   const router = useRouter();
@@ -183,12 +186,24 @@ export default function EditCourse() {
 
               <div>
                 <label style={labelStyle}>وصف قصير</label>
-                <textarea name="description" value={form.description} onChange={handleChange} style={{ ...inputStyle, height: "120px", resize: "vertical" }} />
+                <div style={{ border: "1px solid #cbd5e0", borderRadius: "8px", overflow: "hidden" }}>
+                  <RichEditor
+                    value={form.description}
+                    onChange={(val) => setForm({ ...form, description: val })}
+                    placeholder="قدم لمحة موجزة عن هدف هذا الدرس..."
+                  />
+                </div>
               </div>
 
               <div>
-                <label style={labelStyle}>الأهداف البيداغوجية (افصل بينها بـ | )</label>
-                <textarea name="objectifs" value={form.objectifs} onChange={handleChange} style={{ ...inputStyle, height: "120px", resize: "vertical" }} />
+                <label style={labelStyle}>الأهداف البيداغوجية</label>
+                <div style={{ border: "1px solid #cbd5e0", borderRadius: "8px", overflow: "hidden" }}>
+                  <RichEditor
+                    value={form.objectifs}
+                    onChange={(val) => setForm({ ...form, objectifs: val })}
+                    placeholder="ما الذي سيتعلمه التلميذ في النهاية؟"
+                  />
+                </div>
               </div>
 
               <div style={{ marginTop: "1rem", paddingTop: "1.5rem", borderTop: "1px solid #f7fafc" }}>

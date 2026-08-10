@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 
-import { MATIERES, getMatiereLabel, getMatiereStyles } from "@/lib/constants";
+import { MATIERES, getMatiereLabel, getNiveauLabel, getMatiereStyles, getSubjectIcon, getSubjectDecorations } from "@/lib/constants";
 
 export default function StudentCoursesPage() {
   const [data, setData]       = useState({ catalogue: [], enrollments: [] });
@@ -238,102 +238,150 @@ export default function StudentCoursesPage() {
             {data.catalogue?.length === 0 ? (
               <p style={{ color: "#a0aec0", fontStyle: "italic", textAlign: "center", padding: "3rem", backgroundColor: "white", borderRadius: "16px", border: "1px dashed #cbd5e1" }}>لا توجد أي دورة تطابق هذا البحث.</p>
             ) : (
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", gap: "1.5rem" }}>
-                {data.catalogue.map((c) => {
-                  const enrollment = c.enrollments?.[0] || null;
-                  const subjectTheme = getMatiereStyles(c.matiere);
-                  const icon = c.id % 3 === 0 ? '🌱' : c.id % 3 === 1 ? '🔥' : '⚡'; // Or custom icon based on subject
-                  
-                  const primaryColor = subjectTheme.color || "#4A5568";
-                  const bgColor = subjectTheme.backgroundColor || "#F7FAFC";
-                  const displayNiveau = c.niveau === 'college' ? 'متوسط' : c.niveau === 'lycee' ? 'ثانوي' : c.niveau;
+              <div>
+                {(() => {
+                  const groups = {};
+                  const sortedCourses = [...data.catalogue].sort((a, b) => {
+                    const numA = parseInt((a.title || "").match(/\d+/)?.[0] || 0);
+                    const numB = parseInt((b.title || "").match(/\d+/)?.[0] || 0);
+                    if (numA !== numB) return numA - numB;
+                    return (a.title || "").localeCompare(b.title || "", undefined, { numeric: true, sensitivity: "base" });
+                  });
+                  sortedCourses.forEach(c => {
+                    const key = `${c.niveau}|${c.annee}|${c.matiere}`;
+                    if (!groups[key]) groups[key] = [];
+                    groups[key].push(c);
+                  });
 
-                  return (
-                    <div key={c.id} style={{ 
-                      display: "flex", flexDirection: "column",
-                      background: "white", 
-                      border: "1px solid #f1f5f9", 
-                      borderRadius: "20px", 
-                      boxShadow: "0 10px 25px rgba(0,0,0,0.04), 0 4px 6px rgba(0,0,0,0.02)", 
-                      overflow: "hidden",
-                      transition: "transform 0.2s, box-shadow 0.2s",
-                      cursor: "pointer"
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.transform = "translateY(-4px)";
-                      e.currentTarget.style.boxShadow = "0 15px 35px rgba(0,0,0,0.08)";
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.transform = "none";
-                      e.currentTarget.style.boxShadow = "0 10px 25px rgba(0,0,0,0.04), 0 4px 6px rgba(0,0,0,0.02)";
-                    }}
-                    >
-                      {/* Banner part */}
-                      <div style={{
-                        height: "100px",
-                        backgroundColor: bgColor,
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "space-between",
-                        padding: "1.5rem",
-                        position: "relative"
-                      }}>
-                        <div style={{ fontSize: "2.5rem" }}>{icon}</div>
+                  return Object.keys(groups).map((key) => {
+                    const groupCourses = groups[key];
+                    const firstCourse = groupCourses[0];
+                    const subjectTheme = getMatiereStyles(firstCourse.matiere) || { color: "#4A5568", background: "#F7FAFC" };
+                    const subjectIcon = getSubjectIcon ? getSubjectIcon(firstCourse.matiere) : "📘";
+
+                    const nv = firstCourse.niveau ? getNiveauLabel(firstCourse.niveau) : "";
+                    const an = firstCourse.annee ? firstCourse.annee : "";
+                    const mat = getMatiereLabel(firstCourse.matiere) || firstCourse.matiere;
+                    const headerLabel = (an ? [an, mat] : [nv, mat]).filter(Boolean).join(" • ");
+
+                    return (
+                      <div key={key} style={{ marginBottom: "3rem" }}>
                         <div style={{
-                          backgroundColor: primaryColor,
-                          color: "white",
-                          padding: "0.3rem 0.8rem",
-                          borderRadius: "12px",
-                          fontWeight: "700",
-                          fontSize: "0.75rem",
-                          letterSpacing: "0.5px",
-                          textTransform: "uppercase"
+                          display: "flex", alignItems: "center", gap: "1rem", marginBottom: "1.5rem",
+                          padding: "1rem 1.5rem", borderRadius: "12px", background: subjectTheme.background,
+                          borderRight: `6px solid ${subjectTheme.color}`
                         }}>
-                          {displayNiveau} {c.annee ? `• ${c.annee}` : ''}
+                          <span style={{ fontSize: "2rem" }}>{subjectIcon}</span>
+                          <h2 style={{ margin: 0, color: subjectTheme.color, fontSize: "1.4rem", fontWeight: "800" }}>
+                            {headerLabel}
+                          </h2>
                         </div>
-                      </div>
+                        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", gap: "1.5rem" }}>
+                          {groupCourses.map((c) => {
+                            const enrollment = c.enrollments?.[0] || null;
+                            const subjectIconCourse = getSubjectIcon ? getSubjectIcon(c.matiere) : "📘";
+                            const subjectDeco = getSubjectDecorations ? getSubjectDecorations(c.matiere) : "📖  📝  ✏️";
+                            
+                            const primaryColor = subjectTheme.color || "#4A5568";
+                            const bgColor = `${primaryColor}12`;
+                            const displayNiveau = c.niveau === 'college' ? 'متوسط' : c.niveau === 'lycee' ? 'ثانوي' : c.niveau;
+                            const badgeLabel = c.annee || displayNiveau;
 
-                      {/* Content part */}
-                      <div style={{ padding: "1.5rem", display: "flex", flexDirection: "column", flexGrow: 1 }}>
-                        <h3 style={{ fontWeight: "800", color: "#1e293b", fontSize: "1.2rem", marginBottom: "0.5rem", lineHeight: "1.4" }}>{c.title}</h3>
-                        
-                        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "1rem" }}>
-                          <span style={{
-                            padding: "0.2rem 0.6rem",
-                            borderRadius: "6px",
-                            backgroundColor: bgColor,
-                            color: primaryColor,
-                            fontWeight: "700",
-                            fontSize: "0.8rem"
-                          }}>📘 {getMatiereLabel(c.matiere)}</span>
-                          <span style={{
-                            padding: "0.2rem 0.6rem",
-                            borderRadius: "6px",
-                            backgroundColor: "#f1f5f9",
-                            color: "#64748b",
-                            fontWeight: "700",
-                            fontSize: "0.8rem"
-                          }}>📖 {c.chapters?.length || 0} فصول</span>
-                        </div>
-                        
-                        <div style={{ marginTop: "auto" }}>
-                          <p style={{
-                            fontSize: "1.1rem",
-                            fontWeight: "800",
-                            color: c.prix ? "#f97316" : "#10b981", 
-                            marginBottom: "1rem"
-                          }}>
-                            {c.prix ? `💰 ${c.prix.toLocaleString("fr-FR")} د.ج` : "🎁 مجاني"}
-                          </p>
-                          
-                          <div style={{ width: "100%" }}>
-                            {btnStatut(enrollment, c.id)}
-                          </div>
+                            return (
+                              <div key={c.id} style={{ 
+                                display: "flex", flexDirection: "column",
+                                background: "white", 
+                                border: `2px solid ${primaryColor}20`, 
+                                borderRadius: "20px", 
+                                boxShadow: "0 10px 25px rgba(0,0,0,0.04), 0 4px 6px rgba(0,0,0,0.02)", 
+                                overflow: "hidden",
+                                transition: "transform 0.2s, box-shadow 0.2s",
+                                cursor: "pointer"
+                              }}
+                              onMouseEnter={(e) => {
+                                e.currentTarget.style.transform = "translateY(-4px)";
+                                e.currentTarget.style.boxShadow = `0 15px 35px ${primaryColor}18`;
+                              }}
+                              onMouseLeave={(e) => {
+                                e.currentTarget.style.transform = "none";
+                                e.currentTarget.style.boxShadow = "0 10px 25px rgba(0,0,0,0.04), 0 4px 6px rgba(0,0,0,0.02)";
+                              }}
+                              >
+                                {/* Banner part */}
+                                <div style={{
+                                  height: "110px",
+                                  background: `linear-gradient(135deg, ${primaryColor}15, ${primaryColor}08)`,
+                                  display: "flex",
+                                  flexDirection: "column",
+                                  alignItems: "center",
+                                  justifyContent: "center",
+                                  padding: "1rem 1.5rem",
+                                  position: "relative",
+                                  borderBottom: `3px solid ${primaryColor}30`
+                                }}>
+                                  <div style={{ fontSize: "2.8rem", marginBottom: "0.25rem" }}>{subjectIconCourse}</div>
+                                  <div style={{ fontSize: "0.7rem", color: primaryColor, opacity: 0.6, letterSpacing: "3px", fontWeight: "600" }}>{subjectDeco}</div>
+                                  <div style={{
+                                    position: "absolute", top: "0.5rem", right: "0.5rem",
+                                    backgroundColor: primaryColor,
+                                    color: "white",
+                                    padding: "0.25rem 0.7rem",
+                                    borderRadius: "12px",
+                                    fontWeight: "700",
+                                    fontSize: "0.7rem",
+                                    letterSpacing: "0.5px",
+                                    textTransform: "uppercase"
+                                  }}>
+                                    {badgeLabel}
+                                  </div>
+                                </div>
+
+                                {/* Content part */}
+                                <div style={{ padding: "1.5rem", display: "flex", flexDirection: "column", flexGrow: 1 }}>
+                                  <h3 style={{ fontWeight: "800", color: "#1e293b", fontSize: "1.2rem", marginBottom: "0.5rem", lineHeight: "1.4" }}>{c.title}</h3>
+                                  
+                                  <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "1rem" }}>
+                                    <span style={{
+                                      padding: "0.2rem 0.6rem",
+                                      borderRadius: "6px",
+                                      backgroundColor: bgColor,
+                                      color: primaryColor,
+                                      fontWeight: "700",
+                                      fontSize: "0.8rem"
+                                    }}>{subjectIconCourse} {getMatiereLabel(c.matiere)}</span>
+                                    <span style={{
+                                      padding: "0.2rem 0.6rem",
+                                      borderRadius: "6px",
+                                      backgroundColor: "#f1f5f9",
+                                      color: "#64748b",
+                                      fontWeight: "700",
+                                      fontSize: "0.8rem"
+                                    }}>📖 {c.chapters?.length || 0} فصول</span>
+                                  </div>
+                                  
+                                  <div style={{ marginTop: "auto" }}>
+                                    <p style={{
+                                      fontSize: "1.1rem",
+                                      fontWeight: "800",
+                                      color: c.prix ? "#f97316" : "#10b981", 
+                                      marginBottom: "1rem"
+                                    }}>
+                                      {c.prix ? `💰 ${c.prix.toLocaleString("fr-FR")} د.ج` : "🎁 مجاني"}
+                                    </p>
+                                    
+                                    <div style={{ width: "100%" }}>
+                                      {btnStatut(enrollment, c.id)}
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })}
                         </div>
                       </div>
-                    </div>
-                  );
-                })}
+                    );
+                  });
+                })()}
               </div>
             )}
           </div>

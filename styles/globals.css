@@ -2203,6 +2203,33 @@ body {
   }
 }
 
+/* ═══════════════════════════════════════════════════════════════
+   RICH CONTENT — Rendu HTML issu de l'éditeur Tiptap
+═══════════════════════════════════════════════════════════════ */
+.rich-content { line-height: 1.65; }
+.rich-content p { margin: 0.4rem 0; }
+.rich-content h1 { font-size: 1.6rem; font-weight: 700; margin: 0.75rem 0 0.4rem; color: #1e293b; }
+.rich-content h2 { font-size: 1.3rem; font-weight: 700; margin: 0.65rem 0 0.35rem; color: #1e293b; }
+.rich-content h3 { font-size: 1.1rem; font-weight: 700; margin: 0.5rem 0 0.3rem; color: #1e293b; }
+.rich-content ul { padding-left: 1.4rem; list-style: disc; margin: 0.4rem 0; }
+.rich-content ol { padding-left: 1.4rem; list-style: decimal; margin: 0.4rem 0; }
+.rich-content li { margin: 0.2rem 0; }
+.rich-content strong { font-weight: 700; }
+.rich-content em { font-style: italic; }
+.rich-content u { text-decoration: underline; }
+.rich-content s { text-decoration: line-through; }
+.rich-content blockquote { border-left: 3px solid #cbd5e0; padding-left: 1rem; color: #64748b; margin: 0.5rem 0; font-style: italic; }
+.rich-content code { background: #f1f5f9; padding: 0.1rem 0.4rem; border-radius: 4px; font-family: monospace; font-size: 0.9em; }
+.rich-content pre { background: #1e293b; color: #e2e8f0; padding: 1rem; border-radius: 8px; overflow-x: auto; font-family: monospace; font-size: 0.9em; margin: 0.5rem 0; }
+.rich-content a { color: #0284c7; text-decoration: underline; }
+.rich-content hr { border: none; border-top: 1px solid #e2e8f0; margin: 0.75rem 0; }
+.rich-content sup { vertical-align: super; font-size: 0.75em; }
+.rich-content sub { vertical-align: sub; font-size: 0.75em; }
+.rich-content table { width: 100%; border-collapse: collapse; margin: 0.5rem 0; }
+.rich-content th, .rich-content td { border: 1px solid #e2e8f0; padding: 0.5rem 0.75rem; text-align: left; }
+.rich-content th { background: #f8fafc; font-weight: 700; }
+
+
 
 
 

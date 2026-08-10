@@ -256,7 +256,13 @@ export default function ManageChapter() {
         </button>
 
         <h1>📖 {chapter?.title}</h1>
-        {chapter?.objectifs && <p style={{ color: "#718096" }}>{chapter.objectifs}</p>}
+        {chapter?.objectifs && (
+          <div
+            className="rich-content"
+            dangerouslySetInnerHTML={{ __html: chapter.objectifs }}
+            style={{ color: "#718096", lineHeight: "1.6", margin: "0.25rem 0 0.75rem" }}
+          />
+        )}
 
         {error   && <p style={{ color: "red",   background: "#fff5f5", padding: "0.75rem", borderRadius: "6px", marginBottom: "1rem" }}>{error}</p>}
         {success && <p style={{ color: "green", background: "#f0fff4", padding: "0.75rem", borderRadius: "6px", marginBottom: "1rem" }}>{success}</p>}
