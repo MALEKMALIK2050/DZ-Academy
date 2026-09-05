@@ -147,19 +147,23 @@ const styles = StyleSheet.create({
   header: {
     paddingHorizontal: 20,
     paddingVertical: 14,
-    alignItems: 'flex-end',
+    alignItems: 'stretch',
   },
   title: {
     fontSize: 24,
     fontWeight: '900',
     color: '#111827',
     textAlign: 'right',
+    writingDirection: 'rtl',
+    alignSelf: 'stretch',
     marginBottom: 6,
   },
   subtitle: {
     fontSize: 13,
     color: '#6B7280',
     textAlign: 'right',
+    writingDirection: 'rtl',
+    alignSelf: 'stretch',
     lineHeight: 20,
   },
   scrollContent: {

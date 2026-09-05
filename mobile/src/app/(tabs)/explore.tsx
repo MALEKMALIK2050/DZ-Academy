@@ -9,6 +9,7 @@ import {
   TextInput,
   Modal,
   ActivityIndicator,
+  I18nManager,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
@@ -74,10 +75,10 @@ function PickerModal({
       <Pressable style={pk.overlay} onPress={onClose} />
       <View style={pk.sheet}>
         <View style={pk.header}>
+          <ThemedText style={pk.title}>{title}</ThemedText>
           <Pressable onPress={onClose}>
             <ThemedText style={pk.close}>✕</ThemedText>
           </Pressable>
-          <ThemedText style={pk.title}>{title}</ThemedText>
         </View>
         <ScrollView style={{ maxHeight: 320 }}>
           {options.map((opt) => (
@@ -384,22 +385,26 @@ const styles = StyleSheet.create({
   content: { paddingHorizontal: 16 },
   header: {
     marginVertical: 14,
-    alignItems: 'flex-end',
+    alignItems: 'stretch',
   },
   title: {
     fontSize: 24,
     fontWeight: '900',
     color: '#111827',
     textAlign: 'right',
+    writingDirection: 'rtl',
+    alignSelf: 'stretch',
   },
   sub: {
     fontSize: 13,
     color: '#6B7280',
     textAlign: 'right',
+    writingDirection: 'rtl',
+    alignSelf: 'stretch',
     marginTop: 4,
   },
   searchBox: {
-    flexDirection: 'row-reverse',
+    flexDirection: I18nManager.isRTL ? 'row' : 'row-reverse',
     alignItems: 'center',
     backgroundColor: '#FFFFFF',
     borderWidth: 1,
@@ -417,6 +422,7 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     fontSize: 14,
     color: '#111827',
+    textAlign: 'right',
   },
   clearSearch: {
     fontSize: 16,
@@ -425,7 +431,7 @@ const styles = StyleSheet.create({
   },
   filtersWrapper: {
     marginBottom: 16,
-    alignItems: 'flex-end',
+    alignItems: 'stretch',
   },
   filtersTitle: {
     fontSize: 12,
@@ -433,9 +439,11 @@ const styles = StyleSheet.create({
     color: '#4B5563',
     marginBottom: 8,
     textAlign: 'right',
+    writingDirection: 'rtl',
+    alignSelf: 'stretch',
   },
   filterBtnsRow: {
-    flexDirection: 'row-reverse',
+    flexDirection: I18nManager.isRTL ? 'row' : 'row-reverse',
     flexWrap: 'wrap',
     gap: 8,
   },
@@ -567,7 +575,7 @@ const pk = StyleSheet.create({
     paddingBottom: 20,
   },
   header: {
-    flexDirection: 'row',
+    flexDirection: I18nManager.isRTL ? 'row' : 'row-reverse',
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: 16,
@@ -578,6 +586,8 @@ const pk = StyleSheet.create({
     fontSize: 16,
     fontWeight: '800',
     color: '#111827',
+    textAlign: 'right',
+    writingDirection: 'rtl',
   },
   close: {
     fontSize: 18,
@@ -585,7 +595,7 @@ const pk = StyleSheet.create({
     padding: 4,
   },
   option: {
-    flexDirection: 'row-reverse',
+    flexDirection: I18nManager.isRTL ? 'row' : 'row-reverse',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingVertical: 14,
@@ -599,6 +609,10 @@ const pk = StyleSheet.create({
   optionText: {
     fontSize: 14,
     color: '#374151',
+    flex: 1,
+    textAlign: 'right',
+    writingDirection: 'rtl',
+    alignSelf: 'stretch',
   },
   optionTextSelected: {
     color: '#059669',

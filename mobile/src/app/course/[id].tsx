@@ -83,6 +83,35 @@ const htmlTagsStyles = {
     textAlign: 'right' as const,
     writingDirection: 'rtl' as const,
   },
+  h1: {
+    textAlign: 'right' as const,
+    writingDirection: 'rtl' as const,
+    color: '#111827',
+    fontSize: 18,
+    fontWeight: '800' as const,
+  },
+  h2: {
+    textAlign: 'right' as const,
+    writingDirection: 'rtl' as const,
+    color: '#111827',
+    fontSize: 16,
+    fontWeight: '800' as const,
+  },
+  h3: {
+    textAlign: 'right' as const,
+    writingDirection: 'rtl' as const,
+    color: '#111827',
+    fontSize: 15,
+    fontWeight: '700' as const,
+  },
+  ul: {
+    textAlign: 'right' as const,
+    writingDirection: 'rtl' as const,
+  },
+  ol: {
+    textAlign: 'right' as const,
+    writingDirection: 'rtl' as const,
+  },
 };
 
 interface QuizInfo {
@@ -449,7 +478,7 @@ export default function CourseDetailScreen() {
           >
             <View style={styles.pretestHeader}>
               <ThemedText style={styles.pretestIcon}>{course.isPretestDone ? '🚀' : '🎯'}</ThemedText>
-              <View style={{ flex: 1, alignItems: 'flex-end' }}>
+              <View style={{ flex: 1, alignItems: 'stretch' }}>
                 <ThemedText
                   style={[styles.pretestTitle, course.isPretestDone && { color: '#065F46' }]}
                 >
@@ -508,6 +537,7 @@ export default function CourseDetailScreen() {
               <RenderHTML
                 contentWidth={width - 48}
                 tagsStyles={htmlTagsStyles}
+                baseStyle={{ textAlign: 'right', writingDirection: 'rtl' }}
                 source={{ html: `<div style="direction: rtl; text-align: right; font-size: 14px; line-height: 24px; color: #374151;">${course.objectifs}</div>` }}
               />
             ) : null}
@@ -515,6 +545,7 @@ export default function CourseDetailScreen() {
               <RenderHTML
                 contentWidth={width - 48}
                 tagsStyles={htmlTagsStyles}
+                baseStyle={{ textAlign: 'right', writingDirection: 'rtl' }}
                 source={{
                   html: `<div style="direction: rtl; text-align: right; font-size: 14px; line-height: 24px; color: #374151;">${
                     (course.description || '').replace(/^(<p>)?\s*<br\s*\/?>\s*/gi, '<p>')
@@ -528,8 +559,8 @@ export default function CourseDetailScreen() {
         {/* ── قائمة الفصول والدروس بالفتح التتابعي ── */}
         <View style={styles.section}>
           <View style={styles.sectionTitleRow}>
-            <ThemedText style={styles.chaptersCount}>({chapters.length} فصول)</ThemedText>
             <ThemedText style={styles.sectionTitle}>📖 منهاج وفصول الدورة</ThemedText>
+            <ThemedText style={styles.chaptersCount}>({chapters.length} فصول)</ThemedText>
           </View>
 
           {chapters.length === 0 ? (
@@ -553,6 +584,19 @@ export default function CourseDetailScreen() {
                   ]}
                   onPress={() => handleChapterPress(chapter, idx)}
                 >
+                  {/* 1. اسم الفصل والتفاصيل دائماً على اليمين */}
+                  <View style={styles.chapterInfo}>
+                    <ThemedText style={styles.chapterTitle} numberOfLines={2}>
+                      {idx + 1}. {chTitle}
+                    </ThemedText>
+                    {chapter.quiz ? (
+                      <ThemedText style={styles.quizTag}>
+                        📝 اختبار تكويني (يشترط 75% لفتح الفصل الموالي)
+                      </ThemedText>
+                    ) : null}
+                  </View>
+
+                  {/* 2. أيقونة القفل أو السهم دائماً على اليسار */}
                   <View style={styles.chapterAction}>
                     {reqPay ? (
                       <View style={styles.payBadge}>
@@ -570,17 +614,6 @@ export default function CourseDetailScreen() {
                       <ThemedText style={styles.openArrow}>←</ThemedText>
                     )}
                   </View>
-
-                  <View style={styles.chapterInfo}>
-                    <ThemedText style={styles.chapterTitle} numberOfLines={2}>
-                      {idx + 1}. {chTitle}
-                    </ThemedText>
-                    {chapter.quiz ? (
-                      <ThemedText style={styles.quizTag}>
-                        📝 اختبار تكويني (يشترط 75% لفتح الفصل الموالي)
-                      </ThemedText>
-                    ) : null}
-                  </View>
                 </Pressable>
               );
             })
@@ -592,7 +625,7 @@ export default function CourseDetailScreen() {
           <View style={styles.finalQuizCard}>
             <View style={styles.finalQuizHeader}>
               <ThemedText style={{ fontSize: 32 }}>🏆</ThemedText>
-              <View style={{ flex: 1, alignItems: 'flex-end' }}>
+              <View style={{ flex: 1, alignItems: 'stretch' }}>
                 <ThemedText style={styles.finalQuizTitle}>الاختبار الختامي الشامل (Test Sommatif)</ThemedText>
                 <ThemedText style={styles.finalQuizDesc}>
                   تقييم نهائي يشمل كامل البرنامج للحصول على شهادة التفوق في المنهاج الجزائري.
@@ -675,7 +708,7 @@ const styles = StyleSheet.create({
     lineHeight: 28,
   },
   tagsRow: {
-    flexDirection: 'row-reverse',
+    flexDirection: I18nManager.isRTL ? 'row' : 'row-reverse',
     flexWrap: 'wrap',
     gap: 8,
     justifyContent: 'center',
@@ -717,7 +750,7 @@ const styles = StyleSheet.create({
     borderColor: '#BFDBFE',
   },
   pretestHeader: {
-    flexDirection: 'row-reverse',
+    flexDirection: I18nManager.isRTL ? 'row' : 'row-reverse',
     alignItems: 'center',
     gap: 12,
     marginBottom: 12,
@@ -730,11 +763,15 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     color: '#1E40AF',
     textAlign: 'right',
+    writingDirection: 'rtl',
+    alignSelf: 'stretch',
   },
   pretestDesc: {
     fontSize: 12,
     color: '#3B82F6',
     textAlign: 'right',
+    writingDirection: 'rtl',
+    alignSelf: 'stretch',
     marginTop: 2,
     lineHeight: 18,
   },
@@ -762,6 +799,7 @@ const styles = StyleSheet.create({
     fontWeight: '900',
     color: '#1F2937',
     textAlign: 'right',
+    writingDirection: 'rtl',
     marginBottom: 8,
   },
   descText: {
@@ -769,12 +807,14 @@ const styles = StyleSheet.create({
     color: '#4B5563',
     lineHeight: 22,
     textAlign: 'right',
+    writingDirection: 'rtl',
+    alignSelf: 'stretch',
   },
   section: {
     marginBottom: 20,
   },
   sectionTitleRow: {
-    flexDirection: 'row-reverse',
+    flexDirection: I18nManager.isRTL ? 'row' : 'row-reverse',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 10,
@@ -795,7 +835,7 @@ const styles = StyleSheet.create({
     fontSize: 13,
   },
   chapterItem: {
-    flexDirection: 'row-reverse',
+    flexDirection: I18nManager.isRTL ? 'row' : 'row-reverse',
     justifyContent: 'space-between',
     alignItems: 'center',
     backgroundColor: '#FFFFFF',
@@ -804,6 +844,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     borderWidth: 1,
     borderColor: '#E5E7EB',
+    gap: 12,
   },
   chapterItemLocked: {
     backgroundColor: '#F9FAFB',
@@ -815,23 +856,29 @@ const styles = StyleSheet.create({
   },
   chapterInfo: {
     flex: 1,
-    alignItems: 'flex-end',
-    marginLeft: 10,
+    alignItems: 'stretch',
+    justifyContent: 'center',
   },
   chapterTitle: {
     fontSize: 15,
     fontWeight: '800',
     color: '#1F2937',
     textAlign: 'right',
+    writingDirection: 'rtl',
+    alignSelf: 'stretch',
   },
   quizTag: {
     fontSize: 11,
     color: '#059669',
     fontWeight: '700',
     marginTop: 4,
+    textAlign: 'right',
+    writingDirection: 'rtl',
+    alignSelf: 'stretch',
   },
   chapterAction: {
     alignItems: 'center',
+    justifyContent: 'center',
   },
   payBadge: {
     backgroundColor: '#FEF3C7',
@@ -869,7 +916,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   finalQuizHeader: {
-    flexDirection: 'row-reverse',
+    flexDirection: I18nManager.isRTL ? 'row' : 'row-reverse',
     alignItems: 'center',
     gap: 12,
     marginBottom: 12,
@@ -879,11 +926,15 @@ const styles = StyleSheet.create({
     fontWeight: '900',
     color: '#92400E',
     textAlign: 'right',
+    writingDirection: 'rtl',
+    alignSelf: 'stretch',
   },
   finalQuizDesc: {
     fontSize: 12,
     color: '#B45309',
     textAlign: 'right',
+    writingDirection: 'rtl',
+    alignSelf: 'stretch',
     lineHeight: 18,
     marginTop: 2,
   },

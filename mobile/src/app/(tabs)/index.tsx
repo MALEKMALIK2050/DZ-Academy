@@ -10,6 +10,7 @@ import {
   Modal,
   Alert,
   Platform,
+  I18nManager,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
@@ -233,12 +234,12 @@ export default function MesCoursScreen() {
             {enAttente.map((e) => (
               <View key={e.id} style={styles.pendingCard}>
                 <View style={styles.pendingTop}>
-                  <View style={styles.badgePending}>
-                    <ThemedText style={styles.badgePendingText}>قيد المراجعة</ThemedText>
-                  </View>
                   <ThemedText style={styles.pendingTitle} numberOfLines={1}>
                     {e.course.title || e.course.titre}
                   </ThemedText>
+                  <View style={styles.badgePending}>
+                    <ThemedText style={styles.badgePendingText}>قيد المراجعة</ThemedText>
+                  </View>
                 </View>
                 <ThemedText style={styles.pendingDesc}>
                   تم استلام طلب التسجيل. يرجى إرفاق وصل الدفع عبر بريدي موب أو CCP لتسريع التفعيل.
@@ -362,22 +363,26 @@ const styles = StyleSheet.create({
   content: { paddingHorizontal: 16 },
   header: {
     marginVertical: 14,
-    alignItems: 'flex-end',
+    alignItems: 'stretch',
   },
   title: {
     fontSize: 24,
     fontWeight: '900',
     color: '#111827',
     textAlign: 'right',
+    writingDirection: 'rtl',
+    alignSelf: 'stretch',
   },
   sub: {
     fontSize: 13,
     color: '#6B7280',
     textAlign: 'right',
+    writingDirection: 'rtl',
+    alignSelf: 'stretch',
     marginTop: 4,
   },
   statsRow: {
-    flexDirection: 'row-reverse',
+    flexDirection: I18nManager.isRTL ? 'row' : 'row-reverse',
     gap: 8,
     marginBottom: 20,
   },
@@ -410,6 +415,7 @@ const styles = StyleSheet.create({
     color: '#DC2626',
     fontSize: 13,
     textAlign: 'right',
+    writingDirection: 'rtl',
     fontWeight: '700',
   },
   section: {
@@ -417,12 +423,15 @@ const styles = StyleSheet.create({
   },
   sectionHeader: {
     marginBottom: 12,
-    alignItems: 'flex-end',
+    alignItems: 'stretch',
   },
   sectionTitle: {
     fontSize: 16,
     fontWeight: '800',
     color: '#1F2937',
+    textAlign: 'right',
+    writingDirection: 'rtl',
+    alignSelf: 'stretch',
   },
   pendingCard: {
     backgroundColor: '#FFFBEB',
@@ -433,10 +442,11 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   pendingTop: {
-    flexDirection: 'row-reverse',
+    flexDirection: I18nManager.isRTL ? 'row' : 'row-reverse',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 6,
+    gap: 8,
   },
   badgePending: {
     backgroundColor: '#FEF3C7',
@@ -455,12 +465,15 @@ const styles = StyleSheet.create({
     color: '#92400E',
     flex: 1,
     textAlign: 'right',
-    marginLeft: 8,
+    writingDirection: 'rtl',
+    alignSelf: 'stretch',
   },
   pendingDesc: {
     fontSize: 12,
     color: '#B45309',
     textAlign: 'right',
+    writingDirection: 'rtl',
+    alignSelf: 'stretch',
     lineHeight: 18,
     marginBottom: 10,
   },

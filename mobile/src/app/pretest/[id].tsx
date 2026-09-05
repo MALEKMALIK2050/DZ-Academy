@@ -365,7 +365,7 @@ const styles = StyleSheet.create({
   },
   progressRow: {
     marginBottom: 16,
-    alignItems: 'flex-end',
+    alignItems: 'stretch',
   },
   progressText: {
     fontSize: 13,
@@ -373,6 +373,8 @@ const styles = StyleSheet.create({
     color: '#6B7280',
     marginBottom: 6,
     textAlign: 'right',
+    writingDirection: 'rtl',
+    alignSelf: 'stretch',
   },
   progressBar: {
     width: '100%',
@@ -393,6 +395,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     borderWidth: 1,
     borderColor: '#E5E7EB',
+    alignItems: 'stretch',
   },
   questionText: {
     fontSize: 16,
@@ -426,6 +429,8 @@ const styles = StyleSheet.create({
     color: '#374151',
     flex: 1,
     textAlign: 'right',
+    writingDirection: 'rtl',
+    alignSelf: 'stretch',
     lineHeight: 20,
   },
   optionTextSelected: {

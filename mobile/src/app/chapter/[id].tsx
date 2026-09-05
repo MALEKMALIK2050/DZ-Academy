@@ -72,6 +72,35 @@ const htmlTagsStyles = {
     textAlign: 'right' as const,
     writingDirection: 'rtl' as const,
   },
+  h1: {
+    textAlign: 'right' as const,
+    writingDirection: 'rtl' as const,
+    color: '#111827',
+    fontSize: 18,
+    fontWeight: '800' as const,
+  },
+  h2: {
+    textAlign: 'right' as const,
+    writingDirection: 'rtl' as const,
+    color: '#111827',
+    fontSize: 16,
+    fontWeight: '800' as const,
+  },
+  h3: {
+    textAlign: 'right' as const,
+    writingDirection: 'rtl' as const,
+    color: '#111827',
+    fontSize: 14,
+    fontWeight: '700' as const,
+  },
+  ul: {
+    textAlign: 'right' as const,
+    writingDirection: 'rtl' as const,
+  },
+  ol: {
+    textAlign: 'right' as const,
+    writingDirection: 'rtl' as const,
+  },
 };
 
 type SupportType = 'VIDEO' | 'PDF' | 'PPT' | 'IMAGE' | 'SCORM' | 'ARTICULATE' | 'TEXTE' | 'FORUM';
@@ -124,6 +153,20 @@ const SUPPORT_CONFIG: Record<SupportType, { icon: string; label: string; color: 
   TEXTE:      { icon: '📝', label: 'ملخص الدرس',    color: '#16A34A', bg: '#F0FDF4' },
   FORUM:      { icon: '💬', label: 'منتدى النقاش',   color: '#2563EB', bg: '#EFF6FF' },
 };
+
+function stripHtml(html?: string): string {
+  if (!html) return '';
+  return html
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/\s+/g, ' ')
+    .trim();
+}
 
 function extractYouTubeId(url: string): string | null {
   if (!url) return null;
@@ -262,13 +305,13 @@ export default function ChapterScreen() {
         {/* عنوان الفصل وشريط التنقل السريع */}
         <View style={styles.headerCard}>
           <View style={styles.headerTop}>
+            <ThemedText style={styles.chapterTag}>درس تعليمي</ThemedText>
             <Pressable
               style={styles.drawerTrigger}
               onPress={() => setShowChaptersDrawer(true)}
             >
               <ThemedText style={styles.drawerTriggerTxt}>☰ فصول الدورة</ThemedText>
             </Pressable>
-            <ThemedText style={styles.chapterTag}>درس تعليمي</ThemedText>
           </View>
           <ThemedText style={styles.chapterMainTitle}>{chapterTitle}</ThemedText>
         </View>
@@ -280,7 +323,21 @@ export default function ChapterScreen() {
             <RenderHTML
               contentWidth={width - 40}
               tagsStyles={htmlTagsStyles}
+              baseStyle={{ textAlign: 'right', writingDirection: 'rtl' }}
               source={{ html: `<div style="direction: rtl; text-align: right; font-size: 13px; line-height: 20px; color: #374151;">${chapter.objectifs}</div>` }}
+            />
+          </View>
+        ) : null}
+
+        {/* شرح ومحتوى الفصل */}
+        {chapter.content ? (
+          <View style={styles.sectionCard}>
+            <ThemedText style={styles.sectionCardTitle}>📖 محتوى وشرح الدرس</ThemedText>
+            <RenderHTML
+              contentWidth={width - 40}
+              tagsStyles={htmlTagsStyles}
+              baseStyle={{ textAlign: 'right', writingDirection: 'rtl' }}
+              source={{ html: `<div style="direction: rtl; text-align: right; font-size: 13px; line-height: 22px; color: #374151;">${chapter.content}</div>` }}
             />
           </View>
         ) : null}
@@ -300,16 +357,16 @@ export default function ChapterScreen() {
 
               return (
                 <View key={sup.id} style={styles.supportCard}>
-                  {/* شريط الدعامة */}
+                  {/* شريط الدعامة: العنوان على اليمين والوسم على اليسار */}
                   <View style={styles.supportHeader}>
+                    <ThemedText style={styles.supportName} numberOfLines={1}>
+                      {sup.nom || cfg.label}
+                    </ThemedText>
                     <View style={[styles.supportBadge, { backgroundColor: cfg.bg }]}>
                       <ThemedText style={[styles.supportBadgeTxt, { color: cfg.color }]}>
                         {cfg.icon} {cfg.label}
                       </ThemedText>
                     </View>
-                    <ThemedText style={styles.supportName} numberOfLines={1}>
-                      {sup.nom || cfg.label}
-                    </ThemedText>
                   </View>
 
                   {/* في حالة الفيديو، PDF، SCORM، PPT */}
@@ -324,19 +381,25 @@ export default function ChapterScreen() {
                     </Pressable>
                   ) : null}
 
-                  {/* في حالة المحتوى النصي */}
+                  {/* في حالة المحتوى النصي: معاينة آمنة بدون وسوم HTML مكسورة */}
                   {sup.contenu ? (
                     <View style={styles.textContent}>
-                      <RenderHTML
-                        contentWidth={width - 50}
-                        tagsStyles={htmlTagsStyles}
-                        source={{
-                          html: `<div style="direction: rtl; text-align: right; font-size: 13px; line-height: 22px; color: #374151;">${
-                            isExpanded ? sup.contenu : (sup.contenu.slice(0, 300) + (sup.contenu.length > 300 ? '...' : ''))
-                          }</div>`,
-                        }}
-                      />
-                      {sup.contenu.length > 300 ? (
+                      {isExpanded ? (
+                        <RenderHTML
+                          contentWidth={width - 50}
+                          tagsStyles={htmlTagsStyles}
+                          baseStyle={{ textAlign: 'right', writingDirection: 'rtl' }}
+                          source={{
+                            html: `<div style="direction: rtl; text-align: right; font-size: 13px; line-height: 22px; color: #374151;">${sup.contenu}</div>`,
+                          }}
+                        />
+                      ) : (
+                        <ThemedText style={styles.textContentPreview}>
+                          {stripHtml(sup.contenu).slice(0, 250)}
+                          {stripHtml(sup.contenu).length > 250 ? '...' : ''}
+                        </ThemedText>
+                      )}
+                      {stripHtml(sup.contenu).length > 250 ? (
                         <Pressable
                           onPress={() =>
                             setExpandedTexts((prev) => ({ ...prev, [sup.id]: !prev[sup.id] }))
@@ -361,7 +424,7 @@ export default function ChapterScreen() {
           <View style={styles.quizCard}>
             <View style={styles.quizCardTop}>
               <ThemedText style={{ fontSize: 32 }}>📝</ThemedText>
-              <View style={{ flex: 1, alignItems: 'flex-end' }}>
+              <View style={{ flex: 1, alignItems: 'stretch' }}>
                 <ThemedText style={styles.quizCardTitle}>اختبار الفصل التكويني</ThemedText>
                 <ThemedText style={styles.quizCardDesc}>
                   تحقق من فهمك لنقاط الدرس عبر هذا الاختبار السريع لتحصيل النقاط وفتح الفصل الموالي.
@@ -445,13 +508,13 @@ export default function ChapterScreen() {
                       }
                     }}
                   >
-                    <ThemedText style={styles.drawerItemArrow}>{isCurrent ? '●' : '←'}</ThemedText>
                     <ThemedText
                       style={[styles.drawerItemText, isCurrent && styles.drawerItemTextCurrent]}
                       numberOfLines={1}
                     >
                       {i + 1}. {ch.title || ch.titre}
                     </ThemedText>
+                    <ThemedText style={styles.drawerItemArrow}>{isCurrent ? '●' : '←'}</ThemedText>
                   </Pressable>
                 );
               })}
@@ -476,7 +539,7 @@ const styles = StyleSheet.create({
     borderColor: '#E5E7EB',
   },
   headerTop: {
-    flexDirection: 'row',
+    flexDirection: I18nManager.isRTL ? 'row' : 'row-reverse',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 10,
@@ -506,6 +569,8 @@ const styles = StyleSheet.create({
     fontWeight: '900',
     color: '#111827',
     textAlign: 'right',
+    writingDirection: 'rtl',
+    alignSelf: 'stretch',
     lineHeight: 26,
   },
   sectionCard: {
@@ -521,6 +586,8 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     color: '#1F2937',
     textAlign: 'right',
+    writingDirection: 'rtl',
+    alignSelf: 'stretch',
     marginBottom: 8,
   },
   sectionContainer: {
@@ -531,6 +598,8 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     color: '#1F2937',
     textAlign: 'right',
+    writingDirection: 'rtl',
+    alignSelf: 'stretch',
     marginBottom: 10,
   },
   emptyCard: {
@@ -552,10 +621,11 @@ const styles = StyleSheet.create({
     borderColor: '#E5E7EB',
   },
   supportHeader: {
-    flexDirection: 'row-reverse',
+    flexDirection: I18nManager.isRTL ? 'row' : 'row-reverse',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 10,
+    gap: 8,
   },
   supportBadge: {
     paddingHorizontal: 8,
@@ -572,7 +642,8 @@ const styles = StyleSheet.create({
     color: '#1F2937',
     flex: 1,
     textAlign: 'right',
-    marginLeft: 8,
+    writingDirection: 'rtl',
+    alignSelf: 'stretch',
   },
   actionBtn: {
     paddingVertical: 12,
@@ -587,6 +658,14 @@ const styles = StyleSheet.create({
   },
   textContent: {
     marginTop: 6,
+  },
+  textContentPreview: {
+    fontSize: 13,
+    color: '#374151',
+    lineHeight: 22,
+    textAlign: 'right',
+    writingDirection: 'rtl',
+    alignSelf: 'stretch',
   },
   expandBtn: {
     alignItems: 'center',
@@ -607,7 +686,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   quizCardTop: {
-    flexDirection: 'row-reverse',
+    flexDirection: I18nManager.isRTL ? 'row' : 'row-reverse',
     alignItems: 'center',
     gap: 12,
     marginBottom: 12,
@@ -617,11 +696,15 @@ const styles = StyleSheet.create({
     fontWeight: '900',
     color: '#065F46',
     textAlign: 'right',
+    writingDirection: 'rtl',
+    alignSelf: 'stretch',
   },
   quizCardDesc: {
     fontSize: 12,
     color: '#047857',
     textAlign: 'right',
+    writingDirection: 'rtl',
+    alignSelf: 'stretch',
     lineHeight: 18,
     marginTop: 2,
   },
@@ -680,7 +763,7 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
   },
   drawerHeader: {
-    flexDirection: 'row',
+    flexDirection: I18nManager.isRTL ? 'row' : 'row-reverse',
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: 16,
@@ -697,7 +780,7 @@ const styles = StyleSheet.create({
     color: '#9CA3AF',
   },
   drawerItem: {
-    flexDirection: 'row',
+    flexDirection: I18nManager.isRTL ? 'row' : 'row-reverse',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingVertical: 14,
@@ -713,6 +796,8 @@ const styles = StyleSheet.create({
     color: '#374151',
     flex: 1,
     textAlign: 'right',
+    writingDirection: 'rtl',
+    alignSelf: 'stretch',
   },
   drawerItemTextCurrent: {
     color: '#059669',

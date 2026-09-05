@@ -224,7 +224,7 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   tagsRow: {
-    flexDirection: 'row-reverse',
+    flexDirection: I18nManager.isRTL ? 'row' : 'row-reverse',
     flexWrap: 'wrap',
     gap: 6,
     marginBottom: 4,
@@ -253,15 +253,19 @@ const styles = StyleSheet.create({
     fontSize: 17,
     color: '#1F2937',
     textAlign: 'right',
+    writingDirection: 'rtl',
+    alignSelf: 'stretch',
     lineHeight: 24,
   },
   enseignant: {
     color: '#6B7280',
     fontSize: 12,
     textAlign: 'right',
+    writingDirection: 'rtl',
+    alignSelf: 'stretch',
   },
   metadata: {
-    flexDirection: 'row-reverse',
+    flexDirection: I18nManager.isRTL ? 'row' : 'row-reverse',
     flexWrap: 'wrap',
     gap: 12,
     marginTop: 4,
@@ -275,7 +279,7 @@ const styles = StyleSheet.create({
     marginTop: 6,
   },
   progressRow: {
-    flexDirection: 'row-reverse',
+    flexDirection: I18nManager.isRTL ? 'row' : 'row-reverse',
     alignItems: 'center',
     gap: 8,
   },
