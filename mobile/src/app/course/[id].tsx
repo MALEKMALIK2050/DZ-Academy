@@ -9,6 +9,7 @@ import {
   Alert,
   useWindowDimensions,
   ActivityIndicator,
+  I18nManager,
 } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack, useFocusEffect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -440,29 +441,62 @@ export default function CourseDetailScreen() {
 
         {/* ── اختبار المكتسبات القبلية (Pretest) ── */}
         {(course.hasPretest || !!course.pretest) ? (
-          <View style={styles.pretestCard}>
+          <View
+            style={[
+              styles.pretestCard,
+              course.isPretestDone && { backgroundColor: '#ECFDF5', borderColor: '#A7F3D0' },
+            ]}
+          >
             <View style={styles.pretestHeader}>
-              <ThemedText style={styles.pretestIcon}>🎯</ThemedText>
+              <ThemedText style={styles.pretestIcon}>{course.isPretestDone ? '🚀' : '🎯'}</ThemedText>
               <View style={{ flex: 1, alignItems: 'flex-end' }}>
-                <ThemedText style={styles.pretestTitle}>اختبار تشخيص المكتسبات القبلية</ThemedText>
-                <ThemedText style={styles.pretestDesc}>
+                <ThemedText
+                  style={[styles.pretestTitle, course.isPretestDone && { color: '#065F46' }]}
+                >
                   {course.isPretestDone
-                    ? '✓ أحسنت ! تم اجتياز الاختبار التشخيصي بنجاح.'
+                    ? '✅ تم إكمال تقييم المكتسبات القبلية (الفصل الأول مفتوح)'
+                    : 'اختبار تشخيص المكتسبات القبلية'}
+                </ThemedText>
+                <ThemedText
+                  style={[styles.pretestDesc, course.isPretestDone && { color: '#047857' }]}
+                >
+                  {course.isPretestDone
+                    ? 'أحسنت ! تم تقييم مستواك وفتح الفصل الأول من الدورة بنجاح.'
                     : 'يجب إجراء هذا الاختبار التشخيصي القصير لتحديد مستواك وفتح الفصل الأول.'}
                 </ThemedText>
               </View>
             </View>
-            <Pressable
-              style={[
-                styles.pretestBtn,
-                course.isPretestDone && { backgroundColor: '#059669' },
-              ]}
-              onPress={() => router.push({ pathname: '/pretest/[id]', params: { id: String(course.id) } })}
-            >
-              <ThemedText style={styles.pretestBtnTxt}>
-                {course.isPretestDone ? 'مراجعة نتيجة الاختبار التشخيصي ←' : '🚀 بدء الاختبار التشخيصي ←'}
-              </ThemedText>
-            </Pressable>
+
+            {course.isPretestDone ? (
+              <View style={{ flexDirection: I18nManager.isRTL ? 'row' : 'row-reverse', gap: 10 }}>
+                {chapters.length > 0 && (
+                  <Pressable
+                    style={[styles.pretestBtn, { flex: 2, backgroundColor: '#059669' }]}
+                    onPress={() => handleChapterPress(chapters[0], 0)}
+                  >
+                    <ThemedText style={styles.pretestBtnTxt}>📖 دراسة الفصل الأول ←</ThemedText>
+                  </Pressable>
+                )}
+                <Pressable
+                  style={[
+                    styles.pretestBtn,
+                    { flex: 1, backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#A7F3D0' },
+                  ]}
+                  onPress={() => router.push({ pathname: '/pretest/[id]', params: { id: String(course.id) } })}
+                >
+                  <ThemedText style={[styles.pretestBtnTxt, { color: '#065F46' }]}>
+                    🔄 إعادة الاختبار
+                  </ThemedText>
+                </Pressable>
+              </View>
+            ) : (
+              <Pressable
+                style={styles.pretestBtn}
+                onPress={() => router.push({ pathname: '/pretest/[id]', params: { id: String(course.id) } })}
+              >
+                <ThemedText style={styles.pretestBtnTxt}>🚀 بدء الاختبار التشخيصي ←</ThemedText>
+              </Pressable>
+            )}
           </View>
         ) : null}
 

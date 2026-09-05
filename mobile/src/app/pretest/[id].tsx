@@ -42,6 +42,11 @@ export default function PretestScreen() {
     score: number;
     total: number;
     pourcentage: number;
+    feedback?: {
+      level: string;
+      color?: string;
+      message: string;
+    };
   } | null>(null);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
 
@@ -114,25 +119,45 @@ export default function PretestScreen() {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ answers }),
+        body: JSON.stringify({ reponses: answers, answers }),
       });
 
-      const data = await response.json();
+      const resJson = await response.json();
+      const resData = resJson.data || resJson;
 
       if (response.ok) {
-        setResult({
-          score: data.score || 0,
-          total: data.total || questions.length,
-          pourcentage: data.pourcentage || Math.round(((data.score || 0) / (data.total || questions.length)) * 100),
-        });
-      } else {
-        // حساب محلي في حال كان الـ API يعيد هيكلاً مختلفاً
-        let score = 0;
+        const score = resData.correct ?? resData.score ?? 0;
+        const total = resData.total || questions.length;
+        const percentage = resData.percentage ?? resData.pourcentage ?? (total > 0 ? Math.round((score / total) * 100) : 0);
+
+        let feedback = resData.feedback;
+        if (!feedback) {
+          if (percentage < 20) {
+            feedback = {
+              level: 'critique',
+              message: 'مُحاولة طَيّبة! يُستحسن أن تراجع الأساسيات والمكتسبات في دروس السنوات السابقة لتتمكن من متابعة هذا الدرس بتمكن.',
+            };
+          } else if (percentage <= 50) {
+            feedback = {
+              level: 'faible',
+              message: 'أنت مستعد لمتابعة هذه الدورة بنجاح! تم فتح دروس الفصل الأول، بالتوفيق!',
+            };
+          } else {
+            feedback = {
+              level: 'bon',
+              message: 'أحسنت! إنك جاهز ومستعد تماماً لمتابعة هذا الدرس واستيعابه بنجاح باهر! تم فتح دروس الفصل الأول.',
+            };
+          }
+        }
+
         setResult({
           score,
-          total: questions.length,
-          pourcentage: 0,
+          total,
+          pourcentage: percentage,
+          feedback,
         });
+      } else {
+        Alert.alert('تنبيه', resJson.error || 'تعذر إرسال النتيجة، يرجى إعادة المحاولة.');
       }
     } catch (error) {
       console.error('Pretest submit error:', error);
@@ -190,20 +215,53 @@ export default function PretestScreen() {
         showsVerticalScrollIndicator={false}
       >
         {result ? (
-          /* ── شاشة النتيجة ── */
+          /* ── شاشة النتيجة والتغذية الراجعة البيداغوجية ── */
           <View style={styles.resultCard}>
-            <ThemedText style={styles.resultIcon}>🎯</ThemedText>
-            <ThemedText style={styles.resultTitle}>اكتمل الاختبار التشخيصي !</ThemedText>
-            <ThemedText style={styles.resultScore}>
-              النتيجة: {result.score} من {result.total} ({result.pourcentage}%)
-            </ThemedText>
-            <ThemedText style={styles.resultAdvice}>
+            <View
+              style={[
+                styles.scoreCircle,
+                {
+                  backgroundColor:
+                    result.pourcentage < 20 ? '#DC2626' : result.pourcentage <= 50 ? '#D97706' : '#059669',
+                },
+              ]}
+            >
+              <ThemedText style={styles.scoreNumber}>{result.pourcentage}%</ThemedText>
+              <ThemedText style={styles.scoreSubText}>
+                {result.score} من {result.total} صحيحة
+              </ThemedText>
+            </View>
+
+            <ThemedText style={styles.resultTitle}>
               {result.pourcentage >= 50
-                ? 'مستواك المبدئي ممتاز، أنت جاهز لمتابعة فصول الدورة بتفوق !'
-                : 'يُنصح بالتركيز الجيد ومتابعة الفصول بدقة لتقوية مكتسباتك في هذه المادة.'}
+                ? '✅ أحسنت ! تم تقييم مستواك وفتح الفصل الأول'
+                : result.pourcentage >= 20
+                ? '👍 تم تقييم مستواك وفتح الفصل الأول'
+                : '⚠️ تقييم المستوى الأولي'}
             </ThemedText>
+
+            <View style={styles.feedbackBox}>
+              <ThemedText style={styles.resultAdvice}>
+                {result.feedback?.message ||
+                  (result.pourcentage >= 50
+                    ? 'أحسنت! إنك جاهز ومستعد تماماً لمتابعة هذا الدرس واستيعابه بنجاح باهر! تم فتح دروس الفصل الأول.'
+                    : 'مُحاولة طَيّبة! يُستحسن أن تراجع الأساسيات والمكتسبات السابقة لمتابعة هذا الدرس بتفوق.')}
+              </ThemedText>
+            </View>
+
             <Pressable style={styles.confirmBtn} onPress={() => router.back()}>
-              <ThemedText style={styles.confirmBtnTxt}>البدء في دراسة الفصول ←</ThemedText>
+              <ThemedText style={styles.confirmBtnTxt}>🚀 الدخول إلى الفصل الأول ←</ThemedText>
+            </Pressable>
+
+            <Pressable
+              style={styles.retryTestBtn}
+              onPress={() => {
+                setResult(null);
+                setAnswers({});
+                setCurrentQuestionIndex(0);
+              }}
+            >
+              <ThemedText style={styles.retryTestBtnTxt}>🔄 إعادة الاختبار التشخيصي</ThemedText>
             </Pressable>
           </View>
         ) : (
@@ -439,38 +497,76 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#E5E7EB',
   },
-  resultIcon: {
-    fontSize: 50,
-    marginBottom: 10,
+  scoreCircle: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  scoreNumber: {
+    fontSize: 28,
+    fontWeight: '900',
+    color: '#FFFFFF',
+    lineHeight: 32,
+  },
+  scoreSubText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    opacity: 0.95,
+    marginTop: 2,
   },
   resultTitle: {
-    fontSize: 18,
+    fontSize: 17,
     fontWeight: '900',
     color: '#111827',
-    marginBottom: 6,
-  },
-  resultScore: {
-    fontSize: 16,
-    fontWeight: '800',
-    color: '#2563EB',
+    textAlign: 'center',
     marginBottom: 12,
+  },
+  feedbackBox: {
+    backgroundColor: '#F9FAFB',
+    borderRadius: 14,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    marginBottom: 20,
+    width: '100%',
   },
   resultAdvice: {
     fontSize: 13,
-    color: '#6B7280',
-    textAlign: 'center',
-    lineHeight: 20,
-    marginBottom: 20,
+    color: '#374151',
+    textAlign: 'right',
+    writingDirection: 'rtl',
+    lineHeight: 22,
   },
   confirmBtn: {
     backgroundColor: '#059669',
     paddingVertical: 14,
     paddingHorizontal: 28,
     borderRadius: 12,
+    width: '100%',
+    alignItems: 'center',
   },
   confirmBtnTxt: {
     color: '#FFFFFF',
     fontWeight: '800',
-    fontSize: 14,
+    fontSize: 15,
+  },
+  retryTestBtn: {
+    marginTop: 14,
+    paddingVertical: 8,
+    alignItems: 'center',
+  },
+  retryTestBtnTxt: {
+    color: '#6B7280',
+    fontWeight: '700',
+    fontSize: 13,
   },
 });
