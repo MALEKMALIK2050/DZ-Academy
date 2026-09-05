@@ -1,47 +1,35 @@
 import { LoadingScreen } from '@/components/loading-screen';
 import { AuthProvider, useAuth } from '@/context/auth-context';
 import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
-import { useColorScheme, I18nManager } from 'react-native';
-
-// Force RTL
-if (!I18nManager.isRTL) {
-  I18nManager.allowRTL(true);
-  I18nManager.forceRTL(true);
-}
+import { useColorScheme } from 'react-native';
 
 function NavigationLayout() {
-  const { loading, token } = useAuth();
+  const { loading } = useAuth();
 
   if (loading) {
-    return <LoadingScreen />;
-  }
-
-  if (!token) {
-    return (
-      <Stack screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="auth/login" options={{ headerShown: false }} />
-        <Stack.Screen
-          name="auth/register"
-          options={{
-            headerShown: true,
-            title: '',
-            headerBackTitle: 'رجوع',
-          }}
-        />
-      </Stack>
-    );
+    return <LoadingScreen message="مرحباً بك في دزأكاديمي..." />;
   }
 
   return (
     <Stack screenOptions={{
       headerShown: false,
-      headerTintColor: '#2563EB',
+      headerTintColor: '#059669',
       headerTitleAlign: 'center',
       headerStyle: { backgroundColor: '#FAFBFC' },
       contentStyle: { backgroundColor: '#FAFBFC' },
       headerShadowVisible: false,
       headerTitleStyle: { fontSize: 18, fontWeight: '800', color: '#1F2937' },
     }}>
+      <Stack.Screen name="index" options={{ headerShown: false }} />
+      <Stack.Screen name="auth/login" options={{ headerShown: false }} />
+      <Stack.Screen
+        name="auth/register"
+        options={{
+          headerShown: true,
+          title: '',
+          headerBackTitle: 'رجوع',
+        }}
+      />
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       <Stack.Screen
         name="course/[id]"

@@ -49,7 +49,9 @@ export default function LoginScreen() {
     }
 
     const success = await login(email, password);
-    if (!success) {
+    if (success) {
+      router.replace('/(tabs)');
+    } else {
       setLocalError(error || 'فشل تسجيل الدخول، تحقق من البيانات');
     }
   };
