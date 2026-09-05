@@ -10,6 +10,7 @@ import {
   StyleSheet,
   useWindowDimensions,
   View,
+  I18nManager,
 } from 'react-native';
 import { router, useLocalSearchParams, Stack } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -34,6 +35,43 @@ const C = {
   border: '#E5E7EB',
   white: '#FFFFFF',
   bg: '#FAF8F5',
+};
+
+const htmlTagsStyles = {
+  body: {
+    textAlign: 'right' as const,
+    writingDirection: 'rtl' as const,
+    color: '#374151',
+    fontSize: 13,
+    lineHeight: 22,
+  },
+  p: {
+    textAlign: 'right' as const,
+    writingDirection: 'rtl' as const,
+    color: '#374151',
+    fontSize: 13,
+    lineHeight: 22,
+    marginBottom: 8,
+  },
+  div: {
+    textAlign: 'right' as const,
+    writingDirection: 'rtl' as const,
+    color: '#374151',
+    fontSize: 13,
+    lineHeight: 22,
+  },
+  span: {
+    textAlign: 'right' as const,
+    writingDirection: 'rtl' as const,
+  },
+  strong: {
+    color: '#111827',
+    fontWeight: '800' as const,
+  },
+  li: {
+    textAlign: 'right' as const,
+    writingDirection: 'rtl' as const,
+  },
 };
 
 type SupportType = 'VIDEO' | 'PDF' | 'PPT' | 'IMAGE' | 'SCORM' | 'ARTICULATE' | 'TEXTE' | 'FORUM';
@@ -200,6 +238,14 @@ export default function ChapterScreen() {
           headerBackTitle: 'الرجوع',
           headerTitleAlign: 'center',
           headerTintColor: '#059669',
+          headerLeft: () => (
+            <Pressable
+              onPress={() => router.back()}
+              style={{ padding: 8, flexDirection: 'row', alignItems: 'center' }}
+            >
+              <ThemedText style={{ fontSize: 24, color: '#059669', fontWeight: 'bold' }}>→</ThemedText>
+            </Pressable>
+          ),
         }}
       />
       <ScrollView
@@ -233,6 +279,7 @@ export default function ChapterScreen() {
             <ThemedText style={styles.sectionCardTitle}>🎯 أهداف الدرس</ThemedText>
             <RenderHTML
               contentWidth={width - 40}
+              tagsStyles={htmlTagsStyles}
               source={{ html: `<div style="direction: rtl; text-align: right; font-size: 13px; line-height: 20px; color: #374151;">${chapter.objectifs}</div>` }}
             />
           </View>
@@ -282,6 +329,7 @@ export default function ChapterScreen() {
                     <View style={styles.textContent}>
                       <RenderHTML
                         contentWidth={width - 50}
+                        tagsStyles={htmlTagsStyles}
                         source={{
                           html: `<div style="direction: rtl; text-align: right; font-size: 13px; line-height: 22px; color: #374151;">${
                             isExpanded ? sup.contenu : (sup.contenu.slice(0, 300) + (sup.contenu.length > 300 ? '...' : ''))
@@ -333,8 +381,9 @@ export default function ChapterScreen() {
           </View>
         ) : null}
 
-        {/* شريط التنقل السابق / التالي */}
+        {/* أزرار التنقل بين الفصول (الفصل السابق على اليمين والفصل التالي على اليسار) */}
         <View style={styles.navRow}>
+          {/* الزر الأيمن: الفصل السابق */}
           {chapter.prevChapter ? (
             <Pressable
               style={styles.navBtn}
@@ -344,12 +393,13 @@ export default function ChapterScreen() {
                 }
               }}
             >
-              <ThemedText style={styles.navBtnTxt}>← الفصل السابق</ThemedText>
+              <ThemedText style={styles.navBtnTxt}>الفصل السابق →</ThemedText>
             </Pressable>
           ) : (
             <View style={{ flex: 1 }} />
           )}
 
+          {/* الزر الأيسر: الفصل التالي */}
           {chapter.nextChapter ? (
             <Pressable
               style={[styles.navBtn, styles.nextNavBtn]}
@@ -359,7 +409,7 @@ export default function ChapterScreen() {
                 }
               }}
             >
-              <ThemedText style={[styles.navBtnTxt, styles.nextNavBtnTxt]}>الفصل التالي →</ThemedText>
+              <ThemedText style={[styles.navBtnTxt, styles.nextNavBtnTxt]}>← الفصل التالي</ThemedText>
             </Pressable>
           ) : (
             <View style={{ flex: 1 }} />
@@ -587,7 +637,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   navRow: {
-    flexDirection: 'row-reverse',
+    flexDirection: I18nManager.isRTL ? 'row' : 'row-reverse',
     justifyContent: 'space-between',
     gap: 12,
     marginBottom: 20,

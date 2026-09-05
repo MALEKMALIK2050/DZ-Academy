@@ -14,7 +14,7 @@ export function ThemedText({ style, type = 'default', themeColor, ...rest }: The
   return (
     <Text
       style={[
-        { color: theme[themeColor ?? 'text'], writingDirection: 'rtl' },
+        { color: theme[themeColor ?? 'text'], writingDirection: 'rtl', textAlign: 'right' },
         type === 'default' && styles.default,
         type === 'title' && styles.title,
         type === 'small' && styles.small,

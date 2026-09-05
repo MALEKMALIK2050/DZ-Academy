@@ -47,6 +47,43 @@ const C = {
   bg: '#FAF8F5',
 };
 
+const htmlTagsStyles = {
+  body: {
+    textAlign: 'right' as const,
+    writingDirection: 'rtl' as const,
+    color: '#374151',
+    fontSize: 14,
+    lineHeight: 24,
+  },
+  p: {
+    textAlign: 'right' as const,
+    writingDirection: 'rtl' as const,
+    color: '#374151',
+    fontSize: 14,
+    lineHeight: 24,
+    marginBottom: 8,
+  },
+  div: {
+    textAlign: 'right' as const,
+    writingDirection: 'rtl' as const,
+    color: '#374151',
+    fontSize: 14,
+    lineHeight: 24,
+  },
+  span: {
+    textAlign: 'right' as const,
+    writingDirection: 'rtl' as const,
+  },
+  strong: {
+    color: '#111827',
+    fontWeight: '800' as const,
+  },
+  li: {
+    textAlign: 'right' as const,
+    writingDirection: 'rtl' as const,
+  },
+};
+
 interface QuizInfo {
   id: number;
   type: string;
@@ -187,6 +224,9 @@ export default function CourseDetailScreen() {
       if (!res.ok) throw new Error(`خطأ ${res.status}`);
       const data: CourseDetail = await res.json();
 
+      // حساب حالة اختبار المكتسبات القبلية
+      data.hasPretest = !!data.pretest || !!data.hasPretest;
+
       // 1. التحقق من إكمال اختبار المكتسبات القبلية
       if (data.pretest && (data.pretest.completed === true || data.pretest.passed === true)) {
         data.isPretestDone = true;
@@ -260,6 +300,7 @@ export default function CourseDetailScreen() {
 
       setCourse({
         ...data,
+        hasPretest: !!data.pretest || !!data.hasPretest,
         chapters: finalChapters,
         isFinalQuizLocked: isFinalLocked,
       });
@@ -347,6 +388,14 @@ export default function CourseDetailScreen() {
           headerBackTitle: 'الرجوع',
           headerTitleAlign: 'center',
           headerTintColor: '#059669',
+          headerLeft: () => (
+            <Pressable
+              onPress={() => router.back()}
+              style={{ padding: 8, flexDirection: 'row', alignItems: 'center' }}
+            >
+              <ThemedText style={{ fontSize: 24, color: '#059669', fontWeight: 'bold' }}>→</ThemedText>
+            </Pressable>
+          ),
         }}
       />
       <ScrollView
@@ -390,7 +439,7 @@ export default function CourseDetailScreen() {
         </View>
 
         {/* ── اختبار المكتسبات القبلية (Pretest) ── */}
-        {course.hasPretest ? (
+        {(course.hasPretest || !!course.pretest) ? (
           <View style={styles.pretestCard}>
             <View style={styles.pretestHeader}>
               <ThemedText style={styles.pretestIcon}>🎯</ThemedText>
@@ -411,7 +460,7 @@ export default function CourseDetailScreen() {
               onPress={() => router.push({ pathname: '/pretest/[id]', params: { id: String(course.id) } })}
             >
               <ThemedText style={styles.pretestBtnTxt}>
-                {course.isPretestDone ? 'مراجعة نتيجة الاختبار التشخيصي' : '🚀 بدء الاختبار التشخيصي'}
+                {course.isPretestDone ? 'مراجعة نتيجة الاختبار التشخيصي ←' : '🚀 بدء الاختبار التشخيصي ←'}
               </ThemedText>
             </Pressable>
           </View>
@@ -424,11 +473,21 @@ export default function CourseDetailScreen() {
             {course.objectifs ? (
               <RenderHTML
                 contentWidth={width - 48}
-                source={{ html: `<div style="direction: rtl; text-align: right; font-size: 14px; line-height: 22px; color: #374151;">${course.objectifs}</div>` }}
+                tagsStyles={htmlTagsStyles}
+                source={{ html: `<div style="direction: rtl; text-align: right; font-size: 14px; line-height: 24px; color: #374151;">${course.objectifs}</div>` }}
               />
-            ) : (
-              <ThemedText style={styles.descText}>{course.description}</ThemedText>
-            )}
+            ) : null}
+            {course.description ? (
+              <RenderHTML
+                contentWidth={width - 48}
+                tagsStyles={htmlTagsStyles}
+                source={{
+                  html: `<div style="direction: rtl; text-align: right; font-size: 14px; line-height: 24px; color: #374151;">${
+                    (course.description || '').replace(/^(<p>)?\s*<br\s*\/?>\s*/gi, '<p>')
+                  }</div>`,
+                }}
+              />
+            ) : null}
           </View>
         ) : null}
 
@@ -575,7 +634,9 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: '900',
     color: '#111827',
-    textAlign: 'center',
+    textAlign: 'right',
+    writingDirection: 'rtl',
+    alignSelf: 'stretch',
     marginBottom: 10,
     lineHeight: 28,
   },

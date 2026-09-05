@@ -1,6 +1,6 @@
 // src/components/course-card.tsx
 import React from 'react';
-import { StyleSheet, Pressable, View } from 'react-native';
+import { StyleSheet, Pressable, View, I18nManager } from 'react-native';
 import { router } from 'expo-router';
 import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
@@ -159,7 +159,10 @@ export const CourseCard: React.FC<CourseCardProps> = ({
 
         {/* زر متابعة التعلم */}
         <View style={[styles.accessBtn, { backgroundColor: stylesSubject.color }]}>
-          <ThemedText style={styles.accessBtnText}>متابعة التعلم ←</ThemedText>
+          <View style={styles.accessBtnInner}>
+            <ThemedText style={styles.accessBtnText}>متابعة التعلم</ThemedText>
+            <ThemedText style={styles.accessBtnArrow}>←</ThemedText>
+          </View>
         </View>
       </View>
     </Pressable>
@@ -296,11 +299,24 @@ const styles = StyleSheet.create({
   accessBtn: {
     paddingVertical: 12,
     alignItems: 'center',
+    justifyContent: 'center',
+  },
+  accessBtnInner: {
+    flexDirection: I18nManager.isRTL ? 'row' : 'row-reverse',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
   },
   accessBtnText: {
     color: '#FFFFFF',
     fontWeight: '800',
     fontSize: 14,
+    textAlign: 'center',
+  },
+  accessBtnArrow: {
+    color: '#FFFFFF',
+    fontWeight: '900',
+    fontSize: 16,
   },
 });
 

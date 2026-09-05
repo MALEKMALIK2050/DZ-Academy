@@ -8,6 +8,7 @@ import {
   ScrollView,
   StyleSheet,
   View,
+  I18nManager,
 } from 'react-native';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -276,6 +277,14 @@ export default function QuizScreen() {
           headerBackTitle: 'الرجوع',
           headerTitleAlign: 'center',
           headerTintColor: '#059669',
+          headerLeft: () => (
+            <Pressable
+              onPress={() => router.back()}
+              style={{ padding: 8, flexDirection: 'row', alignItems: 'center' }}
+            >
+              <ThemedText style={{ fontSize: 24, color: '#059669', fontWeight: 'bold' }}>→</ThemedText>
+            </Pressable>
+          ),
         }}
       />
       <ScrollView
@@ -372,14 +381,14 @@ export default function QuizScreen() {
           <>
             {/* شريط المؤقت والتقدم */}
             <View style={styles.metaRow}>
+              <ThemedText style={styles.progressText}>
+                {`\u200Fالسؤال ${currentQuestion + 1} من ${quiz.questions.length}\u200F`}
+              </ThemedText>
               {timeLeft !== null && (
                 <View style={styles.timerBadge}>
                   <ThemedText style={styles.timerText}>⏳ {formatTime(timeLeft)}</ThemedText>
                 </View>
               )}
-              <ThemedText style={styles.progressText}>
-                السؤال {currentQuestion + 1} من {quiz.questions.length}
-              </ThemedText>
             </View>
 
             <View style={styles.progressBar}>
@@ -407,31 +416,33 @@ export default function QuizScreen() {
                       style={[styles.optionCard, isSelected && styles.optionCardSelected]}
                       onPress={() => handleSelectOption(currentQ.id, choix)}
                     >
-                      <ThemedText style={[styles.optionText, isSelected && styles.optionTextSelected]}>
-                        {choix}
-                      </ThemedText>
                       <View style={[styles.radioCircle, isSelected && styles.radioCircleSelected]}>
                         {isSelected && <View style={styles.radioInner} />}
                       </View>
+                      <ThemedText style={[styles.optionText, isSelected && styles.optionTextSelected]}>
+                        {choix}
+                      </ThemedText>
                     </Pressable>
                   );
                 })}
               </View>
             </View>
 
-            {/* أزرار التنقل بين الأسئلة */}
+            {/* أزرار التنقل بين الأسئلة (السابق على اليمين والتالي على اليسار) */}
             <View style={styles.navRow}>
+              {/* الزر الأيمن: السابق */}
               {currentQuestion > 0 ? (
                 <Pressable
                   style={styles.navBtn}
                   onPress={() => setCurrentQuestion((prev) => prev - 1)}
                 >
-                  <ThemedText style={styles.navBtnTxt}>السابق ←</ThemedText>
+                  <ThemedText style={styles.navBtnTxt}>السابق →</ThemedText>
                 </Pressable>
               ) : (
                 <View style={{ flex: 1 }} />
               )}
 
+              {/* الزر الأيسر: التالي أو إرسال الإجابات */}
               {isLastQuestion ? (
                 <Pressable
                   style={[styles.navBtn, styles.submitBtn, submitting && { opacity: 0.7 }]}
@@ -449,7 +460,7 @@ export default function QuizScreen() {
                   style={[styles.navBtn, styles.nextBtn]}
                   onPress={() => setCurrentQuestion((prev) => prev + 1)}
                 >
-                  <ThemedText style={styles.nextBtnTxt}>→ السؤال التالي</ThemedText>
+                  <ThemedText style={styles.nextBtnTxt}>← السؤال التالي</ThemedText>
                 </Pressable>
               )}
             </View>
@@ -465,7 +476,7 @@ const styles = StyleSheet.create({
   center: { justifyContent: 'center', alignItems: 'center', padding: 20 },
   content: { paddingHorizontal: 16 },
   metaRow: {
-    flexDirection: 'row-reverse',
+    flexDirection: I18nManager.isRTL ? 'row' : 'row-reverse',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 8,
@@ -518,6 +529,8 @@ const styles = StyleSheet.create({
     fontWeight: '900',
     color: '#111827',
     textAlign: 'right',
+    writingDirection: 'rtl',
+    alignSelf: 'stretch',
     lineHeight: 26,
     marginBottom: 20,
   },
@@ -525,14 +538,14 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   optionCard: {
-    flexDirection: 'row-reverse',
+    flexDirection: I18nManager.isRTL ? 'row' : 'row-reverse',
     alignItems: 'center',
-    justifyContent: 'space-between',
     backgroundColor: '#F9FAFB',
     borderWidth: 1.5,
     borderColor: '#E5E7EB',
     borderRadius: 14,
     padding: 14,
+    gap: 12,
   },
   optionCardSelected: {
     backgroundColor: '#ECFDF5',
@@ -543,7 +556,6 @@ const styles = StyleSheet.create({
     color: '#374151',
     flex: 1,
     textAlign: 'right',
-    marginLeft: 12,
     lineHeight: 20,
   },
   optionTextSelected: {
@@ -570,7 +582,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#059669',
   },
   navRow: {
-    flexDirection: 'row-reverse',
+    flexDirection: I18nManager.isRTL ? 'row' : 'row-reverse',
     justifyContent: 'space-between',
     gap: 12,
     marginBottom: 20,
