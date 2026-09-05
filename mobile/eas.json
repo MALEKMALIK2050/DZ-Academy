@@ -14,7 +14,7 @@
         "buildType": "apk"
       },
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://dz-academy-6k34.vercel.app"
+        "EXPO_PUBLIC_API_URL": "https://dz-academy-gamma.vercel.app"
       }
     },
     "production": {
@@ -23,7 +23,7 @@
         "buildType": "apk"
       },
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://dz-academy-6k34.vercel.app"
+        "EXPO_PUBLIC_API_URL": "https://dz-academy-gamma.vercel.app"
       }
     }
   },

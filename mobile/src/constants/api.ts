@@ -1,7 +1,7 @@
 // src/constants/api.ts
 import { Platform } from 'react-native';
 
-export const DZACADEMY_PROD_URL = 'https://dz-academy-6k34.vercel.app';
+export const DZACADEMY_PROD_URL = 'https://dz-academy-gamma.vercel.app';
 
 // Sur le Web, utiliser des URLs relatives '' pour passer par le proxy Metro (évite les blocages CORS du navigateur)
 // Sur Mobile (Android / iOS), appeler directement l'URL Vercel de DZ Academy
