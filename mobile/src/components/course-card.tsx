@@ -1,6 +1,6 @@
 // src/components/course-card.tsx
 import React from 'react';
-import { StyleSheet, Pressable, View, I18nManager } from 'react-native';
+import { StyleSheet, Pressable, View, I18nManager, GestureResponderEvent } from 'react-native';
 import { router } from 'expo-router';
 import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
@@ -26,7 +26,13 @@ interface CourseCardProps {
   annee?: string;
   matiere?: string;
   etudiants?: number;
+  prix?: number;
+  parcoursTotalPrice?: number;
+  isEnrolled?: boolean;
+  isPending?: boolean;
+  isFreeTrial?: boolean;
   onPress?: (courseId: string | number) => void;
+  onPayPress?: (courseId: string | number) => void;
   style?: any;
 }
 
@@ -43,7 +49,13 @@ export const CourseCard: React.FC<CourseCardProps> = ({
   niveau,
   annee,
   matiere,
+  prix,
+  parcoursTotalPrice,
+  isEnrolled,
+  isPending,
+  isFreeTrial,
   onPress,
+  onPayPress,
   style,
 }) => {
   const displayTitle = titre || title || 'دورة تعليمية';
@@ -101,6 +113,20 @@ export const CourseCard: React.FC<CourseCardProps> = ({
                 <ThemedText style={styles.tagClasseText}>{classeLabel}</ThemedText>
               </View>
             ) : null}
+            {/* شارة السعر أو المجانية */}
+            {prix === 0 ? (
+              <View style={[styles.tag, styles.tagFree]}>
+                <ThemedText style={styles.tagFreeText}>🎁 مجاني</ThemedText>
+              </View>
+            ) : isFreeTrial ? (
+              <View style={[styles.tag, styles.tagFree]}>
+                <ThemedText style={styles.tagFreeText}>🎁 الفصل الأول مجاناً</ThemedText>
+              </View>
+            ) : (
+              <View style={[styles.tag, styles.tagPrice]}>
+                <ThemedText style={styles.tagPriceText}>💰 {(prix ?? 500)} د.ج</ThemedText>
+              </View>
+            )}
           </View>
 
           {/* عنوان الدورة */}
@@ -157,13 +183,49 @@ export const CourseCard: React.FC<CourseCardProps> = ({
           )}
         </View>
 
-        {/* زر متابعة التعلم */}
-        <View style={[styles.accessBtn, { backgroundColor: stylesSubject.color }]}>
-          <View style={styles.accessBtnInner}>
-            <ThemedText style={styles.accessBtnText}>متابعة التعلم</ThemedText>
-            <ThemedText style={styles.accessBtnArrow}>←</ThemedText>
-          </View>
-        </View>
+        {/* زر متابعة التعلم / الدخول إلى الدرس */}
+        {(() => {
+          let btnLabel = 'طلب متابعة الدرس';
+          let btnBg = stylesSubject.color;
+          let btnArrow = '←';
+
+          if (isEnrolled) {
+            btnLabel = '📖 الدخول إلى الدرس';
+            btnBg = '#1E40AF';
+            btnArrow = '←';
+          } else if (isPending) {
+            btnLabel = '⏳ قيد المراجعة';
+            btnBg = '#D97706';
+            btnArrow = '⏳';
+          } else if (prix === 0 || isFreeTrial) {
+            btnLabel = '🎁 ابدأ مجاناً';
+            btnBg = '#059669';
+            btnArrow = '←';
+          }
+
+          const handleButtonPress = (e?: GestureResponderEvent) => {
+            if (e && e.stopPropagation) e.stopPropagation();
+            if (isEnrolled || isPending || prix === 0 || isFreeTrial) {
+              handlePress();
+            } else if (onPayPress) {
+              onPayPress(id);
+            } else {
+              handlePress();
+            }
+          };
+
+          return (
+            <Pressable
+              onPress={handleButtonPress}
+              style={[styles.accessBtn, { backgroundColor: btnBg }]}
+            >
+              <View style={styles.accessBtnInner}>
+                <ThemedText style={styles.accessBtnText}>{btnLabel}</ThemedText>
+                <ThemedText style={styles.accessBtnArrow}>{btnArrow}</ThemedText>
+              </View>
+            </Pressable>
+          );
+        })()}
       </View>
     </Pressable>
   );
@@ -247,6 +309,24 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '700',
     color: '#4B5563',
+  },
+  tagFree: {
+    backgroundColor: '#ECFDF5',
+    borderColor: '#A7F3D0',
+  },
+  tagFreeText: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: '#059669',
+  },
+  tagPrice: {
+    backgroundColor: '#EFF6FF',
+    borderColor: '#BFDBFE',
+  },
+  tagPriceText: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: '#1E40AF',
   },
   title: {
     fontWeight: '800',

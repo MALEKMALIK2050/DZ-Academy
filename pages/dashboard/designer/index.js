@@ -6,6 +6,7 @@ import ProtectedRoute from "@/components/ProtectedRoute";
 import Chat from "@/components/Chat";
 import ProfileDropdown from "@/components/ProfileDropdown";
 import DashboardLayout from "../../../components/layout/DashboardLayout";
+import VisioTab from "@/components/visio/VisioTab";
 import { MATIERES, NIVEAUX, ANNEES_COLLEGE, ANNEES_LYCEE } from "@/lib/constants";
 
 export default function DesignerDashboard() {
@@ -177,6 +178,7 @@ export default function DesignerDashboard() {
   const DASHBOARD_TABS = [
     { key: "overview", label: "فضاء المصمم", icon: "🎨" },
     { key: "courses", label: "دروسي", icon: "🎨", badge: courses.length },
+    { key: "visio", label: "الاجتماعات", icon: "📹" },
     { key: "messages", label: "الرسائل", icon: "✉️", badge: nonLus },
     { key: "chat", label: "الدردشة", icon: "💬", badge: totalUnreadChat },
   ];
@@ -371,6 +373,10 @@ export default function DesignerDashboard() {
               <h2>💬 المراسلة</h2>
               <Chat />
             </div>
+          )}
+
+          {tab === "visio" && (
+            <VisioTab user={user} />
           )}
         </div>
       </DashboardLayout>

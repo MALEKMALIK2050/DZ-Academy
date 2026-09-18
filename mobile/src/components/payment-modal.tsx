@@ -1,5 +1,5 @@
 // src/components/payment-modal.tsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   StyleSheet,
   View,
@@ -11,13 +11,14 @@ import {
   Alert,
   TouchableOpacity,
   Platform,
+  I18nManager,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import * as DocumentPicker from 'expo-document-picker';
 import * as Linking from 'expo-linking';
 import { ThemedText } from '@/components/themed-text';
 import { API_ENDPOINTS } from '@/constants/api';
-import { DZ_PAYMENT_CONFIG, getClasseLabel, getNiveauLabel } from '@/constants/algerian-education';
+import { DZ_PAYMENT_CONFIG, getClasseLabel, getNiveauLabel, getMatiereLabel } from '@/constants/algerian-education';
 
 interface PaymentModalProps {
   visible: boolean;
@@ -27,10 +28,13 @@ interface PaymentModalProps {
     title?: string;
     titre?: string;
     prix?: number;
+    parcoursTotalPrice?: number;
+    isFreeTrial?: boolean;
     niveau?: string;
     annee?: string;
     matiere?: string;
   };
+  initialType?: 'COURS_SEUL' | 'PARCOURS_COMPLET';
   token: string | null;
   onEnrollmentSuccess?: () => void;
 }
@@ -39,19 +43,38 @@ export function PaymentModal({
   visible,
   onClose,
   course,
+  initialType = 'COURS_SEUL',
   token,
   onEnrollmentSuccess,
 }: PaymentModalProps) {
-  const [selectedType, setSelectedType] = useState<'mensuel' | 'trimestre' | 'annuel'>('mensuel');
+  const [selectedType, setSelectedType] = useState<'COURS_SEUL' | 'PARCOURS_COMPLET'>(initialType);
   const [preuveAsset, setPreuveAsset] = useState<{ uri: string; type: string; name: string } | null>(null);
   const [uploading, setUploading] = useState(false);
   const [enrolling, setEnrolling] = useState(false);
   const [successDone, setSuccessDone] = useState(false);
 
+  useEffect(() => {
+    if (visible) {
+      setSelectedType(initialType);
+      setPreuveAsset(null);
+      setSuccessDone(false);
+    }
+  }, [visible, initialType]);
+
   const courseTitle = course.title || course.titre || 'الدورة التعليمية';
-  const plans = DZ_PAYMENT_CONFIG.prixAbonnement;
-  const currentPlan = plans[selectedType];
-  const finalPrice = course.prix && course.prix > 0 ? course.prix : currentPlan.prix;
+  const isParcours = selectedType === 'PARCOURS_COMPLET';
+  const prixBase = course.prix === 0 ? 0 : (course.prix ?? 500);
+  const parcoursTotal = (course.parcoursTotalPrice !== undefined && course.parcoursTotalPrice !== null)
+    ? course.parcoursTotalPrice
+    : (prixBase > 0 ? prixBase * 4 : 2000);
+  const prixParcours = Math.round(parcoursTotal * 0.75);
+  const finalPrice = isParcours ? prixParcours : prixBase;
+
+  const matiereLabel = getMatiereLabel(course.matiere);
+  const classeLabel = getClasseLabel(course.annee);
+  const courseLibelle = isParcours
+    ? `المسار الكامل (${matiereLabel || course.matiere || ''} ${classeLabel || course.annee || ''})`
+    : courseTitle;
 
   // ── اختيار صورة من المعرض ──
   const pickImage = async () => {
@@ -142,7 +165,7 @@ export function PaymentModal({
         },
         body: JSON.stringify({
           courseId: Number(course.id),
-          typePaiement: selectedType.toUpperCase(),
+          typePaiement: selectedType,
         }),
       });
 
@@ -213,7 +236,7 @@ export function PaymentModal({
           <Pressable onPress={handleClose} hitSlop={10}>
             <ThemedText style={pm.closeBtn}>✕</ThemedText>
           </Pressable>
-          <ThemedText style={pm.headerTitle}>تأكيد التسجيل والدفع 🎓</ThemedText>
+          <ThemedText style={pm.headerTitle}>💳 تعليمات الدفع وتأكيد الطلب</ThemedText>
         </View>
 
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 30 }}>
@@ -236,129 +259,177 @@ export function PaymentModal({
                   {courseTitle}
                 </ThemedText>
                 <View style={pm.courseTags}>
+                  {course.matiere && (
+                    <View style={pm.tagBadge}>
+                      <ThemedText style={pm.tagText}>{matiereLabel || course.matiere}</ThemedText>
+                    </View>
+                  )}
+                  {course.annee && (
+                    <View style={pm.tagBadge}>
+                      <ThemedText style={pm.tagText}>{classeLabel || course.annee}</ThemedText>
+                    </View>
+                  )}
                   {course.niveau && (
                     <View style={pm.tagBadge}>
                       <ThemedText style={pm.tagText}>{getNiveauLabel(course.niveau)}</ThemedText>
                     </View>
                   )}
-                  {course.annee && (
-                    <View style={pm.tagBadge}>
-                      <ThemedText style={pm.tagText}>{getClasseLabel(course.annee)}</ThemedText>
-                    </View>
-                  )}
                 </View>
               </View>
 
-              {/* اختيار نوع الاشتراك */}
-              <ThemedText style={pm.sectionLabel}>📅 اختر نوع الاشتراك</ThemedText>
+              {/* اختيار نوع التسجيل (درس فردي أو مسار كامل بخصم 25%) */}
+              <ThemedText style={pm.sectionLabel}>📅 اختر نوع التسجيل :</ThemedText>
               <View style={pm.typeRow}>
-                {(['mensuel', 'trimestre', 'annuel'] as const).map((t) => {
-                  const p = plans[t];
-                  const active = selectedType === t;
-                  return (
-                    <Pressable
-                      key={t}
-                      style={[pm.typeBtn, active && pm.typeBtnActive]}
-                      onPress={() => setSelectedType(t)}
-                    >
-                      <ThemedText style={[pm.typeBtnTxt, active && pm.typeBtnTxtActive]}>
-                        {p.label}
-                      </ThemedText>
-                      <ThemedText style={[pm.priceTxt, active && pm.priceTxtActive]}>
-                        {p.prix} <ThemedText style={{ fontSize: 11 }}>دج</ThemedText>
-                      </ThemedText>
-                    </Pressable>
-                  );
-                })}
+                {/* خيار الدرس الفردي */}
+                <Pressable
+                  style={[pm.typeBtn, !isParcours && pm.typeBtnActive]}
+                  onPress={() => setSelectedType('COURS_SEUL')}
+                >
+                  <ThemedText style={[pm.typeBtnTxt, !isParcours && pm.typeBtnTxtActive]}>
+                    💳 هذا الدرس
+                  </ThemedText>
+                  <ThemedText style={[pm.priceTxt, !isParcours && pm.priceTxtActive]}>
+                    {prixBase === 0 ? 'مجاني' : `${prixBase} د.ج`}
+                  </ThemedText>
+                </Pressable>
+
+                {/* خيار المسار الكامل */}
+                <Pressable
+                  style={[pm.typeBtn, isParcours && pm.typeBtnActive]}
+                  onPress={() => setSelectedType('PARCOURS_COMPLET')}
+                >
+                  <View style={pm.discountBadge}>
+                    <ThemedText style={pm.discountBadgeTxt}>خصم 25% 🎉</ThemedText>
+                  </View>
+                  <ThemedText style={[pm.typeBtnTxt, isParcours && pm.typeBtnTxtActive]}>
+                    🎓 المسار الكامل
+                  </ThemedText>
+                  <ThemedText style={[pm.priceTxt, isParcours && pm.priceTxtActive]}>
+                    {prixParcours === 0 ? 'مجاني' : `${prixParcours} د.ج`}
+                  </ThemedText>
+                </Pressable>
               </View>
 
-              {/* بطاقة السعر الإجمالي */}
-              <View style={pm.priceBox}>
+              {/* بطاقة السعر الإجمالي المطلوب */}
+              <View style={[pm.priceBox, finalPrice === 0 && pm.priceBoxFree]}>
                 <View style={pm.priceRow}>
                   <ThemedText style={pm.priceLabel}>المبلغ المطلوب دفعه :</ThemedText>
-                  <ThemedText style={pm.finalPriceText}>{finalPrice} دج</ThemedText>
+                  <ThemedText style={[pm.finalPriceText, finalPrice === 0 && pm.finalPriceTextFree]}>
+                    {finalPrice > 0 ? `${finalPrice.toLocaleString()} د.ج` : '🎁 هذا الدرس مجاني'}
+                  </ThemedText>
                 </View>
                 <ThemedText style={pm.priceNote}>
-                  يشمل الوصول الكامل لجميع الفصول والاختبارات التكوينية والشهادات
+                  {isParcours
+                    ? 'يشمل جميع دورات المادة لهذه السنة الدراسية مع خصم 25% ووصول كامل'
+                    : finalPrice > 0
+                    ? 'يشمل الوصول الكامل لجميع فصول واختبارات هذه الدورة التعليمية'
+                    : 'يمكنك البدء فوراً بدون دفع أي رسوم'}
                 </ThemedText>
               </View>
 
-              {/* خيارات الدفع الجزائري */}
-              <ThemedText style={pm.sectionLabel}>💳 معلومات الدفع المتاحة بالجزائر</ThemedText>
-              <View style={pm.infoCard}>
-                <View style={pm.paymentMethodHeader}>
-                  <ThemedText style={pm.methodIcon}>⚡</ThemedText>
-                  <ThemedText style={pm.methodTitle}>الدفع السريع عبر بريدي موب (BaridiMob)</ThemedText>
-                </View>
-                <ThemedText style={pm.infoRow}>
-                  رقم الحساب (RIP) : <ThemedText style={pm.infoVal}>{DZ_PAYMENT_CONFIG.baridimob.rip}</ThemedText>
-                </ThemedText>
-                <ThemedText style={pm.infoRow}>
-                  المستفيد : <ThemedText style={pm.infoVal}>{DZ_PAYMENT_CONFIG.baridimob.titulaire}</ThemedText>
-                </ThemedText>
-              </View>
+              {finalPrice > 0 && (
+                <>
+                  {/* معلومات الدفع بالجزائر */}
+                  <ThemedText style={pm.sectionLabel}>💳 معلومات الدفع المتاحة بالجزائر :</ThemedText>
 
-              <View style={pm.infoCard}>
-                <View style={pm.paymentMethodHeader}>
-                  <ThemedText style={pm.methodIcon}>📮</ThemedText>
-                  <ThemedText style={pm.methodTitle}>الدفع عبر الحساب البريدي الجاري (CCP)</ThemedText>
-                </View>
-                <ThemedText style={pm.infoRow}>
-                  رقم الحساب : <ThemedText style={pm.infoVal}>{DZ_PAYMENT_CONFIG.ccp.numero} مفتاح {DZ_PAYMENT_CONFIG.ccp.cle}</ThemedText>
-                </ThemedText>
-                <ThemedText style={pm.infoRow}>
-                  لصالح : <ThemedText style={pm.infoVal}>{DZ_PAYMENT_CONFIG.ccp.titulaire}</ThemedText>
-                </ThemedText>
-              </View>
+                  {/* بريدي موب */}
+                  <View style={pm.infoCard}>
+                    <View style={pm.paymentMethodHeader}>
+                      <ThemedText style={pm.methodIcon}>⚡</ThemedText>
+                      <ThemedText style={pm.methodTitle}>الدفع السريع عبر بريدي موب (BaridiMob)</ThemedText>
+                    </View>
+                    <ThemedText style={pm.infoRow}>
+                      رقم الحساب (RIP) : <ThemedText style={pm.infoVal}>{DZ_PAYMENT_CONFIG.baridimob.rip}</ThemedText>
+                    </ThemedText>
+                    <ThemedText style={pm.infoRow}>
+                      المستفيد : <ThemedText style={pm.infoVal}>{DZ_PAYMENT_CONFIG.baridimob.titulaire}</ThemedText>
+                    </ThemedText>
+                  </View>
 
-              {/* رفع وصل الدفع */}
-              <ThemedText style={pm.sectionLabel}>📎 إرفاق وصل الدفع (اختياري الآن)</ThemedText>
-              <View style={pm.uploadBox}>
-                {preuveAsset ? (
-                  <View style={pm.previewContainer}>
-                    {preuveAsset.type.startsWith('image/') ? (
-                      <Image source={{ uri: preuveAsset.uri }} style={pm.previewImg} resizeMode="cover" />
+                  {/* بريد الجزائر CCP */}
+                  <View style={pm.infoCard}>
+                    <View style={pm.paymentMethodHeader}>
+                      <ThemedText style={pm.methodIcon}>📮</ThemedText>
+                      <ThemedText style={pm.methodTitle}>الدفع عبر الحساب البريدي الجاري (CCP)</ThemedText>
+                    </View>
+                    <ThemedText style={pm.infoRow}>
+                      رقم الحساب : <ThemedText style={pm.infoVal}>{DZ_PAYMENT_CONFIG.ccp.numero} مفتاح {DZ_PAYMENT_CONFIG.ccp.cle}</ThemedText>
+                    </ThemedText>
+                    <ThemedText style={pm.infoRow}>
+                      صاحب الحساب : <ThemedText style={pm.infoVal}>{DZ_PAYMENT_CONFIG.ccp.titulaire}</ThemedText>
+                    </ThemedText>
+                  </View>
+
+                  {/* التحويل البنكي RIB */}
+                  {DZ_PAYMENT_CONFIG.rib && (
+                    <View style={pm.infoCard}>
+                      <View style={pm.paymentMethodHeader}>
+                        <ThemedText style={pm.methodIcon}>🏦</ThemedText>
+                        <ThemedText style={pm.methodTitle}>الدفع عبر التحويل البنكي</ThemedText>
+                      </View>
+                      <ThemedText style={pm.infoRow}>
+                        البنك : <ThemedText style={pm.infoVal}>{DZ_PAYMENT_CONFIG.rib.banque}</ThemedText>
+                      </ThemedText>
+                      <ThemedText style={pm.infoRow}>
+                        رقم الحساب (RIB) : <ThemedText style={pm.infoVal}>{DZ_PAYMENT_CONFIG.rib.numero}</ThemedText>
+                      </ThemedText>
+                      <ThemedText style={pm.infoRow}>
+                        صاحب الحساب : <ThemedText style={pm.infoVal}>{DZ_PAYMENT_CONFIG.rib.titulaire}</ThemedText>
+                      </ThemedText>
+                    </View>
+                  )}
+
+                  {/* إرفاق وصل الدفع */}
+                  <ThemedText style={pm.sectionLabel}>📎 إرفاق وصل الدفع (صورة أو PDF) :</ThemedText>
+                  <View style={pm.uploadBox}>
+                    {preuveAsset ? (
+                      <View style={pm.previewContainer}>
+                        {preuveAsset.type.startsWith('image/') ? (
+                          <Image source={{ uri: preuveAsset.uri }} style={pm.previewImg} resizeMode="cover" />
+                        ) : (
+                          <View style={pm.pdfPreview}>
+                            <ThemedText style={{ fontSize: 36, marginBottom: 8 }}>📄</ThemedText>
+                            <ThemedText style={pm.pdfName} numberOfLines={2}>{preuveAsset.name}</ThemedText>
+                          </View>
+                        )}
+                        <Pressable style={pm.removeBtn} onPress={() => setPreuveAsset(null)}>
+                          <ThemedText style={pm.removeBtnTxt}>✕ إلغاء الملف</ThemedText>
+                        </Pressable>
+                      </View>
                     ) : (
-                      <View style={pm.pdfPreview}>
-                        <ThemedText style={{ fontSize: 36, marginBottom: 8 }}>📄</ThemedText>
-                        <ThemedText style={pm.pdfName} numberOfLines={2}>{preuveAsset.name}</ThemedText>
+                      <View style={pm.uploadBtns}>
+                        <Pressable style={pm.uploadBtn} onPress={pickImage}>
+                          <ThemedText style={pm.uploadBtnTxt}>🖼️ المعرض</ThemedText>
+                        </Pressable>
+                        <Pressable style={pm.uploadBtn} onPress={takePhoto}>
+                          <ThemedText style={pm.uploadBtnTxt}>📷 الكاميرا</ThemedText>
+                        </Pressable>
+                        <Pressable style={pm.uploadBtn} onPress={pickDocument}>
+                          <ThemedText style={pm.uploadBtnTxt}>📄 ملف PDF</ThemedText>
+                        </Pressable>
                       </View>
                     )}
-                    <Pressable style={pm.removeBtn} onPress={() => setPreuveAsset(null)}>
-                      <ThemedText style={pm.removeBtnTxt}>✕ إلغاء الملف</ThemedText>
-                    </Pressable>
                   </View>
-                ) : (
-                  <View style={pm.uploadBtns}>
-                    <Pressable style={pm.uploadBtn} onPress={pickImage}>
-                      <ThemedText style={pm.uploadBtnTxt}>🖼️ المعرض</ThemedText>
-                    </Pressable>
-                    <Pressable style={pm.uploadBtn} onPress={takePhoto}>
-                      <ThemedText style={pm.uploadBtnTxt}>📷 الكاميرا</ThemedText>
-                    </Pressable>
-                    <Pressable style={pm.uploadBtn} onPress={pickDocument}>
-                      <ThemedText style={pm.uploadBtnTxt}>📄 ملف PDF</ThemedText>
-                    </Pressable>
-                  </View>
-                )}
-              </View>
 
-              {/* خيار إرسال الوصل عبر واتساب */}
-              <View style={pm.waBanner}>
-                <ThemedText style={pm.waLabel}>— أو يمكنك إرسال الوصل مباشرة عبر واتساب —</ThemedText>
-                <TouchableOpacity
-                  style={pm.waBtn}
-                  onPress={() => {
-                    const msg = encodeURIComponent(
-                      `السلام عليكم، أود تأكيد تسجيلي في دورة "${courseTitle}" بمبلغ ${finalPrice} دج.`
-                    );
-                    const url = `https://wa.me/${DZ_PAYMENT_CONFIG.whatsapp}?text=${msg}`;
-                    Linking.openURL(url);
-                  }}
-                >
-                  <ThemedText style={pm.waBtnTxt}>💬 إرسال الوصل عبر واتساب</ThemedText>
-                </TouchableOpacity>
-              </View>
+                  {/* خيار إرسال الوصل عبر واتساب */}
+                  <View style={pm.waBanner}>
+                    <ThemedText style={pm.waLabel}>— أو يمكنك إرسال الوصل مباشرة عبر واتساب —</ThemedText>
+                    <TouchableOpacity
+                      style={pm.waBtn}
+                      onPress={() => {
+                        const msg = encodeURIComponent(
+                          `السلام عليكم، أود إرسال وصل الدفع الخاص بـ ${courseLibelle} (المبلغ: ${finalPrice} د.ج).`
+                        );
+                        const phone = (DZ_PAYMENT_CONFIG.whatsapp || '213791713163').replace(/[^0-9]/g, '');
+                        const url = `https://wa.me/${phone}?text=${msg}`;
+                        Linking.openURL(url);
+                      }}
+                    >
+                      <ThemedText style={pm.waBtnTxt}>💬 إرسال الوصل عبر واتساب</ThemedText>
+                    </TouchableOpacity>
+                  </View>
+                </>
+              )}
 
               {/* زر التأكيد النهائي */}
               <Pressable
@@ -370,7 +441,11 @@ export function PaymentModal({
                   <ActivityIndicator color="#fff" />
                 ) : (
                   <ThemedText style={pm.confirmBtnTxt}>
-                    {uploading ? 'جاري رفع الوصل...' : '✅ تأكيد طلب التسجيل'}
+                    {uploading
+                      ? 'جاري رفع الوصل...'
+                      : finalPrice === 0
+                      ? '🎁 تأكيد التسجيل المجاني'
+                      : '✅ تأكيد طلب التسجيل'}
                   </ThemedText>
                 )}
               </Pressable>
@@ -399,7 +474,7 @@ const pm = StyleSheet.create({
     right: 0,
   },
   header: {
-    flexDirection: 'row',
+    flexDirection: I18nManager.isRTL ? 'row' : 'row-reverse',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 20,
@@ -408,7 +483,7 @@ const pm = StyleSheet.create({
     borderBottomColor: '#F3F4F6',
   },
   headerTitle: {
-    fontSize: 17,
+    fontSize: 16,
     fontWeight: '800',
     color: '#111827',
   },
@@ -418,7 +493,7 @@ const pm = StyleSheet.create({
     padding: 4,
   },
   courseSummary: {
-    padding: 16,
+    padding: 14,
     marginHorizontal: 16,
     marginTop: 12,
     backgroundColor: '#F9FAFB',
@@ -427,15 +502,16 @@ const pm = StyleSheet.create({
     borderColor: '#E5E7EB',
   },
   courseTitle: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '800',
     color: '#1F2937',
     textAlign: 'right',
     marginBottom: 8,
   },
   courseTags: {
-    flexDirection: 'row-reverse',
+    flexDirection: I18nManager.isRTL ? 'row' : 'row-reverse',
     gap: 8,
+    flexWrap: 'wrap',
   },
   tagBadge: {
     backgroundColor: '#ECFDF5',
@@ -458,22 +534,24 @@ const pm = StyleSheet.create({
     textAlign: 'right',
   },
   typeRow: {
-    flexDirection: 'row-reverse',
-    gap: 8,
+    flexDirection: I18nManager.isRTL ? 'row' : 'row-reverse',
+    gap: 10,
     marginHorizontal: 16,
   },
   typeBtn: {
     flex: 1,
     paddingVertical: 12,
-    borderRadius: 12,
+    paddingHorizontal: 10,
+    borderRadius: 14,
     borderWidth: 1.5,
     borderColor: '#E5E7EB',
     alignItems: 'center',
     backgroundColor: '#FAFAFA',
+    position: 'relative',
   },
   typeBtnActive: {
-    borderColor: '#059669',
-    backgroundColor: '#ECFDF5',
+    borderColor: '#2563EB',
+    backgroundColor: '#EFF6FF',
   },
   typeBtnTxt: {
     fontSize: 12,
@@ -482,7 +560,8 @@ const pm = StyleSheet.create({
     marginBottom: 4,
   },
   typeBtnTxtActive: {
-    color: '#059669',
+    color: '#1E40AF',
+    fontWeight: '800',
   },
   priceTxt: {
     fontSize: 15,
@@ -490,37 +569,58 @@ const pm = StyleSheet.create({
     color: '#111827',
   },
   priceTxtActive: {
-    color: '#047857',
+    color: '#1E40AF',
+  },
+  discountBadge: {
+    position: 'absolute',
+    top: -8,
+    backgroundColor: '#D97706',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
+  },
+  discountBadgeTxt: {
+    color: '#FFFFFF',
+    fontSize: 9,
+    fontWeight: '800',
   },
   priceBox: {
     marginHorizontal: 16,
-    marginTop: 12,
-    backgroundColor: '#FFFBEB',
-    borderRadius: 12,
+    marginTop: 14,
+    backgroundColor: '#EFF6FF',
+    borderRadius: 14,
     padding: 14,
-    borderWidth: 1,
-    borderColor: '#FDE68A',
+    borderWidth: 1.5,
+    borderColor: '#BFDBFE',
+  },
+  priceBoxFree: {
+    backgroundColor: '#ECFDF5',
+    borderColor: '#A7F3D0',
   },
   priceRow: {
-    flexDirection: 'row-reverse',
+    flexDirection: I18nManager.isRTL ? 'row' : 'row-reverse',
     justifyContent: 'space-between',
     alignItems: 'center',
   },
   priceLabel: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#92400E',
+    color: '#1E40AF',
   },
   finalPriceText: {
     fontSize: 20,
     fontWeight: '900',
-    color: '#B45309',
+    color: '#1E40AF',
+  },
+  finalPriceTextFree: {
+    color: '#059669',
   },
   priceNote: {
     fontSize: 11,
-    color: '#A16207',
+    color: '#6B7280',
     textAlign: 'right',
-    marginTop: 4,
+    marginTop: 6,
+    lineHeight: 16,
   },
   infoCard: {
     marginHorizontal: 16,
@@ -532,7 +632,7 @@ const pm = StyleSheet.create({
     borderColor: '#E2E8F0',
   },
   paymentMethodHeader: {
-    flexDirection: 'row-reverse',
+    flexDirection: I18nManager.isRTL ? 'row' : 'row-reverse',
     alignItems: 'center',
     gap: 8,
     marginBottom: 6,
@@ -566,7 +666,7 @@ const pm = StyleSheet.create({
     alignItems: 'center',
   },
   uploadBtns: {
-    flexDirection: 'row-reverse',
+    flexDirection: I18nManager.isRTL ? 'row' : 'row-reverse',
     gap: 8,
     width: '100%',
   },
@@ -645,7 +745,7 @@ const pm = StyleSheet.create({
     paddingVertical: 14,
     borderRadius: 12,
     alignItems: 'center',
-    backgroundColor: '#059669',
+    backgroundColor: '#1E40AF',
   },
   confirmBtnTxt: {
     color: '#FFFFFF',

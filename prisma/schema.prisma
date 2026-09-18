@@ -55,6 +55,7 @@ enum SupportType {
   ARTICULATE
   TEXTE
   FORUM
+  QCM
 }
 
 enum QuizType {
@@ -171,6 +172,9 @@ model User {
   resetPasswordToken   String?
   resetPasswordExpires DateTime?
 
+  // Visioconférence
+  visiosOrganisees   VisioConference[]  @relation("VisiosOrganisees")
+  visiosParticipees  VisioParticipant[]
 
   cguAccepted     Boolean  @default(false)
   cguAcceptedAt   DateTime?
@@ -204,6 +208,7 @@ model Course {
   annee       String?
   matiere     String?
   niveau      String?
+  prix        Int?         // Prix en DA. null ou 0 = gratuit
 
   chapters Chapter[]
 
@@ -219,6 +224,7 @@ model Course {
   importBatches  ImportBatch[]
   remediations Remediation[]
   scormPackages  ScormPackage[]
+  visios         VisioConference[]
 }
 
 // ========================================
@@ -388,7 +394,8 @@ model Enrollment {
   note         String?
   prixPaye     Float?
   statut       String    @default("EN_ATTENTE")  // valeurs possibles : EN_ATTENTE, PAYE, GRATUIT, REJETE
-  typePaiement String?
+  typePaiement      String?
+  preuvePaiementUrl String?   // Chemin de la preuve de paiement
   valideAt     DateTime?
   validePar    Int?
   progress     Int       @default(0)
@@ -726,4 +733,56 @@ model ScormPackage {
   course        Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
 
   @@map("ScormPackage")
+}
+
+// ========================================
+// VISIOCONFÉRENCE / LIVE SESSIONS
+// ========================================
+
+model VisioConference {
+  id              Int                @id @default(autoincrement())
+  titre           String
+  description     String?            @db.Text
+  dateDebut       DateTime
+  dureeMinutes    Int                @default(60)
+  roomName        String             @unique
+  statut          String             @default("PROGRAMMEE") // PROGRAMMEE, EN_COURS, TERMINEE, ANNULEE
+
+  // Public cible
+  publicCible     String             @default("TOUS") // TOUS, ENSEIGNANTS, ETUDIANTS, DESIGNERS, SPECIFIQUE
+  targetRoles     String[]           @default([])
+  niveau          String?
+  annee           String?
+  matiere         String?
+  courseId        Int?
+  course          Course?            @relation(fields: [courseId], references: [id], onDelete: SetNull)
+
+  // Organisateur
+  organisateurId  Int
+  organisateur    User               @relation("VisiosOrganisees", fields: [organisateurId], references: [id], onDelete: Cascade)
+
+  // Participants
+  participants    VisioParticipant[]
+
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+
+  @@index([organisateurId])
+  @@index([statut])
+  @@index([dateDebut])
+}
+
+model VisioParticipant {
+  id        Int             @id @default(autoincrement())
+  visioId   Int
+  userId    Int
+  statut    String          @default("INVITE") // INVITE, CONFIRME, REJOINT
+  rejointAt DateTime?
+
+  visio     VisioConference @relation(fields: [visioId], references: [id], onDelete: Cascade)
+  user      User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([visioId, userId])
+  @@index([userId])
+  @@index([visioId])
 }

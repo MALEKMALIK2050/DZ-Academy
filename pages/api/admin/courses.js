@@ -28,18 +28,39 @@ export default async function handler(req, res) {
   }
 
   if (req.method === "PATCH") {
-    const { courseId, teacherIds } = req.body; // Expect array of teacher IDs
-    if (!courseId) return res.status(400).json({ error: "courseId manquant" });
+    const { courseId, teacherIds, prix, bulk } = req.body;
 
     try {
+      // ✅ Mise à jour globale du prix pour tous les cours
+      if (bulk && prix !== undefined) {
+        const parsedPrix = (prix === null || prix === "") ? null : parseInt(prix);
+        await prisma.course.updateMany({
+          data: { prix: parsedPrix },
+        });
+        return res.status(200).json({ success: true, message: "Prix mis à jour pour tous les cours" });
+      }
+
+      if (!courseId) return res.status(400).json({ error: "courseId manquant" });
+
+      const updateData = {};
+
+      // ✅ Mise à jour du prix si fourni
+      if (prix !== undefined) {
+        updateData.prix = (prix === null || prix === "") ? null : parseInt(prix);
+      }
+
+      // ✅ Mise à jour des enseignants si fournis
+      if (teacherIds !== undefined) {
+        updateData.teachers = {
+          set: (teacherIds || []).map(id => ({ id: parseInt(id) }))
+        };
+      }
+
       await prisma.course.update({
         where: { id: parseInt(courseId) },
-        data: {
-          teachers: {
-            set: (teacherIds || []).map(id => ({ id: parseInt(id) }))
-          }
-        },
+        data: updateData,
       });
+
       return res.status(200).json({ success: true });
     } catch (err) {
       return res.status(500).json({ error: err.message });

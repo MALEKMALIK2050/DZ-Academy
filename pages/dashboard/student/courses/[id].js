@@ -6,11 +6,12 @@ import ForumEmbed from "@/components/forum/ForumEmbed";
 import YouTubePlayer from "@/components/YouTubePlayer";
 import PretestModern from "@/components/PretestModern";
 import RemediationRequest from "@/components/student/RemediationRequest";
+import SupportQuestionCard from "@/components/student/SupportQuestionCard";
 
 const SEUIL = 90;
 
 function typeColor(type) {
-  const colors = { PDF: "#e53e3e", VIDEO: "#3182ce", IMAGE: "#38a169", PPT: "#dd6b20", SCORM: "#805ad5", ARTICULATE: "#d69e2e", FORUM: "#0284c7" };
+  const colors = { PDF: "#e53e3e", VIDEO: "#3182ce", IMAGE: "#38a169", PPT: "#dd6b20", SCORM: "#805ad5", ARTICULATE: "#d69e2e", FORUM: "#0284c7", QCM: "#059669" };
   return colors[type] || "#718096";
 }
 
@@ -746,138 +747,166 @@ export default function StudentCourse() {
                 {activeChapter.supports?.length > 0 && (
                   <div style={{ marginBottom: "2rem" }}>
                     <div style={{ display: "grid", gap: "1.5rem" }}>
-                      {activeChapter.supports.map((s) => {
-                        if (s.type === "TEXTE") {
-                          return (
-                            <div key={s.id} style={{ background: "white", border: "1px solid #E9ECEF", padding: isMobile ? "1rem" : "1.5rem", borderRadius: "12px", overflowX: "auto", boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}>
-                              {s.nom && (
-                                <h3 style={{ margin: "0 0 1rem", color: "#2D6A4F", borderBottom: "2px solid #74C69D", paddingBottom: "0.5rem", fontSize: isMobile ? "1rem" : "1.1rem" }}>
-                                  {s.nom}
-                                </h3>
-                              )}
-                              <div
-                                dangerouslySetInnerHTML={{ __html: s.contenu }}
-                                className="rich-text-content"
-                                style={{ color: "#1a202c", fontSize: isMobile ? "0.85rem" : "0.95rem" }}
-                              />
-                            </div>
-                          );
-                        }
+                      {(() => {
+                        const sortedSupports = [...(activeChapter.supports || [])].sort((a, b) => (a.ordre || 0) - (b.ordre || 0));
+                        const qcmSupports = sortedSupports.filter((item) => item.type === "QCM");
 
-                        if (s.type === "VIDEO") {
-                          return (
-                            <YouTubePlayer
-                              key={s.id}
-                              support={s}
-                              userId={user?.id}
-                              onProgress={({ supportId, completed, progression }) => {
-                                console.log(`Video ${supportId}: ${progression}% ${completed ? "✅" : ""}`);
-                              }}
-                            />
-                          );
-                        }
-
-                        if (s.type === "FORUM") {
-                          return (
-                            <div key={s.id} style={{ marginTop: "1rem" }}>
-                              <ForumEmbed forumId={s.forumId} />
-                            </div>
-                          );
-                        }
-
-                        if (s.type === "SCORM" || s.type === "ARTICULATE") {
-                          return (
-                            <div key={s.id} style={{
-                              background: "white",
-                              border: "1px solid #E9ECEF",
-                              borderRadius: "12px",
-                              overflow: "hidden",
-                              marginBottom: "1rem",
-                              boxShadow: "0 4px 15px rgba(0,0,0,0.05)",
-                            }}>
-                              <div style={{
-                                background: s.type === "ARTICULATE" ? "#d69e2e" : "#805ad5",
-                                padding: isMobile ? "0.8rem 1rem" : "1rem 1.5rem",
-                                color: "white",
-                                display: "flex",
-                                alignItems: "center",
-                                flexWrap: "wrap",
-                                gap: "1rem",
-                              }}>
-                                <span style={{ fontSize: "1.2rem" }}>{s.type === "ARTICULATE" ? "🎯" : "🎓"}</span>
-                                <h3 style={{ margin: 0, fontSize: isMobile ? "1rem" : "1.1rem" }}>{s.nom || s.title || `Module ${s.type}`}</h3>
-                                <a 
-                                  href={s.url} 
-                                  target="_blank" 
-                                  rel="noreferrer"
-                                  style={{
-                                    marginLeft: "auto",
-                                    background: "rgba(255,255,255,0.2)",
-                                    padding: "0.4rem 1rem",
-                                    borderRadius: "8px",
-                                    color: "white",
-                                    textDecoration: "none",
-                                    fontSize: "0.85rem",
-                                    fontWeight: "600",
-                                    display: "flex",
-                                    alignItems: "center",
-                                    gap: "0.5rem",
-                                    transition: "background 0.2s"
-                                  }}
-                                  onMouseEnter={(e) => e.target.style.background = "rgba(255,255,255,0.3)"}
-                                  onMouseLeave={(e) => e.target.style.background = "rgba(255,255,255,0.2)"}
-                                >
-                                  ↗️ ملء الشاشة
-                                </a>
-                              </div>
-                              <div style={{ position: "relative", width: "100%", height: isMobile ? "400px" : "600px", background: "#f8fafc" }}>
-                                <iframe
-                                  src={s.url}
-                                  title={s.nom || `Contenu ${s.type}`}
-                                  style={{
-                                    width: "100%",
-                                    height: "100%",
-                                    border: "none",
-                                    display: "block"
-                                  }}
-                                  allowFullScreen
+                        return sortedSupports.map((s) => {
+                          if (s.type === "TEXTE") {
+                            return (
+                              <div key={s.id} id={`support-${s.id}`} style={{ background: "white", border: "1px solid #E9ECEF", padding: isMobile ? "1rem" : "1.5rem", borderRadius: "12px", overflowX: "auto", boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}>
+                                {s.nom && (
+                                  <h3 style={{ margin: "0 0 1rem", color: "#2D6A4F", borderBottom: "2px solid #74C69D", paddingBottom: "0.5rem", fontSize: isMobile ? "1rem" : "1.1rem" }}>
+                                    {s.nom}
+                                  </h3>
+                                )}
+                                <div
+                                  dangerouslySetInnerHTML={{ __html: s.contenu }}
+                                  className="rich-text-content"
+                                  style={{ color: "#1a202c", fontSize: isMobile ? "0.85rem" : "0.95rem" }}
                                 />
                               </div>
-                            </div>
-                          );
-                        }
+                            );
+                          }
 
-                        return (
-                          <a
-                            key={s.id}
-                            href={s.url}
-                            target="_blank"
-                            rel="noreferrer"
-                            style={{
-                              background: "white",
-                              border: "1px solid #E9ECEF",
-                              padding: "0.8rem 1rem",
-                              borderRadius: "10px",
-                              display: "flex",
-                              alignItems: "center",
-                              gap: "1rem",
-                              textDecoration: "none",
-                              color: "#2d3748",
-                              flexWrap: "wrap",
-                              boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
-                              transition: "all 0.2s ease"
-                            }}
-                            onMouseEnter={(e) => e.target.style.boxShadow = "0 2px 8px rgba(0,0,0,0.1)"}
-                            onMouseLeave={(e) => e.target.style.boxShadow = "0 1px 3px rgba(0,0,0,0.05)"}
-                          >
-                            <span style={{ background: typeColor(s.type), color: "white", padding: "0.2rem 0.6rem", borderRadius: "6px", fontSize: "0.7rem", fontWeight: "bold" }}>
-                              {s.type}
-                            </span>
-                            <span style={{ color: "#3182ce", fontWeight: "500", wordBreak: "break-word", flex: 1, fontSize: "0.85rem" }}>{s.nom || s.url}</span>
-                            <span style={{ marginLeft: "auto", color: "#a0aec0" }}>→</span>
-                          </a>
-                        );
-                      })}
+                          if (s.type === "VIDEO") {
+                            return (
+                              <div key={s.id} id={`support-${s.id}`}>
+                                <YouTubePlayer
+                                  support={s}
+                                  userId={user?.id}
+                                  onProgress={({ supportId, completed, progression }) => {
+                                    console.log(`Video ${supportId}: ${progression}% ${completed ? "✅" : ""}`);
+                                  }}
+                                />
+                              </div>
+                            );
+                          }
+
+                          if (s.type === "QCM") {
+                            const qcmIndex = qcmSupports.findIndex((item) => item.id === s.id);
+                            return (
+                              <div key={s.id} id={`support-${s.id}`}>
+                                <SupportQuestionCard
+                                  support={s}
+                                  questionNumber={qcmIndex >= 0 ? qcmIndex + 1 : 1}
+                                  defaultOpen={false}
+                                  onContinue={() => {
+                                    const currentIdx = sortedSupports.findIndex((item) => item.id === s.id);
+                                    if (currentIdx >= 0 && currentIdx < sortedSupports.length - 1) {
+                                      const nextSup = sortedSupports[currentIdx + 1];
+                                      const nextEl = document.getElementById(`support-${nextSup.id}`);
+                                      if (nextEl) nextEl.scrollIntoView({ behavior: "smooth" });
+                                    }
+                                  }}
+                                />
+                              </div>
+                            );
+                          }
+
+                          if (s.type === "FORUM") {
+                            return (
+                              <div key={s.id} id={`support-${s.id}`} style={{ marginTop: "1rem" }}>
+                                <ForumEmbed forumId={s.forumId} />
+                              </div>
+                            );
+                          }
+
+                          if (s.type === "SCORM" || s.type === "ARTICULATE") {
+                            return (
+                              <div key={s.id} id={`support-${s.id}`} style={{
+                                background: "white",
+                                border: "1px solid #E9ECEF",
+                                borderRadius: "12px",
+                                overflow: "hidden",
+                                marginBottom: "1rem",
+                                boxShadow: "0 4px 15px rgba(0,0,0,0.05)",
+                              }}>
+                                <div style={{
+                                  background: s.type === "ARTICULATE" ? "#d69e2e" : "#805ad5",
+                                  padding: isMobile ? "0.8rem 1rem" : "1rem 1.5rem",
+                                  color: "white",
+                                  display: "flex",
+                                  alignItems: "center",
+                                  flexWrap: "wrap",
+                                  gap: "1rem",
+                                }}>
+                                  <span style={{ fontSize: "1.2rem" }}>{s.type === "ARTICULATE" ? "🎯" : "🎓"}</span>
+                                  <h3 style={{ margin: 0, fontSize: isMobile ? "1rem" : "1.1rem" }}>{s.nom || s.title || `Module ${s.type}`}</h3>
+                                  <a 
+                                    href={s.url} 
+                                    target="_blank" 
+                                    rel="noreferrer" 
+                                    style={{
+                                      marginLeft: "auto",
+                                      background: "rgba(255,255,255,0.2)",
+                                      padding: "0.4rem 1rem",
+                                      borderRadius: "8px",
+                                      color: "white",
+                                      textDecoration: "none",
+                                      fontSize: "0.85rem",
+                                      fontWeight: "600",
+                                      display: "flex",
+                                      alignItems: "center",
+                                      gap: "0.5rem",
+                                      transition: "background 0.2s"
+                                    }}
+                                    onMouseEnter={(e) => e.target.style.background = "rgba(255,255,255,0.3)"}
+                                    onMouseLeave={(e) => e.target.style.background = "rgba(255,255,255,0.2)"}
+                                  >
+                                    ↗️ ملء الشاشة
+                                  </a>
+                                </div>
+                                <div style={{ position: "relative", width: "100%", height: isMobile ? "400px" : "600px", background: "#f8fafc" }}>
+                                  <iframe
+                                    src={s.url}
+                                    title={s.nom || `Contenu ${s.type}`}
+                                    style={{
+                                      width: "100%",
+                                      height: "100%",
+                                      border: "none",
+                                      display: "block"
+                                    }}
+                                    allowFullScreen
+                                  />
+                                </div>
+                              </div>
+                            );
+                          }
+
+                          return (
+                            <a
+                              key={s.id}
+                              id={`support-${s.id}`}
+                              href={s.url}
+                              target="_blank"
+                              rel="noreferrer"
+                              style={{
+                                background: "white",
+                                border: "1px solid #E9ECEF",
+                                padding: "0.8rem 1rem",
+                                borderRadius: "10px",
+                                display: "flex",
+                                alignItems: "center",
+                                gap: "1rem",
+                                textDecoration: "none",
+                                color: "#2d3748",
+                                flexWrap: "wrap",
+                                boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
+                                transition: "all 0.2s ease"
+                              }}
+                              onMouseEnter={(e) => e.target.style.boxShadow = "0 2px 8px rgba(0,0,0,0.1)"}
+                              onMouseLeave={(e) => e.target.style.boxShadow = "0 1px 3px rgba(0,0,0,0.05)"}
+                            >
+                              <span style={{ background: typeColor(s.type), color: "white", padding: "0.2rem 0.6rem", borderRadius: "6px", fontSize: "0.7rem", fontWeight: "bold" }}>
+                                {s.type}
+                              </span>
+                              <span style={{ color: "#3182ce", fontWeight: "500", wordBreak: "break-word", flex: 1, fontSize: "0.85rem" }}>{s.nom || s.url}</span>
+                              <span style={{ marginLeft: "auto", color: "#a0aec0" }}>→</span>
+                            </a>
+                          );
+                        });
+                      })()}
                     </div>
                   </div>
                 )}

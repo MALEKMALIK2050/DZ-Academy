@@ -3,6 +3,7 @@ import { useEffect, useState, useRef } from "react";
 import { useAuth } from "@/context/AuthContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import ForumEmbed from "@/components/forum/ForumEmbed";
+import SupportQuestionCard from "@/components/student/SupportQuestionCard";
 
 
 export default function TeacherCourse() {
@@ -154,6 +155,8 @@ export default function TeacherCourse() {
                               {s.nom && <h4 style={{ margin: "0 0 0.75rem", color: "#2d3748", borderBottom: "2px solid #e2e8f0", paddingBottom: "0.5rem" }}>{s.nom}</h4>}
                               <div dangerouslySetInnerHTML={{ __html: s.contenu }} className="rich-text-content" style={{ color: "#2d3748" }} />
                             </div>
+                          ) : s.type === "QCM" ? (
+                            <SupportQuestionCard key={s.id} support={s} isTeacher={true} />
                           ) : (
                             <a key={s.id} href={s.url} target="_blank" rel="noreferrer"
                               style={{ background: "white", border: "1px solid #e2e8f0", padding: "1rem", borderRadius: "10px", display: "flex", alignItems: "center", gap: "1rem", textDecoration: "none", color: "#2d3748" }}>
@@ -440,7 +443,7 @@ function RenduCard({ rendu, devoirId, depasse, onRefresh }) {
 }
 
 function typeColor(type) {
-  const colors = { PDF: "#e53e3e", VIDEO: "#3182ce", IMAGE: "#38a169", PPT: "#dd6b20", SCORM: "#805ad5", ARTICULATE: "#d69e2e", TEXTE: "#319795", FORUM: "#805ad5" };
+  const colors = { PDF: "#e53e3e", VIDEO: "#3182ce", IMAGE: "#38a169", PPT: "#dd6b20", SCORM: "#805ad5", ARTICULATE: "#d69e2e", TEXTE: "#319795", FORUM: "#805ad5", QCM: "#059669" };
   return colors[type] || "#718096";
 }
 

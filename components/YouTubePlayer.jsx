@@ -1,224 +1,107 @@
-import { useRef, useState, useCallback } from "react";
-import YouTube from "react-youtube";
-
-function extractYouTubeId(url) {
+export function extractYouTubeId(url) {
   if (!url) return null;
-  // Gère youtu.be, youtube.com/watch?v=, /embed/, /shorts/
-  const regExp =
-    /(?:youtu\.be\/|youtube\.com\/(?:watch\?(?:.*&)?v=|embed\/|shorts\/|v\/))([A-Za-z0-9_-]{11})/;
-  const match = url.match(regExp);
+  const trimmed = url.trim();
+  if (/^[A-Za-z0-9_-]{11}$/.test(trimmed)) return trimmed;
+  const match = trimmed.match(
+    /(?:youtu\.be\/|youtube(?:-nocookie)?\.com\/(?:watch\?(?:.*&)?v=|embed\/|shorts\/|v\/))([A-Za-z0-9_-]{11})/
+  );
   return match ? match[1] : null;
 }
 
-const YouTubePlayer = ({
+export default function YouTubePlayer({
+  support,
   videoId: propVideoId,
   supportId: propSupportId,
-  onProgressUpdate,
-  support,
-  onProgress,
-  userId,
-}) => {
-  const playerRef = useRef(null);
-  const intervalRef = useRef(null);
-  const lastPositionRef = useRef(0);
-  const reportedEventsRef = useRef([]);
-  const [error, setError] = useState("");
-  const [isReady, setIsReady] = useState(false);
-
-  const supportId = propSupportId || support?.id;
+}) {
   const videoId = propVideoId || support?.videoId || extractYouTubeId(support?.url);
-  const progressCallback = onProgressUpdate || onProgress;
-
-  // Options du player YouTube
-  const opts = {
-    height: "500",
-    width: "100%",
-    playerVars: {
-      autoplay: 0,
-      controls: 1,
-      modestbranding: 1,
-      rel: 0,
-      origin:
-        typeof window !== "undefined" ? window.location.origin : "",
-    },
-  };
-
-  // Restaurer la dernière position depuis l'API
-  const fetchAndRestorePosition = useCallback(
-    async (player) => {
-      if (!supportId) return;
-      try {
-        const res = await fetch(`/api/video/progress?supportId=${supportId}`, {
-          credentials: "include",
-        });
-        if (!res.ok) return;
-        const data = await res.json();
-        if (data.lastPosition && data.lastPosition > 5) {
-          lastPositionRef.current = data.lastPosition;
-          player.seekTo(data.lastPosition, true);
-          player.pauseVideo();
-        }
-      } catch (err) {
-        console.error("Erreur restauration position:", err);
-      }
-    },
-    [supportId]
-  );
-
-  const trackProgress = useCallback(
-    async (isFinal = false) => {
-      const player = playerRef.current;
-      if (!player || !isReady) return;
-      try {
-        const currentTime = player.getCurrentTime();
-        const duration = player.getDuration();
-        lastPositionRef.current = currentTime;
-        const progression = duration > 0 ? (currentTime / duration) * 100 : 0;
-
-        // Jalons : 25, 50, 75, 100
-        let event = null;
-        const milestones = [25, 50, 75, 100];
-        for (const m of milestones) {
-          if (
-            progression >= m &&
-            !reportedEventsRef.current.includes(m)
-          ) {
-            reportedEventsRef.current.push(m);
-            event = m;
-          }
-        }
-
-        const res = await fetch("/api/video/progress", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-          body: JSON.stringify({
-            supportId,
-            progression,
-            event,
-            lastPosition: currentTime,
-            duration,
-          }),
-        });
-
-        if (res.ok && progressCallback) {
-          const data = await res.json();
-          progressCallback({
-            supportId,
-            progression: data.progression,
-            completed: data.completed,
-            events: data.events,
-          });
-        }
-      } catch (err) {
-        console.error("Erreur tracking:", err);
-      }
-    },
-    [isReady, supportId, progressCallback]
-  );
-
-  // Handlers du player
-  const onReady = useCallback(
-    (event) => {
-      playerRef.current = event.target;
-      setIsReady(true);
-      fetchAndRestorePosition(event.target);
-    },
-    [fetchAndRestorePosition]
-  );
-
-  const onStateChange = useCallback(
-    (event) => {
-      const YT = window.YT?.PlayerState;
-      if (!YT) return;
-      if (event.data === YT.PLAYING) {
-        if (intervalRef.current) clearInterval(intervalRef.current);
-        intervalRef.current = setInterval(() => trackProgress(false), 10000);
-      } else if (event.data === YT.PAUSED) {
-        if (intervalRef.current) clearInterval(intervalRef.current);
-        trackProgress(false);
-      } else if (event.data === YT.ENDED) {
-        if (intervalRef.current) clearInterval(intervalRef.current);
-        trackProgress(true);
-      }
-    },
-    [trackProgress]
-  );
-
-  const onError = useCallback((event) => {
-    const codes = {
-      2: "URL invalide",
-      5: "Erreur lecteur HTML5",
-      100: "Vidéo introuvable ou privée",
-      101: "Lecture non autorisée en iframe",
-      150: "Lecture non autorisée en iframe",
-    };
-    setError(codes[event.data] || `Erreur YouTube (code ${event.data})`);
-  }, []);
+  const supportId = propSupportId || support?.id || "main";
 
   if (!videoId) {
     return (
-      <div
+      <a
+        href={support?.url}
+        target="_blank"
+        rel="noreferrer"
         style={{
-          background: "#1a1a2e",
-          borderRadius: "12px",
-          padding: "2rem",
-          textAlign: "center",
-          color: "#ff6b6b",
+          background: "#f7fafc",
+          border: "1px solid #e2e8f0",
+          padding: "1rem",
+          borderRadius: "10px",
+          display: "flex",
+          alignItems: "center",
+          gap: "1rem",
+          textDecoration: "none",
+          color: "#2d3748",
+          marginBottom: "0.75rem",
         }}
       >
-        ❌ URL ou ID de vidéo invalide
-      </div>
+        <span
+          style={{
+            background: "#3182ce",
+            color: "white",
+            padding: "0.3rem 0.8rem",
+            borderRadius: "6px",
+            fontSize: "0.8rem",
+            fontWeight: "600",
+          }}
+        >
+          VIDÉO
+        </span>
+        <span style={{ color: "#3182ce", fontWeight: "500" }}>
+          {support?.nom || support?.url || "Ouvrir la vidéo"}
+        </span>
+        <span style={{ marginLeft: "auto", color: "#a0aec0" }}>→</span>
+      </a>
     );
   }
 
   return (
     <div
       style={{
-        background: "#000",
-        borderRadius: "12px",
+        background: "white",
+        border: "1px solid #e2e8f0",
+        borderRadius: "10px",
         overflow: "hidden",
-        position: "relative",
+        marginBottom: "0.75rem",
+        boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
       }}
     >
-      {error && (
+      {/* Titre */}
+      {support?.nom && (
         <div
           style={{
-            background: "#1a1a2e",
-            color: "#ff6b6b",
-            padding: "1rem 1.5rem",
+            padding: "0.75rem 1rem",
+            borderBottom: "1px solid #e2e8f0",
+            fontWeight: "bold",
+            color: "#2d3748",
             display: "flex",
             alignItems: "center",
             gap: "0.5rem",
-            fontSize: "0.9rem",
           }}
         >
-          ❌ {error}
-          <a
-            href={`https://www.youtube.com/watch?v=${videoId}`}
-            target="_blank"
-            rel="noreferrer"
-            style={{
-              marginLeft: "auto",
-              color: "#60a5fa",
-              fontSize: "0.8rem",
-              textDecoration: "underline",
-            }}
-          >
-            Ouvrir sur YouTube ↗
-          </a>
+          <span>🎬</span>
+          <span>{support.nom}</span>
         </div>
       )}
-      <YouTube
-        videoId={videoId}
-        opts={opts}
-        onReady={onReady}
-        onStateChange={onStateChange}
-        onError={onError}
-        style={{ display: "block" }}
-      />
+
+      {/* Cadre vidéo 16:9 responsive natif — lecture directe garantie sans blocage */}
+      <div style={{ position: "relative", paddingBottom: "56.25%", height: 0, background: "#000" }}>
+        <iframe
+          id={`yt-player-${supportId}`}
+          src={`https://www.youtube-nocookie.com/embed/${videoId}?rel=0&modestbranding=1&playsinline=1`}
+          title={support?.nom || "Vidéo YouTube"}
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            width: "100%",
+            height: "100%",
+            border: 0,
+          }}
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+          allowFullScreen
+        />
+      </div>
     </div>
   );
-};
-
-export default YouTubePlayer;
+}

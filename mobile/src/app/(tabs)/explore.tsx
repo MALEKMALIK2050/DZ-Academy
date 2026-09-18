@@ -50,6 +50,8 @@ interface CourseItem {
   niveau?: string;
   annee?: string;
   prix?: number;
+  parcoursTotalPrice?: number;
+  isFreeTrial?: boolean;
   chapters?: { id: number }[];
   teachers?: { id: number; nom: string; prenom: string }[];
   enrollments?: { id: number; statut: string; typePaiement: string }[];
@@ -319,8 +321,20 @@ export default function ExploreScreen() {
                     annee={course.annee}
                     matiere={course.matiere}
                     teachers={course.teachers}
+                    prix={course.prix}
+                    parcoursTotalPrice={course.parcoursTotalPrice}
+                    isEnrolled={!!isEnrolled}
+                    isPending={!!isPending}
+                    isFreeTrial={!!course.isFreeTrial}
                     onPress={() => {
-                      router.push({ pathname: '/course/[id]', params: { id: String(course.id) } });
+                      if (isEnrolled || isPending || course.prix === 0 || course.isFreeTrial) {
+                        router.push({ pathname: '/course/[id]', params: { id: String(course.id) } });
+                      } else {
+                        setPayCourse(course);
+                      }
+                    }}
+                    onPayPress={() => {
+                      setPayCourse(course);
                     }}
                   />
                 </View>

@@ -4,12 +4,31 @@ import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
 import { useColorScheme } from 'react-native';
 
 function NavigationLayout() {
-  const { loading } = useAuth();
+  const { loading, token } = useAuth();
 
   if (loading) {
     return <LoadingScreen message="مرحباً بك في دزأكاديمي..." />;
   }
 
+  // إذا لم يكن هناك جلسة نشطة، عرض شاشات الدخول والتسجيل فقط
+  if (!token) {
+    return (
+      <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="index" options={{ headerShown: false }} />
+        <Stack.Screen name="auth/login" options={{ headerShown: false }} />
+        <Stack.Screen
+          name="auth/register"
+          options={{
+            headerShown: true,
+            title: '',
+            headerBackTitle: 'رجوع',
+          }}
+        />
+      </Stack>
+    );
+  }
+
+  // إذا كان الطالب مسجلاً، عرض كامل شاشات المنصة
   return (
     <Stack screenOptions={{
       headerShown: false,

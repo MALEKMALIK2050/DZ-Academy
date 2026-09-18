@@ -71,11 +71,41 @@
   font-size: clamp(2.4rem, 6.5vw, 4.2rem);
   font-weight: 700;
   line-height: 1.25;
+  margin: 0 0 1rem 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+.hero-title-artistic:not(:has(.hero-title-text)) {
   background: linear-gradient(135deg, #064E3B 0%, #047857 50%, #1e3a8a 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.15));
-  margin: 0 0 1rem 0;
+}
+.hero-title-text {
+  background: linear-gradient(135deg, #064E3B 0%, #047857 50%, #1e3a8a 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.15));
+}
+.hero-book-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif;
+  font-style: normal;
+  line-height: 1;
+  -webkit-text-fill-color: initial !important;
+  -webkit-background-clip: initial !important;
+  background: none !important;
+  filter: drop-shadow(0 4px 12px rgba(16, 185, 129, 0.35)) drop-shadow(0 2px 5px rgba(0, 0, 0, 0.2));
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  cursor: default;
+}
+.hero-book-icon:hover {
+  transform: scale(1.15) rotate(-5deg);
 }
 .hero-subtitle-artistic {
   font-family: 'Amiri', 'Tajawal', serif;

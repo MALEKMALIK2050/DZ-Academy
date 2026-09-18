@@ -185,7 +185,7 @@ function Section({ title, courses, teachers, onAssign, onDelete }) {
 
                   <td style={tdStyle}>
                     <select
-                      defaultValue={c.teacherId || ""}
+                      value={c.teachers?.[0]?.id || ""}
                       onChange={(e) => onAssign(c.id, e.target.value)}
                       style={{ padding: "0.4rem", borderRadius: "6px", border: "1px solid #cbd5e0", width: "100%" }}
                     >

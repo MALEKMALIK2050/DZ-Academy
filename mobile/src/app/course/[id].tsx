@@ -143,6 +143,8 @@ interface CourseDetail {
   niveau?: string;
   annee?: string;
   prix?: number;
+  parcoursTotalPrice?: number;
+  isFreeTrial?: boolean;
   chapters?: Chapter[];
   hasPretest?: boolean;
   isPretestDone?: boolean;

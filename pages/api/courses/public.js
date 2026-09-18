@@ -20,73 +20,45 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: "Méthode non autorisée" });
   }
 
-  try {
-    const { niveau, annee, matiere } = req.query;
+  res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
 
-    // ✅ Construire les filtres dynamiquement avec correspondance souple et universelle
-    // ✅ Ne montrer que les cours publiés
+  try {
+    const { niveau, annee, matiere, search } = req.query;
+
+    const user = getUser(req);
     const where = { status: "PUBLISHED" };
 
-    if (niveau) {
-      const nNorm = niveau.trim().toLowerCase();
-      if (nNorm === "college" || nNorm.includes("متوسط")) {
-        where.niveau = { in: ["college", "المتوسط", "متوسط", "التعليم المتوسط"] };
-      } else if (nNorm === "lycee" || nNorm.includes("ثانوي")) {
-        where.niveau = { in: ["lycee", "الثانوي", "ثانوي", "التعليم الثانوي"] };
+    if (niveau && niveau.trim()) {
+      const n = niveau.trim();
+      if (n === "college" || n === "المتوسط" || n === "التعليم المتوسط") {
+        where.niveau = { in: ["college", "المتوسط", "التعليم المتوسط"] };
+      } else if (n === "lycee" || n === "الثانوي" || n === "التعليم الثانوي") {
+        where.niveau = { in: ["lycee", "الثانوي", "التعليم الثانوي"] };
       } else {
-        where.niveau = { equals: niveau, mode: "insensitive" };
+        where.niveau = n;
       }
     }
 
-    if (annee) {
-      const aNorm = annee.trim().toLowerCase();
-      const MAPPING_ANNEES = [
-        ["1am", "السنة الأولى متوسط", "6eme", "السنة 1 متوسط"],
-        ["2am", "السنة الثانية متوسط", "5eme", "السنة 2 متوسط"],
-        ["3am", "السنة الثالثة متوسط", "4eme", "السنة 3 متوسط"],
-        ["4am", "السنة الرابعة متوسط", "3eme", "السنة 4 متوسط"],
-        ["1as", "السنة الأولى ثانوي", "السنة 1 ثانوي"],
-        ["2as", "السنة الثانية ثانوي", "السنة 2 ثانوي"],
-        ["3as", "السنة الثالثة ثانوي", "terminale", "السنة الثالثة ثانوي (بكالوريا)", "السنة 3 ثانوي"]
-      ];
+    if (annee && annee.trim()) {
+      where.annee = annee.trim();
+    }
 
-      const matchGroup = MAPPING_ANNEES.find(group => group.some(item => item.toLowerCase() === aNorm));
-      if (matchGroup) {
-        where.annee = { in: matchGroup };
-      } else {
-        where.annee = { equals: annee, mode: "insensitive" };
+    if (matiere && matiere.trim()) {
+      where.matiere = matiere.trim();
+    }
+
+    if (search && search.trim()) {
+      const keywords = search.trim().split(/\s+/).filter(Boolean);
+      if (keywords.length > 0) {
+        where.AND = [
+          ...(where.AND || []),
+          ...keywords.map((kw) => ({
+            title: { contains: kw, mode: "insensitive" },
+          })),
+        ];
       }
     }
 
-    if (matiere) {
-      const mNorm = matiere.trim().toLowerCase();
-      const MAPPING_MATIERES = [
-        ["math", "الرياضيات", "رياضيات"],
-        ["physique", "الفيزياء والكيمياء", "الفيزياء", "فيزياء"],
-        ["svt", "علوم الحياة والأرض", "علوم الطبيعة والحياة", "العلوم"],
-        ["informatique", "الإعلام الآلي", "إعلام آلي"],
-        ["histoire", "التاريخ والجغرافيا", "تاريخ وجغرافيا"],
-        ["francais", "اللغة الفرنسية", "فرنسية"],
-        ["anglais", "اللغة الإنجليزية", "إنجليزية"],
-        ["arabe", "اللغة العربية", "عربية"],
-        ["philosophie", "الفلسفة", "فلسفة"],
-        ["education_islamique", "التربية الإسلامية", "إسلامية"],
-        ["allemand", "اللغة الألمانية", "ألمانية"],
-        ["italien", "اللغة الإيطالية", "إيطالية"]
-      ];
-
-      const matchGroup = MAPPING_MATIERES.find(group => group.some(item => item.toLowerCase() === mNorm));
-      if (matchGroup) {
-        where.matiere = { in: matchGroup };
-      } else {
-        where.matiere = { equals: matiere, mode: "insensitive" };
-      }
-    }
-
-    // ✅ Récupérer l'utilisateur connecté (optionnel, pour afficher le statut d'inscription)
-    const user = getUser(req);
-
-    // ✅ Construire le select dynamiquement selon si l'utilisateur est connecté
     const selectFields = {
       id: true,
       title: true,
@@ -95,6 +67,7 @@ export default async function handler(req, res) {
       niveau: true,
       annee: true,
       coverImage: true,
+      prix: true,
       chapters: { select: { id: true } },
       teachers: {
         select: {
@@ -105,7 +78,6 @@ export default async function handler(req, res) {
       },
     };
 
-    // ✅ Ajouter les inscriptions seulement si l'étudiant est connecté
     if (user) {
       selectFields.enrollments = {
         where: { studentId: user.id },
@@ -117,18 +89,42 @@ export default async function handler(req, res) {
       };
     }
 
-    const courses = await prisma.course.findMany({
+    const coursesRaw = await prisma.course.findMany({
       where,
       select: selectFields,
-      orderBy: { createdAt: "desc" },
+      orderBy: { createdAt: "asc" },
     });
 
-    console.log(
-      `📚 Cours trouvés: ${courses.length} (filtres: niveau=${niveau || "tous"}, annee=${annee || "toutes"}, matiere=${matiere || "toutes"})`
-    );
+    const seenFirst = new Set();
+    const parcoursPrices = {};
+    for (const c of coursesRaw) {
+      const key = `${c.matiere}-${c.niveau}-${c.annee}`;
+      if (!parcoursPrices[key]) parcoursPrices[key] = 0;
+      parcoursPrices[key] += c.prix || 0;
+    }
+
+    const courses = coursesRaw.map((course) => {
+      const key = `${course.matiere}-${course.niveau}-${course.annee}`;
+      let isFreeTrial = false;
+
+      if (!seenFirst.has(key)) {
+        seenFirst.add(key);
+        isFreeTrial = true;
+      }
+
+      return {
+        ...course,
+        teacher: course.teachers?.[0] || null,
+        isFreeTrial,
+        parcoursTotalPrice: parcoursPrices[key]
+      };
+    });
+
+    courses.reverse();
+
     return res.status(200).json(courses);
   } catch (error) {
     console.error("API COURS PUBLIC ERROR:", error);
-    return res.status(500).json({ error: "Erreur serveur" });
+    return res.status(500).json({ error: error.message });
   }
 }

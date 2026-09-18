@@ -10,7 +10,7 @@ export default function TeacherCourses() {
 
   useEffect(() => {
     const fetchCourses = async () => {
-      const res = await fetch("/api/courses");
+      const res = await fetch("/api/teacher/courses", { credentials: "include" });
       const data = await res.json();
       setCourses(data);
     };

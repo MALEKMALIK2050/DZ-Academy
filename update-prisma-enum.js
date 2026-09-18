@@ -4,7 +4,8 @@ const prisma = new PrismaClient();
 async function main() {
   console.log("Updating SupportType enum in DZAcademy database...");
   await prisma.$executeRawUnsafe(`ALTER TYPE "SupportType" ADD VALUE IF NOT EXISTS 'WORD';`);
-  console.log("✅ Successfully added 'WORD' to SupportType enum in DZAcademy database!");
+  await prisma.$executeRawUnsafe(`ALTER TYPE "SupportType" ADD VALUE IF NOT EXISTS 'QCM';`);
+  console.log("✅ Successfully added 'WORD' and 'QCM' to SupportType enum in DZAcademy database!");
 }
 
 main()

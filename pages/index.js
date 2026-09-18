@@ -177,7 +177,8 @@ export default function Home() {
         </div>
 
         <h1 className="hero-title-artistic">
-          📚 تعلّم بطريقة مختلفة
+          <span className="hero-book-icon" role="img" aria-label="كتب">📚</span>
+          <span className="hero-title-text">تعلّم بطريقة مختلفة</span>
         </h1>
 
         <div className="hero-subtitle-artistic">

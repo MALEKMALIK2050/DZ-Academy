@@ -1,6 +1,7 @@
 // components/SupportsList.jsx
 import { useState, useEffect } from "react";
 import YouTubePlayer from "./YouTubePlayer";
+import SupportQuestionCard from "./student/SupportQuestionCard";
 
 export default function SupportsList({ chapterId, isTeacher = false }) {
   const [supports, setSupports] = useState([]);
@@ -51,6 +52,16 @@ export default function SupportsList({ chapterId, isTeacher = false }) {
 
       <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
         {supports.map((support) => {
+          if (support.type === "QCM") {
+            return (
+              <SupportQuestionCard
+                key={support.id}
+                support={support}
+                isTeacher={isTeacher}
+              />
+            );
+          }
+
           const progress = support.videoProgress?.[0];
           const isExpanded = expandedSupports[support.id];
           const isVideo = support.type === "VIDEO";
@@ -228,6 +239,7 @@ function getTypeIcon(type) {
     ARTICULATE: "🎯",
     TEXTE: "📝",
     FORUM: "💬",
+    QCM: "🎯",
   };
   return icons[type] || "📎";
 }
@@ -242,6 +254,7 @@ function getTypeBg(type) {
     ARTICULATE: "#0d9488",
     TEXTE: "#0ea5e9",
     FORUM: "#8b5cf6",
+    QCM: "linear-gradient(135deg, #059669, #10b981)",
   };
   return colors[type] || "#475569";
 }

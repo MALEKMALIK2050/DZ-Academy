@@ -52,6 +52,7 @@ interface Enrollment {
     matiere?: string;
     niveau?: string;
     annee?: string;
+    prix?: number;
     chapters?: { id: number }[];
     teachers?: { id: number; nom: string; prenom: string }[];
   };
@@ -73,6 +74,7 @@ export default function MesCoursScreen() {
   const [uploading, setUploading] = useState(false);
 
   const fetchEnrollments = useCallback(async () => {
+    if (!token) return;
     try {
       setError(null);
       const res = await fetch(API_ENDPOINTS.studentCourses, {
@@ -287,6 +289,8 @@ export default function MesCoursScreen() {
                 annee={e.course.annee}
                 matiere={e.course.matiere}
                 teachers={e.course.teachers}
+                prix={e.course.prix}
+                isEnrolled={true}
               />
             ))
           )}

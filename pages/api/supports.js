@@ -49,7 +49,7 @@ export default async function handler(req, res) {
 
     // POST — Créer un support
     if (req.method === "POST") {
-      if (user.role !== "DESIGNER")
+      if (!["DESIGNER", "ADMIN", "TEACHER"].includes(user.role))
         return res.status(403).json({ error: "Accès refusé" });
 
       const { chapterId, type, nom, url, contenu, ordre } = req.body;
@@ -64,13 +64,19 @@ export default async function handler(req, res) {
         videoId = extractYouTubeId(url);
       }
 
+      // Pour le type QCM, le contenu contient le JSON de la question
+      let finalContenu = contenu;
+      if (type === "QCM" && typeof contenu === "object") {
+        finalContenu = JSON.stringify(contenu);
+      }
+
       const support = await prisma.support.create({
         data: {
           chapterId: parseInt(chapterId),
           type,
           nom,
           url,
-          contenu,
+          contenu: finalContenu,
           videoId,
           ordre: ordre || 0,
         },
@@ -81,7 +87,7 @@ export default async function handler(req, res) {
 
     // PUT — Modifier ou réordonner un support
     if (req.method === "PUT") {
-      if (user.role !== "DESIGNER")
+      if (!["DESIGNER", "ADMIN", "TEACHER"].includes(user.role))
         return res.status(403).json({ error: "Accès refusé" });
 
       const { supportId, nom, url, contenu, ordre, type } = req.body;
@@ -91,9 +97,11 @@ export default async function handler(req, res) {
       }
 
       const updateData = {};
-      if (nom) updateData.nom = nom;
-      if (url) updateData.url = url;
-      if (contenu) updateData.contenu = contenu;
+      if (nom !== undefined) updateData.nom = nom;
+      if (url !== undefined) updateData.url = url;
+      if (contenu !== undefined) {
+        updateData.contenu = (typeof contenu === "object" && contenu !== null) ? JSON.stringify(contenu) : contenu;
+      }
       if (ordre !== undefined) updateData.ordre = ordre;
 
       // Extraire videoId si URL change
@@ -111,7 +119,7 @@ export default async function handler(req, res) {
 
     // DELETE — Supprimer un support
     if (req.method === "DELETE") {
-      if (user.role !== "DESIGNER")
+      if (!["DESIGNER", "ADMIN", "TEACHER"].includes(user.role))
         return res.status(403).json({ error: "Accès refusé" });
 
       const { supportId } = req.body;

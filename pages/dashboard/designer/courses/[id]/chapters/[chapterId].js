@@ -28,10 +28,21 @@ export default function ManageChapter() {
   const [supportFile, setSupportFile] = useState(null);
   const [fileUploadMode, setFileUploadMode] = useState(false); // false = URL mode, true = file upload mode
 
+  // Question formative intégrée dans un support (تقييم ذاتي)
+  const [supportQuestionType, setSupportQuestionType] = useState("QCM");
+  const emptySupportQuestion = {
+    texte: "", choix: ["", "", "", ""], reponse: "", points: 1, explication: "",
+    texteTrous: "", paires: [{ gauche: "", droite: "" }, { gauche: "", droite: "" }],
+    elements: ["", "", "", ""], reponsesMultiples: [],
+  };
+  const [supportQuestion, setSupportQuestion] = useState(emptySupportQuestion);
+
   // Devoirs
-  const [devoirs,      setDevoirs]      = useState([]);
-  const [addingDevoir, setAddingDevoir] = useState(false);
-  const [newDevoir,    setNewDevoir]    = useState({ titre: "", consigne: "", dateLimit: "" });
+  const [devoirs,       setDevoirs]       = useState([]);
+  const [addingDevoir,  setAddingDevoir]  = useState(false);
+  const [newDevoir,     setNewDevoir]     = useState({ titre: "", consigne: "", dateLimit: "" });
+  const [editingDevoir, setEditingDevoir] = useState(null);
+  const [editDevoir,    setEditDevoir]    = useState({ titre: "", consigne: "", dateLimit: "" });
 
   // Quiz
   const [questions,     setQuestions]     = useState([]);
@@ -173,6 +184,103 @@ const handleAddSupportWithFile = async () => {
 
 
 const handleAddSupport = async () => {
+  // ── معالجة خاصة بالأسئلة التفاعلية (QCM) ──
+  if (newSupport.type === "QCM") {
+    let payload = {
+      questionType: supportQuestionType,
+      texte: supportQuestionType === "GAP" ? supportQuestion.texteTrous : supportQuestion.texte,
+      points: supportQuestion.points || 1,
+      explication: supportQuestion.explication || "",
+    };
+
+    switch (supportQuestionType) {
+      case "QCM": {
+        const choix = supportQuestion.choix.filter((c) => c.trim());
+        if (!supportQuestion.texte || choix.length < 2 || !supportQuestion.reponse)
+          return setError("نص السؤال، وخيارين على الأقل والإجابة الصحيحة إلزامية");
+        payload.choix = choix;
+        payload.reponse = supportQuestion.reponse;
+        break;
+      }
+      case "QCM_MULTIPLE": {
+        const choix = supportQuestion.choix.filter((c) => c.trim());
+        const bonnes = supportQuestion.reponsesMultiples.filter((r) => r.trim());
+        if (!supportQuestion.texte || choix.length < 2 || bonnes.length < 1)
+          return setError("خيارين على الأقل وإجابة صحيحة واحدة إلزامية");
+        payload.choix = choix;
+        payload.reponse = JSON.stringify(bonnes);
+        break;
+      }
+      case "VRAI_FAUX": {
+        if (!supportQuestion.texte || !supportQuestion.reponse)
+          return setError("نص العبارة وتحديد الإجابة (صحيح/خطأ) إلزامي");
+        payload.choix = ["صحيح", "خطأ"];
+        payload.reponse = supportQuestion.reponse;
+        break;
+      }
+      case "OUVERTE": {
+        if (!supportQuestion.texte || !supportQuestion.reponse)
+          return setError("نص السؤال والإجابة النموذجية المرجعية إلزامية");
+        payload.choix = [];
+        payload.reponse = supportQuestion.reponse;
+        break;
+      }
+      case "GAP": {
+        if (!supportQuestion.texteTrous) return setError("النص بالفراغات إلزامي");
+        const trous = (supportQuestion.texteTrous.match(/\[(?:trou|فراغ)\]/gi) || []).length;
+        if (trous === 0) return setError("أضف فراغاً واحداً على الأقل باستخدام [trou] أو [فراغ]");
+        payload.texte = supportQuestion.texteTrous;
+        payload.choix = [];
+        payload.reponse = JSON.stringify(supportQuestion.reponse.split(",").map((r) => r.trim()));
+        break;
+      }
+      case "MATCHING": {
+        const paires = supportQuestion.paires.filter((p) => p.gauche.trim() && p.droite.trim());
+        if (!supportQuestion.texte || paires.length < 2) return setError("زوجين على الأقل إلزاميان");
+        payload.choix = paires.map((p) => p.gauche);
+        payload.reponse = JSON.stringify(paires.reduce((acc, p) => ({ ...acc, [p.gauche]: p.droite }), {}));
+        break;
+      }
+      case "ORDERING": {
+        const elements = supportQuestion.elements.filter((e) => e.trim());
+        if (!supportQuestion.texte || elements.length < 2) return setError("عنصرين على الأقل إلزاميان للترتيب");
+        payload.choix = [...elements].sort(() => Math.random() - 0.5);
+        payload.reponse = JSON.stringify(elements);
+        break;
+      }
+      default:
+        return setError("نوع السؤال غير صالح");
+    }
+
+    try {
+      const res = await fetch("/api/supports", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          chapterId,
+          type: "QCM",
+          nom: newSupport.nom || `سؤال : ${payload.texte.slice(0, 45)}`,
+          contenu: JSON.stringify(payload),
+        }),
+      });
+
+      const data = await res.json();
+      if (res.ok) {
+        setSuccess("✅ تم إضافة السؤال التفاعلي إلى الملحقات بنجاح !");
+        setNewSupport({ type: "PDF", url: "", nom: "", contenu: "" });
+        setSupportQuestion(emptySupportQuestion);
+        setAddingSupport(false);
+        fetchChapter();
+      } else {
+        setError(data.error || "خطأ في إضافة السؤال");
+      }
+    } catch {
+      setError("خطأ في الخادم");
+    }
+    return;
+  }
+
   if (!newSupport.nom) return setError("اسم الملحق إلزامي");
 
   // Validation spécifique selon le type
@@ -181,7 +289,7 @@ const handleAddSupport = async () => {
   } else if (fileUploadMode && isFileUploadType(newSupport.type)) {
     // Handled by handleAddSupportWithFile
     return handleAddSupportWithFile();
-  } else if (newSupport.type !== "TEXTE" && newSupport.type !== "FORUM" && !newSupport.url) {
+  } else if (newSupport.type !== "TEXTE" && newSupport.type !== "FORUM" && newSupport.type !== "QCM" && !newSupport.url) {
     return setError("الرابط (URL) إلزامي");
   }
   if ((newSupport.type === "TEXTE" || newSupport.type === "FORUM") && !newSupport.contenu) return setError("المحتوى إلزامي");
@@ -362,6 +470,38 @@ const handleAddSupport = async () => {
     } catch {}
   };
 
+  const handleUpdateDevoir = async () => {
+    if (!editDevoir.titre || !editDevoir.consigne || !editDevoir.dateLimit)
+      return setError("العنوان والتعليمات وتاريخ الاستحقاق كلها حقول إلزامية");
+    setError(""); setSuccess("");
+
+    try {
+      const res = await fetch("/api/devoirs", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          id: editingDevoir,
+          titre: editDevoir.titre,
+          consigne: editDevoir.consigne,
+          dateLimit: editDevoir.dateLimit,
+        }),
+      });
+
+      if (res.ok) {
+        setSuccess("✅ تم تعديل الواجب بنجاح !");
+        setEditingDevoir(null);
+        setEditDevoir({ titre: "", consigne: "", dateLimit: "" });
+        fetchChapter();
+      } else {
+        const d = await res.json();
+        setError(d.error || "خطأ أثناء تعديل الواجب");
+      }
+    } catch {
+      setError("خطأ في الخادم");
+    }
+  };
+
   // ── Quiz ─────────────────────────────────────────────────
   const resetQuestion = () => { setNewQuestion(emptyQuestion); setQuestionType("QCM"); };
 
@@ -533,7 +673,7 @@ const handleAddSupport = async () => {
                     <label style={labelStyle}>الاسم المعروض</label>
                     <input value={editSupport.nom} onChange={(e) => setEditSupport({ ...editSupport, nom: e.target.value })} style={inputStyle} />
 
-                    {s.type !== "TEXTE" && s.type !== "FORUM" && (
+                    {s.type !== "TEXTE" && s.type !== "FORUM" && s.type !== "QCM" && (
                       <>
                         <label style={{ ...labelStyle, marginTop: "0.75rem" }}>URL</label>
                         <input value={editSupport.url} onChange={(e) => setEditSupport({ ...editSupport, url: e.target.value })} style={inputStyle} />
@@ -562,10 +702,10 @@ const handleAddSupport = async () => {
                   <div style={{ background: "#f8fafc", padding: "1rem", borderRadius: "12px", marginBottom: "0.75rem", display: "flex", justifyContent: "space-between", alignItems: "center", border: "1px solid #e2e8f0" }}>
                     <div style={{ flex: 1 }}>
                       <span style={{ background: typeColor(s.type), color: "white", padding: "0.2rem 0.6rem", borderRadius: "20px", fontSize: "0.8rem", marginLeft: "0.5rem" }}>
-                        {s.type}
+                        {s.type === "QCM" ? "سؤال تفاعلي" : s.type}
                       </span>
                       <strong>{s.nom || s.url || "نص"}</strong>
-                      {s.url && s.type !== "TEXTE" && !isScormType(s.type) && (
+                      {s.url && s.type !== "TEXTE" && !isScormType(s.type) && s.type !== "QCM" && (
                         <div style={{ fontSize: "0.8rem", color: "#64748b", marginTop: "0.25rem" }}>
                           <a href={s.url} target="_blank" rel="noreferrer" style={{ color: "#1e40af" }}>{s.url}</a>
                         </div>
@@ -593,6 +733,73 @@ const handleAddSupport = async () => {
                           {s.contenu && <div style={{ fontSize: "0.8rem", color: "#0c4a6e", fontStyle: "italic" }} className="rich-text-content" dangerouslySetInnerHTML={{ __html: s.contenu }} />}
                         </div>
                       )}
+                      {s.type === "QCM" && (() => {
+                        let q = null;
+                        try { q = typeof s.contenu === "string" ? JSON.parse(s.contenu) : s.contenu; } catch(_) {}
+                        return (
+                          <div style={{ marginRight: "0.5rem", marginTop: "0.5rem", padding: "0.85rem", background: "#f0fdf4", borderRadius: "10px", border: "1px solid #bbf7d0" }}>
+                            <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "0.4rem" }}>
+                              <span style={{ background: "#059669", color: "white", padding: "0.15rem 0.55rem", borderRadius: "12px", fontSize: "0.75rem", fontWeight: "bold" }}>
+                                🎯 {q?.questionType || "QCM"}
+                              </span>
+                              <span style={{ fontSize: "0.8rem", color: "#047857", fontWeight: "700" }}>
+                                +{q?.points || 1} { (q?.points || 1) > 2 ? "نقاط" : "نقطة" }
+                              </span>
+                            </div>
+                            <div style={{ fontWeight: "700", color: "#1e293b", fontSize: "0.95rem", marginBottom: "0.4rem" }}>
+                              {q?.texte}
+                            </div>
+                            {(q?.questionType === "QCM" || q?.questionType === "VRAI_FAUX") && Array.isArray(q?.choix) && (
+                              <ul style={{ margin: "0.3rem 1rem 0 0", padding: 0, fontSize: "0.85rem", color: "#475569" }}>
+                                {q.choix.map((c, i) => (
+                                  <li key={i} style={{ color: c === q.reponse ? "#059669" : "#475569", fontWeight: c === q.reponse ? "bold" : "normal" }}>
+                                    {c === q.reponse ? "✅ " : "○ "}{c}
+                                  </li>
+                                ))}
+                              </ul>
+                            )}
+                            {q?.questionType === "QCM_MULTIPLE" && Array.isArray(q?.choix) && (
+                              <ul style={{ margin: "0.3rem 1rem 0 0", padding: 0, fontSize: "0.85rem", color: "#475569" }}>
+                                {q.choix.map((c, i) => {
+                                  let bonnes = [];
+                                  try { bonnes = Array.isArray(q.reponse) ? q.reponse : JSON.parse(q.reponse || "[]"); } catch(_) {}
+                                  const isB = bonnes.includes(c);
+                                  return (
+                                    <li key={i} style={{ color: isB ? "#059669" : "#475569", fontWeight: isB ? "bold" : "normal" }}>
+                                      {isB ? "✅ " : "☐ "}{c}
+                                    </li>
+                                  );
+                                })}
+                              </ul>
+                            )}
+                            {q?.questionType === "OUVERTE" && (
+                              <div style={{ fontSize: "0.85rem", color: "#4b5563", fontStyle: "italic", marginTop: "0.3rem" }}>
+                                💡 الإجابة النموذجية المرجعية : <strong>{q.reponse}</strong>
+                              </div>
+                            )}
+                            {q?.questionType === "GAP" && (
+                              <div style={{ fontSize: "0.85rem", color: "#4b5563", marginTop: "0.3rem" }}>
+                                🔤 الإجابات المتوقعة : <strong>{Array.isArray(q.reponse) ? q.reponse.join(" ، ") : q.reponse}</strong>
+                              </div>
+                            )}
+                            {q?.questionType === "MATCHING" && (
+                              <div style={{ fontSize: "0.85rem", color: "#4b5563", marginTop: "0.3rem" }}>
+                                🔗 أزواج الربط : {Object.entries(typeof q.reponse === "object" ? q.reponse : JSON.parse(q.reponse || "{}")).map(([g, d]) => `${g} ⟵ ${d}`).join(" | ")}
+                              </div>
+                            )}
+                            {q?.questionType === "ORDERING" && (
+                              <div style={{ fontSize: "0.85rem", color: "#4b5563", marginTop: "0.3rem" }}>
+                                🔢 الترتيب الصحيح : {(Array.isArray(q.reponse) ? q.reponse : JSON.parse(q.reponse || "[]")).join(" ⟵ ")}
+                              </div>
+                            )}
+                            {q?.explication && (
+                              <div style={{ fontSize: "0.8rem", color: "#6d28d9", fontStyle: "italic", marginTop: "0.4rem" }}>
+                                📖 الشرح البيداغوجي : {q.explication}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })()}
                     </div>
                     
                     <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
@@ -643,19 +850,340 @@ const handleAddSupport = async () => {
                   style={inputStyle}
                   disabled={uploading}
                 >
-                  {["PDF", "VIDEO", "IMAGE", "PPT", "WORD", "SCORM", "ARTICULATE", "TEXTE", "FORUM"].map((t) => (
-                    <option key={t} value={t}>{t}</option>
+                  {["PDF", "VIDEO", "IMAGE", "PPT", "WORD", "SCORM", "ARTICULATE", "TEXTE", "FORUM", "QCM"].map((t) => (
+                    <option key={t} value={t}>{t === "QCM" ? "🎯 سؤال تفاعلي (تقييم ذاتي)" : t}</option>
                   ))}
                 </select>
 
-                <label style={{ ...labelStyle, marginTop: "0.75rem" }}>الاسم المعروض *</label>
+                <label style={{ ...labelStyle, marginTop: "0.75rem" }}>
+                  {newSupport.type === "QCM" ? "عنوان السؤال (اختياري)" : "الاسم المعروض *"}
+                </label>
                 <input
-                  placeholder="مثال: ملحق الفصل الأول"
+                  placeholder={newSupport.type === "QCM" ? "مثال: سؤال تقييمي للفصل الأول (أو اتركه فارغاً)" : "مثال: ملحق الفصل الأول"}
                   value={newSupport.nom}
                   onChange={(e) => setNewSupport({ ...newSupport, nom: e.target.value })}
                   style={inputStyle}
                   disabled={uploading}
                 />
+
+                {/* ── إعداد السؤال التفاعلي (QCM) في الملحق ── */}
+                {newSupport.type === "QCM" && (
+                  <div style={{ marginTop: "1rem", padding: "1.25rem", background: "white", borderRadius: "12px", border: "1px solid #a7f3d0", boxShadow: "0 2px 8px rgba(5, 150, 105, 0.08)" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "1rem" }}>
+                      <span style={{ fontSize: "1.3rem" }}>🎯</span>
+                      <h4 style={{ margin: 0, color: "#065f46", fontSize: "1.1rem" }}>إعداد السؤال التفاعلي (تقييم ذاتي)</h4>
+                    </div>
+
+                    <label style={labelStyle}>نوع السؤال</label>
+                    <select
+                      value={supportQuestionType}
+                      onChange={(e) => {
+                        setSupportQuestionType(e.target.value);
+                        setSupportQuestion({
+                          ...emptySupportQuestion,
+                          points: supportQuestion.points,
+                          explication: supportQuestion.explication,
+                        });
+                      }}
+                      style={inputStyle}
+                    >
+                      <option value="QCM">اختيار من متعدد — إجابة واحدة صحيحة</option>
+                      <option value="QCM_MULTIPLE">اختيار متعدد — إجابات صحيحة متعددة</option>
+                      <option value="VRAI_FAUX">صحيح / خطأ</option>
+                      <option value="OUVERTE">سؤال مفتوح (مع إجابة نموذجية)</option>
+                      <option value="GAP">ملء الفراغات (Fill the gap)</option>
+                      <option value="MATCHING">ربط ومطابقة (Matching)</option>
+                      <option value="ORDERING">ترتيب تسلسلي (Ordering)</option>
+                    </select>
+
+                    <div style={{ display: "flex", gap: "1rem", marginTop: "0.75rem", alignItems: "center" }}>
+                      <div>
+                        <label style={labelStyle}>النقاط الممنوحة</label>
+                        <input
+                          type="number"
+                          min="1"
+                          max="20"
+                          value={supportQuestion.points}
+                          onChange={(e) => setSupportQuestion({ ...supportQuestion, points: parseInt(e.target.value) || 1 })}
+                          style={{ ...inputStyle, width: "90px", textAlign: "center" }}
+                        />
+                      </div>
+                    </div>
+
+                    {/* 1. QCM إجابة واحدة */}
+                    {supportQuestionType === "QCM" && (
+                      <div style={{ marginTop: "0.75rem" }}>
+                        <label style={labelStyle}>نص السؤال *</label>
+                        <input
+                          placeholder="نص السؤال..."
+                          value={supportQuestion.texte}
+                          onChange={(e) => setSupportQuestion({ ...supportQuestion, texte: e.target.value })}
+                          style={inputStyle}
+                        />
+                        <label style={{ ...labelStyle, marginTop: "0.75rem" }}>خيارات الإجابة *</label>
+                        {supportQuestion.choix.map((c, i) => (
+                          <input
+                            key={i}
+                            placeholder={`خيار ${i + 1}`}
+                            value={c}
+                            onChange={(e) => {
+                              const choix = [...supportQuestion.choix];
+                              choix[i] = e.target.value;
+                              setSupportQuestion({ ...supportQuestion, choix });
+                            }}
+                            style={{ ...inputStyle, marginBottom: "0.5rem" }}
+                          />
+                        ))}
+                        <div style={{ display: "flex", gap: "0.5rem", marginBottom: "0.75rem" }}>
+                          <button
+                            type="button"
+                            onClick={() => setSupportQuestion({ ...supportQuestion, choix: [...supportQuestion.choix, ""] })}
+                            style={{ ...btnSmall, background: "#059669" }}
+                          >
+                            ➕ إضافة خيار
+                          </button>
+                          {supportQuestion.choix.length > 2 && (
+                            <button
+                              type="button"
+                              onClick={() => setSupportQuestion({ ...supportQuestion, choix: supportQuestion.choix.slice(0, -1) })}
+                              style={{ ...btnSmall, background: "#ef4444" }}
+                            >
+                              ✕ إزالة الخيار الأخير
+                            </button>
+                          )}
+                        </div>
+                        <label style={{ ...labelStyle, marginTop: "0.75rem" }}>الإجابة الصحيحة *</label>
+                        <select
+                          value={supportQuestion.reponse}
+                          onChange={(e) => setSupportQuestion({ ...supportQuestion, reponse: e.target.value })}
+                          style={inputStyle}
+                        >
+                          <option value="">اختر الإجابة الصحيحة</option>
+                          {supportQuestion.choix.filter((c) => c.trim()).map((c, i) => (
+                            <option key={i} value={c}>{c}</option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
+
+                    {/* 2. QCM إجابات متعددة */}
+                    {supportQuestionType === "QCM_MULTIPLE" && (
+                      <div style={{ marginTop: "0.75rem" }}>
+                        <label style={labelStyle}>نص السؤال *</label>
+                        <input
+                          placeholder="نص السؤال..."
+                          value={supportQuestion.texte}
+                          onChange={(e) => setSupportQuestion({ ...supportQuestion, texte: e.target.value })}
+                          style={inputStyle}
+                        />
+                        <label style={{ ...labelStyle, marginTop: "0.75rem" }}>الخيارات (حدد الخيارات الصحيحة) *</label>
+                        {supportQuestion.choix.map((c, i) => (
+                          <div key={i} style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.5rem" }}>
+                            <input
+                              type="checkbox"
+                              checked={supportQuestion.reponsesMultiples.includes(c)}
+                              onChange={(e) => {
+                                const rep = [...supportQuestion.reponsesMultiples];
+                                if (e.target.checked) rep.push(c);
+                                else rep.splice(rep.indexOf(c), 1);
+                                setSupportQuestion({ ...supportQuestion, reponsesMultiples: rep });
+                              }}
+                            />
+                            <input
+                              placeholder={`خيار ${i + 1}`}
+                              value={c}
+                              onChange={(e) => {
+                                const choix = [...supportQuestion.choix];
+                                choix[i] = e.target.value;
+                                setSupportQuestion({ ...supportQuestion, choix });
+                              }}
+                              style={inputStyle}
+                            />
+                          </div>
+                        ))}
+                        <div style={{ display: "flex", gap: "0.5rem", marginBottom: "0.75rem" }}>
+                          <button
+                            type="button"
+                            onClick={() => setSupportQuestion({ ...supportQuestion, choix: [...supportQuestion.choix, ""] })}
+                            style={{ ...btnSmall, background: "#059669" }}
+                          >
+                            ➕ إضافة خيار
+                          </button>
+                          {supportQuestion.choix.length > 2 && (
+                            <button
+                              type="button"
+                              onClick={() => setSupportQuestion({ ...supportQuestion, choix: supportQuestion.choix.slice(0, -1) })}
+                              style={{ ...btnSmall, background: "#ef4444" }}
+                            >
+                              ✕ إزالة الخيار الأخير
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* 3. صحيح / خطأ */}
+                    {supportQuestionType === "VRAI_FAUX" && (
+                      <div style={{ marginTop: "0.75rem" }}>
+                        <label style={labelStyle}>نص العبارة *</label>
+                        <input
+                          placeholder="العبارة..."
+                          value={supportQuestion.texte}
+                          onChange={(e) => setSupportQuestion({ ...supportQuestion, texte: e.target.value })}
+                          style={inputStyle}
+                        />
+                        <label style={{ ...labelStyle, marginTop: "0.75rem" }}>الإجابة الصحيحة *</label>
+                        <div style={{ display: "flex", gap: "1.5rem", marginTop: "0.5rem" }}>
+                          {["صحيح", "خطأ"].map((v) => (
+                            <label key={v} style={{ display: "flex", alignItems: "center", gap: "0.5rem", cursor: "pointer", fontWeight: "600" }}>
+                              <input
+                                type="radio"
+                                name="support_vf"
+                                value={v}
+                                checked={supportQuestion.reponse === v}
+                                onChange={(e) => setSupportQuestion({ ...supportQuestion, reponse: e.target.value })}
+                              />
+                              {v === "صحيح" ? "✅ صحيح" : "❌ خطأ"}
+                            </label>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* 4. سؤال مفتوح */}
+                    {supportQuestionType === "OUVERTE" && (
+                      <div style={{ marginTop: "0.75rem" }}>
+                        <label style={labelStyle}>نص السؤال *</label>
+                        <textarea
+                          placeholder="نص السؤال..."
+                          value={supportQuestion.texte}
+                          onChange={(e) => setSupportQuestion({ ...supportQuestion, texte: e.target.value })}
+                          style={{ ...inputStyle, height: "80px", resize: "vertical" }}
+                        />
+                        <label style={{ ...labelStyle, marginTop: "0.75rem" }}>الإجابة النموذجية المرجعية *</label>
+                        <textarea
+                          placeholder="الإجابة المتوقعة التي تظهر كمرجع للطالب بعد الإجابة..."
+                          value={supportQuestion.reponse}
+                          onChange={(e) => setSupportQuestion({ ...supportQuestion, reponse: e.target.value })}
+                          style={{ ...inputStyle, height: "80px", resize: "vertical" }}
+                        />
+                      </div>
+                    )}
+
+                    {/* 5. ملء الفراغات */}
+                    {supportQuestionType === "GAP" && (
+                      <div style={{ marginTop: "0.75rem" }}>
+                        <label style={labelStyle}>نص الفراغات * — استخدم [trou] أو [فراغ]</label>
+                        <textarea
+                          placeholder="مثال: عاصمة [فراغ] هي مدينة [فراغ]."
+                          value={supportQuestion.texteTrous}
+                          onChange={(e) => setSupportQuestion({ ...supportQuestion, texteTrous: e.target.value })}
+                          style={{ ...inputStyle, height: "100px", resize: "vertical" }}
+                        />
+                        <label style={{ ...labelStyle, marginTop: "0.75rem" }}>الإجابات المتوقعة مفصولة بفواصل *</label>
+                        <input
+                          placeholder="مثال: الجزائر، الجزائر العاصمة"
+                          value={supportQuestion.reponse}
+                          onChange={(e) => setSupportQuestion({ ...supportQuestion, reponse: e.target.value })}
+                          style={inputStyle}
+                        />
+                      </div>
+                    )}
+
+                    {/* 6. ربط ومطابقة */}
+                    {supportQuestionType === "MATCHING" && (
+                      <div style={{ marginTop: "0.75rem" }}>
+                        <label style={labelStyle}>التعليمات / نص السؤال *</label>
+                        <input
+                          placeholder="اربط كل عنصر بما يطابقه..."
+                          value={supportQuestion.texte}
+                          onChange={(e) => setSupportQuestion({ ...supportQuestion, texte: e.target.value })}
+                          style={inputStyle}
+                        />
+                        <label style={{ ...labelStyle, marginTop: "0.75rem" }}>أزواج الربط *</label>
+                        {supportQuestion.paires.map((p, i) => (
+                          <div key={i} style={{ display: "grid", gridTemplateColumns: "1fr auto 1fr", gap: "0.5rem", marginBottom: "0.5rem" }}>
+                            <input
+                              placeholder={`العنصر ${i + 1}`}
+                              value={p.gauche}
+                              onChange={(e) => {
+                                const paires = [...supportQuestion.paires];
+                                paires[i] = { ...paires[i], gauche: e.target.value };
+                                setSupportQuestion({ ...supportQuestion, paires });
+                              }}
+                              style={inputStyle}
+                            />
+                            <span style={{ textAlign: "center", lineHeight: "2.5", fontWeight: "bold" }}>⟵</span>
+                            <input
+                              placeholder={`المطابق ${i + 1}`}
+                              value={p.droite}
+                              onChange={(e) => {
+                                const paires = [...supportQuestion.paires];
+                                paires[i] = { ...paires[i], droite: e.target.value };
+                                setSupportQuestion({ ...supportQuestion, paires });
+                              }}
+                              style={inputStyle}
+                            />
+                          </div>
+                        ))}
+                        <button
+                          type="button"
+                          onClick={() => setSupportQuestion({ ...supportQuestion, paires: [...supportQuestion.paires, { gauche: "", droite: "" }] })}
+                          style={{ ...btnSmall, background: "#059669", marginTop: "0.5rem" }}
+                        >
+                          ➕ إضافة زوج
+                        </button>
+                      </div>
+                    )}
+
+                    {/* 7. ترتيب تسلسلي */}
+                    {supportQuestionType === "ORDERING" && (
+                      <div style={{ marginTop: "0.75rem" }}>
+                        <label style={labelStyle}>التعليمات / نص السؤال *</label>
+                        <input
+                          placeholder="رتب العناصر بالترتيب الصحيح..."
+                          value={supportQuestion.texte}
+                          onChange={(e) => setSupportQuestion({ ...supportQuestion, texte: e.target.value })}
+                          style={inputStyle}
+                        />
+                        <label style={{ ...labelStyle, marginTop: "0.75rem" }}>العناصر بالترتيب المنطقي / الزمني الصحيح *</label>
+                        {supportQuestion.elements.map((el, i) => (
+                          <div key={i} style={{ display: "flex", gap: "0.5rem", marginBottom: "0.5rem", alignItems: "center" }}>
+                            <span style={{ color: "#475569", minWidth: "24px", fontWeight: "bold" }}>{i + 1}.</span>
+                            <input
+                              placeholder={`الخطوة ${i + 1}`}
+                              value={el}
+                              onChange={(ev) => {
+                                const elements = [...supportQuestion.elements];
+                                elements[i] = ev.target.value;
+                                setSupportQuestion({ ...supportQuestion, elements });
+                              }}
+                              style={inputStyle}
+                            />
+                          </div>
+                        ))}
+                        <button
+                          type="button"
+                          onClick={() => setSupportQuestion({ ...supportQuestion, elements: [...supportQuestion.elements, ""] })}
+                          style={{ ...btnSmall, background: "#059669", marginTop: "0.5rem" }}
+                        >
+                          ➕ إضافة عنصر
+                        </button>
+                      </div>
+                    )}
+
+                    {/* الشرح البيداغوجي */}
+                    <div style={{ marginTop: "1rem", paddingTop: "1rem", borderTop: "1px dashed #e2e8f0" }}>
+                      <label style={labelStyle}>📖 الشرح والتفسير البيداغوجي (يُعرض للطالب بعد التحقق من الإجابة)</label>
+                      <textarea
+                        placeholder="اختياري : وضح للطالب سبب صحة الإجابة أو قدم نصيحة تعليمية..."
+                        value={supportQuestion.explication}
+                        onChange={(e) => setSupportQuestion({ ...supportQuestion, explication: e.target.value })}
+                        style={{ ...inputStyle, height: "65px", resize: "vertical" }}
+                      />
+                    </div>
+                  </div>
+                )}
 
                 {/* ── SCORM / ARTICULATE : Upload ZIP ── */}
                 {isScormType(newSupport.type) && (
@@ -899,7 +1427,7 @@ const handleAddSupport = async () => {
                 )}
 
                 {/* ── الأنواع الأخرى : URL فقط ── */}
-                {!isScormType(newSupport.type) && !isFileUploadType(newSupport.type) && newSupport.type !== "TEXTE" && newSupport.type !== "FORUM" && (
+                {!isScormType(newSupport.type) && !isFileUploadType(newSupport.type) && newSupport.type !== "TEXTE" && newSupport.type !== "FORUM" && newSupport.type !== "QCM" && (
                   <>
                     <label style={{ ...labelStyle, marginTop: "0.75rem" }}>الرابط (URL) *</label>
                     <input
@@ -928,9 +1456,10 @@ const handleAddSupport = async () => {
                     {uploading ? "⏳ جاري الرفع..."
                       : isScormType(newSupport.type) ? "📦 استيراد الحزمة"
                       : (fileUploadMode && isFileUploadType(newSupport.type)) ? "📁 رفع الملف"
+                      : newSupport.type === "QCM" ? "🎯 إضافة السؤال إلى الملحقات"
                       : "✅ إضافة"}
                   </button>
-                  <button onClick={() => { setAddingSupport(false); setNewSupport({ type: "PDF", url: "", nom: "", contenu: "" }); setScormFile(null); setSupportFile(null); setFileUploadMode(false); setUploadProgress(0); }} disabled={uploading} style={{ ...btnWarning, opacity: uploading ? 0.6 : 1 }}>إلغاء</button>
+                  <button onClick={() => { setAddingSupport(false); setNewSupport({ type: "PDF", url: "", nom: "", contenu: "" }); setScormFile(null); setSupportFile(null); setFileUploadMode(false); setUploadProgress(0); setSupportQuestion(emptySupportQuestion); }} disabled={uploading} style={{ ...btnWarning, opacity: uploading ? 0.6 : 1 }}>إلغاء</button>
                 </div>
               </div>
             ) : (
@@ -952,7 +1481,40 @@ const handleAddSupport = async () => {
               const deadline = new Date(d.dateLimit);
               const depasse  = new Date() > deadline;
               const nbRendus = d.rendus?.length || 0;
-              return (
+              return editingDevoir === d.id ? (
+                // ── وضع تعديل الواجب ──
+                <div key={d.id} style={{ background: "#f0fdf4", padding: "1.25rem", borderRadius: "12px", marginBottom: "1rem", border: "1.5px solid #86efac" }}>
+                  <h4 style={{ margin: "0 0 1rem", color: "#166534" }}>✏️ تعديل الواجب — {d.titre}</h4>
+
+                  <label style={labelStyle}>العنوان *</label>
+                  <input
+                    placeholder="مثال: بحث حول التحويلات الهندسية"
+                    value={editDevoir.titre}
+                    onChange={(e) => setEditDevoir({ ...editDevoir, titre: e.target.value })}
+                    style={inputStyle}
+                  />
+
+                  <label style={{ ...labelStyle, marginTop: "0.75rem" }}>الموعد النهائي * (يُغلق عند 00:00)</label>
+                  <input
+                    type="date"
+                    value={editDevoir.dateLimit}
+                    onChange={(e) => setEditDevoir({ ...editDevoir, dateLimit: e.target.value })}
+                    style={{ ...inputStyle, width: "220px", textAlign: "right", direction: "rtl" }}
+                  />
+
+                  <label style={{ ...labelStyle, marginTop: "0.75rem" }}>التعليمات * (قم بتفصيل العمل المطلوب)</label>
+                  <RichEditor
+                    value={editDevoir.consigne}
+                    onChange={(html) => setEditDevoir({ ...editDevoir, consigne: html })}
+                  />
+
+                  <div style={{ display: "flex", gap: "0.5rem", marginTop: "1rem" }}>
+                    <button onClick={handleUpdateDevoir} style={btnSuccess}>💾 حفظ التعديلات</button>
+                    <button onClick={() => setEditingDevoir(null)} style={btnWarning}>إلغاء</button>
+                  </div>
+                </div>
+              ) : (
+                // ── وضع عرض الواجب ──
                 <div key={d.id} style={{ background: "#f8fafc", padding: "1.25rem", borderRadius: "12px", marginBottom: "1rem", border: "1px solid #e2e8f0" }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
                     <div>
@@ -962,7 +1524,31 @@ const handleAddSupport = async () => {
                       </div>
                       <div style={{ fontSize: "0.85rem", color: "#64748b" }}>{nbRendus} تسليم(ات)</div>
                     </div>
-                    <button onClick={() => handleDeleteDevoir(d.id)} style={btnDanger}>🗑</button>
+                    <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
+                      <button
+                        onClick={() => {
+                          setEditingDevoir(d.id);
+                          const dateFormatted = d.dateLimit ? new Date(d.dateLimit).toISOString().split("T")[0] : "";
+                          setEditDevoir({
+                            titre: d.titre || "",
+                            consigne: d.consigne || "",
+                            dateLimit: dateFormatted,
+                          });
+                        }}
+                        style={{
+                          ...btnSuccess,
+                          padding: "0.35rem 0.85rem",
+                          fontSize: "0.85rem",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "0.35rem",
+                        }}
+                        title="تعديل الواجب"
+                      >
+                        ✏️ تعديل
+                      </button>
+                      <button onClick={() => handleDeleteDevoir(d.id)} style={btnDanger} title="حذف الواجب">🗑</button>
+                    </div>
                   </div>
                   <div style={{ marginTop: "0.75rem", background: "white", padding: "0.75rem", borderRadius: "6px", border: "1px solid #e2e8f0", fontSize: "0.9rem" }}
                     dangerouslySetInnerHTML={{ __html: d.consigne }} />
@@ -1016,13 +1602,13 @@ const handleAddSupport = async () => {
                 />
 
                 <div style={{ display: "flex", gap: "0.5rem", marginTop: "1rem" }}>
-                  <button onClick={handleAddDevoir} style={btnSuccess}>✅ Créer le devoir</button>
-                  <button onClick={() => { setAddingDevoir(false); setNewDevoir({ titre: "", consigne: "", dateLimit: "" }); }} style={btnWarning}>Annuler</button>
+                  <button onClick={handleAddDevoir} style={btnSuccess}>✅ إنشاء الواجب</button>
+                  <button onClick={() => { setAddingDevoir(false); setNewDevoir({ titre: "", consigne: "", dateLimit: "" }); }} style={btnWarning}>إلغاء</button>
                 </div>
               </div>
             ) : (
               <button onClick={() => setAddingDevoir(true)} style={{ ...btnPrimary, marginTop: "1rem" }}>
-                ➕ Créer un devoir
+                ➕ إنشاء واجب جديد
               </button>
             )}
           </div>
@@ -1238,7 +1824,7 @@ const handleAddSupport = async () => {
 }
 
 function typeColor(type) {
-  const colors = { PDF: "#dc2626", VIDEO: "#1e40af", IMAGE: "#059669", PPT: "#d97706", WORD: "#2563eb", SCORM: "#7c3aed", ARTICULATE: "#0d9488", TEXTE: "#0ea5e9", FORUM: "#8b5cf6" };
+  const colors = { PDF: "#dc2626", VIDEO: "#1e40af", IMAGE: "#059669", PPT: "#d97706", WORD: "#2563eb", SCORM: "#7c3aed", ARTICULATE: "#0d9488", TEXTE: "#0ea5e9", FORUM: "#8b5cf6", QCM: "#059669" };
   return colors[type] || "#475569";
 }
 

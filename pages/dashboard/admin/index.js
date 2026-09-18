@@ -4,6 +4,7 @@ import { useAuth } from "@/context/AuthContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import Chat from "@/components/Chat";
 import DashboardLayout from "../../../components/layout/DashboardLayout";
+import VisioTab from "@/components/visio/VisioTab";
 
 // ── Composants extraits ──
 import OverviewTab from "@/components/dashboard/admin/OverviewTab";
@@ -224,6 +225,53 @@ export default function DashboardAdmin() {
     } catch { setError("Erreur serveur"); }
   };
 
+  const handleUpdateCoursePrice = async (courseId, prix) => {
+    try {
+      const res = await fetch("/api/admin/courses", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ courseId, prix }),
+      });
+      if (res.ok) {
+        setStats((prev) => prev ? {
+          ...prev,
+          courses: (prev.courses || []).map((c) => c.id === courseId ? { ...c, prix } : c),
+        } : prev);
+        await fetchAll();
+      } else {
+        const errData = await res.json().catch(() => ({}));
+        alert(errData.error || "Erreur lors de la mise à jour du prix");
+      }
+    } catch (err) {
+      console.error("handleUpdateCoursePrice error:", err);
+      alert("Erreur lors de la mise à jour du prix");
+    }
+  };
+
+  const handleUpdateAllCoursesPrices = async (prix) => {
+    try {
+      const res = await fetch("/api/admin/courses", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ bulk: true, prix }),
+      });
+      if (res.ok) {
+        setStats((prev) => prev ? {
+          ...prev,
+          courses: (prev.courses || []).map((c) => ({ ...c, prix })),
+        } : prev);
+      } else {
+        const errData = await res.json().catch(() => ({}));
+        alert(errData.error || "Erreur lors de la mise à jour globale des prix");
+      }
+    } catch (err) {
+      console.error("handleUpdateAllCoursesPrices error:", err);
+      alert("Erreur lors de la mise à jour globale");
+    }
+  };
+
   const UserHoverTrigger = ({ user: u, label }) => {
     if (!u) return null;
     return (
@@ -254,6 +302,7 @@ export default function DashboardAdmin() {
     { key: "courses", label: "Cours", icon: "📚", badge: courses.length },
     { key: "students", label: "Élèves", icon: "👨‍🎓", badge: students.length },
     { key: "evaluations", label: "Évaluations", icon: "📝", badge: quizResults.length },
+    { key: "visio", label: "Visioconférence", icon: "📹" },
     { key: "messages", label: "Messages", icon: "✉️" },
     { key: "inscriptions", label: "Inscriptions", icon: "📋", badge: enAttente },
     { key: "chat", label: "Chat", icon: "💬", badge: totalUnreadChat },
@@ -325,6 +374,8 @@ export default function DashboardAdmin() {
             onAssignTeacher={handleAssignTeacher}
             onSelectedTeachersChange={setSelectedTeachers}
             onDeleteCourse={handleDeleteCourse}
+            onUpdatePrice={handleUpdateCoursePrice}
+            onUpdateAllPrices={handleUpdateAllCoursesPrices}
             UserHoverTrigger={UserHoverTrigger}
           />
         )}
@@ -346,6 +397,10 @@ export default function DashboardAdmin() {
 
         {tab === "messages" && (
           <MessagesTab msgStats={msgStats} users={users} UserHoverTrigger={UserHoverTrigger} />
+        )}
+
+        {tab === "visio" && (
+          <VisioTab user={user} />
         )}
       </DashboardLayout>
 

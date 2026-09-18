@@ -885,16 +885,45 @@ export default function StudentDashboard() {
                           </div>
                           
                           <div style={{ marginTop: "auto" }}>
-                            {c.isFreeTrial && (
-                              <p style={{
-                                fontSize: "1rem",
-                                fontWeight: "800",
-                                color: "#10b981",
-                                marginBottom: "0.75rem"
-                              }}>
-                                🎁 مجاني
-                              </p>
-                            )}
+                            <div style={{ marginBottom: "0.75rem", display: "flex", alignItems: "center" }}>
+                              {c.prix === 0 ? (
+                                <span style={{
+                                  fontSize: "0.85rem",
+                                  fontWeight: "800",
+                                  color: "#059669",
+                                  background: "#ecfdf5",
+                                  padding: "0.25rem 0.6rem",
+                                  borderRadius: "8px",
+                                  border: "1px solid #a7f3d0"
+                                }}>
+                                  🎁 مجاني
+                                </span>
+                              ) : c.isFreeTrial ? (
+                                <span style={{
+                                  fontSize: "0.85rem",
+                                  fontWeight: "800",
+                                  color: "#059669",
+                                  background: "#ecfdf5",
+                                  padding: "0.25rem 0.6rem",
+                                  borderRadius: "8px",
+                                  border: "1px solid #a7f3d0"
+                                }}>
+                                  🎁 الفصل الأول مجاناً
+                                </span>
+                              ) : (
+                                <span style={{
+                                  fontSize: "0.95rem",
+                                  fontWeight: "800",
+                                  color: "#1e40af",
+                                  background: "#eff6ff",
+                                  padding: "0.25rem 0.65rem",
+                                  borderRadius: "8px",
+                                  border: "1px solid #bfdbfe"
+                                }}>
+                                  💰 {(c.prix ?? 500).toLocaleString("fr-FR")} د.ج
+                                </span>
+                              )}
+                            </div>
                             <div style={{ minWidth: "180px" }}>
                               {isEnrolled ? (
                                 <button
@@ -908,7 +937,7 @@ export default function StudentDashboard() {
                                 <button onClick={(e) => { e.stopPropagation(); handleUnenroll(c.id); }} className="btn-dent-outline" style={{ width: "100%", padding: "0.6rem" }}>إلغاء الطلب</button>
                               ) : (
                                 <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }} onClick={(e) => e.stopPropagation()}>
-                                  {c.isFreeTrial ? (
+                                  {c.prix === 0 || c.isFreeTrial ? (
                                     <button
                                       onClick={(e) => { e.stopPropagation(); router.push("/dashboard/student/courses/" + c.id); }}
                                       className="btn-dent-green"
@@ -921,17 +950,25 @@ export default function StudentDashboard() {
                                       <select
                                         value={typePaiements[c.id] || "COURS_SEUL"}
                                         onChange={(e) => setTypePaiements({ ...typePaiements, [c.id]: e.target.value })}
-                                        style={{ padding: "0.5rem 1rem", borderRadius: "9999px", border: "1px solid #cbd5e0", fontSize: "0.9rem", width: "100%", fontWeight: "600", color: "#4a5568", marginBottom: "0.5rem" }}
+                                        style={{ padding: "0.5rem 0.8rem", borderRadius: "8px", border: "1.5px solid #cbd5e0", fontSize: "0.85rem", width: "100%", fontWeight: "600", color: "#4a5568", marginBottom: "0.5rem", background: "white" }}
                                       >
-                                        <option value="COURS_SEUL">💳 هذا الدرس فقط</option>
-                                        <option value="PARCOURS_COMPLET">🎓 المسار الكامل</option>
+                                        <option value="COURS_SEUL">💳 هذا الدرس ({(c.prix ?? 500)} د.ج)</option>
+                                        {(() => {
+                                          const pTotal = c.parcoursTotalPrice || ((c.prix ?? 500) * 4);
+                                          const pDiscount = Math.round(pTotal * 0.75);
+                                          return (
+                                            <option value="PARCOURS_COMPLET">
+                                              🎓 المسار الكامل ({pDiscount > 0 ? `${pDiscount.toLocaleString("fr-FR")} د.ج (-25% 🎉)` : "مجاني 🎉"})
+                                            </option>
+                                          );
+                                        })()}
                                       </select>
                                       <button
                                         onClick={(e) => { e.stopPropagation(); setPaymentModalParams({ course: c, typePaiement: typePaiements[c.id] || "COURS_SEUL" }); }}
                                         className="btn-dent-blue"
                                         style={{ ...btnPrimary, width: "100%" }}
                                       >
-                                        ➕ طلب الوصول
+                                        طلب متابعة الدرس
                                       </button>
                                     </div>
                                   )}

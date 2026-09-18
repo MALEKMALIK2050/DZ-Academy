@@ -33,9 +33,9 @@ export default async function handler(req, res) {
       return res.status(200).json(devoirs);
     }
 
-    // POST — créer devoir (DESIGNER ou TEACHER)
+    // POST — créer devoir (DESIGNER, TEACHER ou ADMIN)
     if (req.method === "POST") {
-      if (user.role !== "DESIGNER" && user.role !== "TEACHER")
+      if (user.role !== "DESIGNER" && user.role !== "TEACHER" && user.role !== "ADMIN")
         return res.status(403).json({ error: "Accès refusé" });
 
       const { chapterId, titre, consigne, dateLimit } = req.body;
@@ -53,9 +53,29 @@ export default async function handler(req, res) {
       return res.status(201).json(devoir);
     }
 
+    // PUT — modifier devoir (DESIGNER, TEACHER ou ADMIN)
+    if (req.method === "PUT") {
+      if (user.role !== "DESIGNER" && user.role !== "TEACHER" && user.role !== "ADMIN")
+        return res.status(403).json({ error: "Accès refusé" });
+
+      const { id, titre, consigne, dateLimit } = req.body;
+      if (!id || !titre || !consigne || !dateLimit)
+        return res.status(400).json({ error: "Tous les champs sont obligatoires" });
+
+      const devoir = await prisma.devoir.update({
+        where: { id: parseInt(id) },
+        data: {
+          titre,
+          consigne,
+          dateLimit: new Date(dateLimit),
+        },
+      });
+      return res.status(200).json(devoir);
+    }
+
     // DELETE — supprimer devoir
     if (req.method === "DELETE") {
-      if (user.role !== "DESIGNER" && user.role !== "TEACHER")
+      if (user.role !== "DESIGNER" && user.role !== "TEACHER" && user.role !== "ADMIN")
         return res.status(403).json({ error: "Accès refusé" });
 
       const { devoirId } = req.body;

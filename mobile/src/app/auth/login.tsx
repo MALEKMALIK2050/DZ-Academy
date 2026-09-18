@@ -186,7 +186,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.white, borderBottomWidth: 1, borderBottomColor: Colors.border,
   },
   logoContainer: { marginBottom: 16 },
-  logo: { width: 100, height: 100, borderRadius: 50 },
+  logo: { width: 120, height: 120, borderRadius: 20 },
   titleMain: { fontSize: 22, fontWeight: '900', color: Colors.darkText, textAlign: 'center', marginBottom: 6 },
   subtitle: { fontSize: 13, color: Colors.lightText, textAlign: 'center', fontWeight: '500' },
   formWrapper: { paddingHorizontal: 16, marginVertical: 20 },
